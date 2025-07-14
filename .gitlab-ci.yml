@@ -1,0 +1,86 @@
+stages:      
+  - build
+  - test
+  - pages
+  - deploy
+
+image: docker:git
+services:
+- docker:dind
+
+build:
+  image: docker:20.10.16
+  stage: build
+  services:
+    - docker:20.10.16-dind
+  variables:
+    IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker build . -t $IMAGE_TAG -t $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+    - docker push $IMAGE_TAG
+    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+
+junit:
+  stage: test
+  image: maven:3-jdk-8-alpine
+  script:
+    - mvn test
+  artifacts:
+    paths:
+      - target/surefire-reports/
+    reports:
+      junit: target/surefire-reports/TEST-*.xml
+
+
+
+deploy-job:      # This job runs in the deploy stage.
+  stage: deploy 
+  environment: production
+  script:
+    - echo "Deploying application..."
+    - echo "Application successfully deployed."
+
+export-merged-sbom:
+  image: alpine
+  before_script:
+    - apk add --update jq curl
+  stage: .post
+  script:
+    - /bin/sh sbom_export.sh
+  artifacts:
+    paths:
+      - "gl-sbom-merged-*.cdx.json"
+
+pages:
+  stage: pages
+  image: maven:3-jdk-8-alpine
+  dependencies:
+    - junit
+  script:
+    - mkdir -p public
+    - cp -r target/surefire-reports public/
+    # JUnitレポートをHTMLに変換するオプション
+    - mvn surefire-report:report-only
+    - cp -r target/site public/
+  artifacts:
+    paths:
+      - public
+  only:
+    - main  # または master ブランチ
+
+
+
+include:
+  - template: Jobs/Code-Intelligence.gitlab-ci.yml  
+  - template: Jobs/SAST.gitlab-ci.yml  
+  - template: Jobs/Secret-Detection.gitlab-ci.yml  
+  - template: Jobs/Container-Scanning.gitlab-ci.yml
+  - template: Jobs/Dependency-Scanning.gitlab-ci.yml
+
+container_scanning:
+  variables:
+    CS_IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+
+
+
