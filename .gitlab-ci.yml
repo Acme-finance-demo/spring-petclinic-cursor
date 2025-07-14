@@ -62,12 +62,7 @@ include:
   - template: Jobs/Code-Intelligence.gitlab-ci.yml  
   - template: Jobs/SAST.gitlab-ci.yml  
   - template: Jobs/Secret-Detection.gitlab-ci.yml  
-  - template: Jobs/Container-Scanning.gitlab-ci.yml
   - template: Jobs/Dependency-Scanning.gitlab-ci.yml
-
-container_scanning:
-  variables:
-    CS_IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
 
 
 
