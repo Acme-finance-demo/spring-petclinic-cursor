@@ -50,5 +50,3 @@ _site/
 *.css
 !petclinic.css
 .claude/settings.local.json
-.gitignore
-.gitignore
