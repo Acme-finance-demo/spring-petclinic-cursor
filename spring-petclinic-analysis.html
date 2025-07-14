@@ -1,0 +1,2524 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>spring-petclinic-analysis</title>
+  <style>
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #1a1a1a;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+</head>
+<body>
+<nav id="TOC" role="doc-toc">
+<ul>
+<li><a href="#spring-petclinic-プロジェクト解析書"
+id="toc-spring-petclinic-プロジェクト解析書">Spring Petclinic
+プロジェクト解析書</a>
+<ul>
+<li><a href="#画面一覧" id="toc-画面一覧">1. 画面一覧</a>
+<ul>
+<li><a href="#メイン画面" id="toc-メイン画面">1.1 メイン画面</a></li>
+<li><a href="#飼い主管理画面" id="toc-飼い主管理画面">1.2
+飼い主管理画面</a></li>
+<li><a href="#ペット管理画面" id="toc-ペット管理画面">1.3
+ペット管理画面</a></li>
+<li><a href="#獣医師管理画面" id="toc-獣医師管理画面">1.4
+獣医師管理画面</a></li>
+<li><a href="#診察予約管理画面" id="toc-診察予約管理画面">1.5
+診察予約管理画面</a></li>
+</ul></li>
+<li><a href="#テーブル一覧" id="toc-テーブル一覧">2. テーブル一覧</a>
+<ul>
+<li><a href="#テーブル概要" id="toc-テーブル概要">2.1
+テーブル概要</a></li>
+<li><a href="#テーブル詳細" id="toc-テーブル詳細">2.2
+テーブル詳細</a></li>
+<li><a href="#er図entity-relationship-diagram"
+id="toc-er図entity-relationship-diagram">2.3 ER図（Entity Relationship
+Diagram）</a></li>
+<li><a href="#データベース設計の特徴"
+id="toc-データベース設計の特徴">2.4 データベース設計の特徴</a></li>
+</ul></li>
+<li><a href="#クラス図" id="toc-クラス図">3. クラス図</a>
+<ul>
+<li><a href="#エンティティクラス図" id="toc-エンティティクラス図">3.1
+エンティティクラス図</a></li>
+<li><a href="#主要クラスの関係性" id="toc-主要クラスの関係性">3.2
+主要クラスの関係性</a></li>
+<li><a href="#コントローラクラス構成"
+id="toc-コントローラクラス構成">3.3 コントローラクラス構成</a></li>
+</ul></li>
+<li><a href="#各画面の基本設計書" id="toc-各画面の基本設計書">4.
+各画面の基本設計書</a>
+<ul>
+<li><a href="#ホーム画面top001" id="toc-ホーム画面top001">4.1
+ホーム画面（TOP001）</a></li>
+<li><a href="#飼い主検索画面own001" id="toc-飼い主検索画面own001">4.2
+飼い主検索画面（OWN001）</a></li>
+<li><a href="#飼い主一覧画面own002" id="toc-飼い主一覧画面own002">4.3
+飼い主一覧画面（OWN002）</a></li>
+<li><a href="#飼い主詳細画面own004" id="toc-飼い主詳細画面own004">4.4
+飼い主詳細画面（OWN004）</a></li>
+<li><a href="#ペット登録更新画面pet001"
+id="toc-ペット登録更新画面pet001">4.5
+ペット登録・更新画面（PET001）</a></li>
+<li><a href="#診療記録登録画面pet002"
+id="toc-診療記録登録画面pet002">4.6 診療記録登録画面（PET002）</a></li>
+<li><a href="#獣医師一覧画面vet001" id="toc-獣医師一覧画面vet001">4.7
+獣医師一覧画面（VET001）</a></li>
+<li><a href="#予約一覧画面app001" id="toc-予約一覧画面app001">4.8
+予約一覧画面（APP001）</a></li>
+<li><a href="#予約作成画面app002" id="toc-予約作成画面app002">4.9
+予約作成画面（APP002）</a></li>
+<li><a href="#予約詳細編集画面app003"
+id="toc-予約詳細編集画面app003">4.10
+予約詳細・編集画面（APP003）</a></li>
+<li><a href="#予約カレンダー画面app004"
+id="toc-予約カレンダー画面app004">4.11
+予約カレンダー画面（APP004）</a></li>
+<li><a href="#獣医師スケジュール管理画面app005"
+id="toc-獣医師スケジュール管理画面app005">4.12
+獣医師スケジュール管理画面（APP005）</a></li>
+</ul></li>
+<li><a href="#技術的特徴" id="toc-技術的特徴">5. 技術的特徴</a>
+<ul>
+<li><a href="#使用技術" id="toc-使用技術">5.1 使用技術</a></li>
+<li><a href="#設計パターン" id="toc-設計パターン">5.2
+設計パターン</a></li>
+<li><a href="#セキュリティ品質" id="toc-セキュリティ品質">5.3
+セキュリティ・品質</a></li>
+</ul></li>
+<li><a href="#画面遷移図" id="toc-画面遷移図">6. 画面遷移図</a>
+<ul>
+<li><a href="#基本的な画面遷移フロー"
+id="toc-基本的な画面遷移フロー">6.1 基本的な画面遷移フロー</a></li>
+<li><a href="#詳細な画面遷移フロー機能別"
+id="toc-詳細な画面遷移フロー機能別">6.2
+詳細な画面遷移フロー（機能別）</a></li>
+<li><a href="#ユーザーのタスクフロー"
+id="toc-ユーザーのタスクフロー">6.3 ユーザーのタスクフロー</a></li>
+<li><a href="#状態遷移図" id="toc-状態遷移図">6.4 状態遷移図</a></li>
+<li><a href="#画面構成とナビゲーション"
+id="toc-画面構成とナビゲーション">6.5 画面構成とナビゲーション</a></li>
+<li><a href="#画面遷移の特徴" id="toc-画面遷移の特徴">6.6
+画面遷移の特徴</a></li>
+<li><a href="#予約一覧画面app001-1" id="toc-予約一覧画面app001-1">4.10
+予約一覧画面（APP001）</a></li>
+<li><a href="#予約作成画面app002-1" id="toc-予約作成画面app002-1">4.11
+予約作成画面（APP002）</a></li>
+<li><a href="#予約詳細編集画面app003-1"
+id="toc-予約詳細編集画面app003-1">4.12
+予約詳細・編集画面（APP003）</a></li>
+<li><a href="#予約カレンダー画面app004-1"
+id="toc-予約カレンダー画面app004-1">4.13
+予約カレンダー画面（APP004）</a></li>
+<li><a href="#獣医師スケジュール管理画面app005-1"
+id="toc-獣医師スケジュール管理画面app005-1">4.14
+獣医師スケジュール管理画面（APP005）</a></li>
+</ul></li>
+<li><a href="#今後の拡張可能性" id="toc-今後の拡張可能性">7.
+今後の拡張可能性</a>
+<ul>
+<li><a href="#機能拡張" id="toc-機能拡張">7.1 機能拡張</a></li>
+<li><a href="#技術的拡張" id="toc-技術的拡張">7.2 技術的拡張</a></li>
+</ul></li>
+</ul></li>
+</ul>
+</nav>
+<h1 id="spring-petclinic-プロジェクト解析書">Spring Petclinic
+プロジェクト解析書</h1>
+<h2 id="画面一覧">1. 画面一覧</h2>
+<h3 id="メイン画面">1.1 メイン画面</h3>
+<table>
+<thead>
+<tr>
+<th>画面ID</th>
+<th>画面名</th>
+<th>URL</th>
+<th>機能概要</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>TOP001</td>
+<td>ホーム画面</td>
+<td><code>/</code></td>
+<td>アプリケーションのホーム画面</td>
+</tr>
+<tr>
+<td>ERR001</td>
+<td>エラー画面</td>
+<td><code>/oups</code></td>
+<td>システムエラー表示画面</td>
+</tr>
+</tbody>
+</table>
+<h3 id="飼い主管理画面">1.2 飼い主管理画面</h3>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 16%" />
+<col style="width: 32%" />
+</colgroup>
+<thead>
+<tr>
+<th>画面ID</th>
+<th>画面名</th>
+<th>URL</th>
+<th>機能概要</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>OWN001</td>
+<td>飼い主検索画面</td>
+<td><code>/owners/find</code></td>
+<td>飼い主の検索フォーム</td>
+</tr>
+<tr>
+<td>OWN002</td>
+<td>飼い主一覧画面</td>
+<td><code>/owners</code></td>
+<td>検索結果の飼い主一覧表示</td>
+</tr>
+<tr>
+<td>OWN003</td>
+<td>飼い主登録・更新画面</td>
+<td><code>/owners/new</code>, <code>/owners/{id}/edit</code></td>
+<td>飼い主の新規登録・更新フォーム</td>
+</tr>
+<tr>
+<td>OWN004</td>
+<td>飼い主詳細画面</td>
+<td><code>/owners/{id}</code></td>
+<td>飼い主の詳細情報とペット一覧</td>
+</tr>
+</tbody>
+</table>
+<h3 id="ペット管理画面">1.3 ペット管理画面</h3>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 16%" />
+<col style="width: 32%" />
+</colgroup>
+<thead>
+<tr>
+<th>画面ID</th>
+<th>画面名</th>
+<th>URL</th>
+<th>機能概要</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PET001</td>
+<td>ペット登録・更新画面</td>
+<td><code>/owners/{ownerId}/pets/new</code>,
+<code>/owners/{ownerId}/pets/{petId}/edit</code></td>
+<td>ペットの新規登録・更新フォーム</td>
+</tr>
+<tr>
+<td>PET002</td>
+<td>診療記録登録画面</td>
+<td><code>/owners/{ownerId}/pets/{petId}/visits/new</code></td>
+<td>ペットの診療記録登録フォーム</td>
+</tr>
+</tbody>
+</table>
+<h3 id="獣医師管理画面">1.4 獣医師管理画面</h3>
+<table>
+<thead>
+<tr>
+<th>画面ID</th>
+<th>画面名</th>
+<th>URL</th>
+<th>機能概要</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>VET001</td>
+<td>獣医師一覧画面</td>
+<td><code>/vets.html</code></td>
+<td>獣医師一覧表示</td>
+</tr>
+</tbody>
+</table>
+<h3 id="診察予約管理画面">1.5 診察予約管理画面</h3>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 16%" />
+<col style="width: 32%" />
+</colgroup>
+<thead>
+<tr>
+<th>画面ID</th>
+<th>画面名</th>
+<th>URL</th>
+<th>機能概要</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>APP001</td>
+<td>予約一覧画面</td>
+<td><code>/appointments</code></td>
+<td>予約の検索・一覧表示</td>
+</tr>
+<tr>
+<td>APP002</td>
+<td>予約作成画面</td>
+<td><code>/appointments/new</code></td>
+<td>新規予約の作成フォーム</td>
+</tr>
+<tr>
+<td>APP003</td>
+<td>予約詳細・編集画面</td>
+<td><code>/appointments/{id}</code></td>
+<td>予約内容の確認・編集</td>
+</tr>
+<tr>
+<td>APP004</td>
+<td>予約カレンダー画面</td>
+<td><code>/appointments/calendar</code></td>
+<td>カレンダー形式での予約表示</td>
+</tr>
+<tr>
+<td>APP005</td>
+<td>獣医師スケジュール管理画面</td>
+<td><code>/vets/{id}/schedule</code></td>
+<td>獣医師の勤務時間・休診日設定</td>
+</tr>
+</tbody>
+</table>
+<h2 id="テーブル一覧">2. テーブル一覧</h2>
+<h3 id="テーブル概要">2.1 テーブル概要</h3>
+<table>
+<thead>
+<tr>
+<th>テーブル名</th>
+<th>日本語名</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>owners</td>
+<td>飼い主</td>
+<td>ペットの飼い主情報を管理</td>
+</tr>
+<tr>
+<td>pets</td>
+<td>ペット</td>
+<td>ペットの基本情報を管理</td>
+</tr>
+<tr>
+<td>visits</td>
+<td>診療記録</td>
+<td>ペットの診療記録を管理</td>
+</tr>
+<tr>
+<td>types</td>
+<td>ペット種別</td>
+<td>ペットの種類（犬、猫等）を管理</td>
+</tr>
+<tr>
+<td>vets</td>
+<td>獣医師</td>
+<td>獣医師の基本情報を管理</td>
+</tr>
+<tr>
+<td>specialties</td>
+<td>専門分野</td>
+<td>獣医師の専門分野を管理</td>
+</tr>
+<tr>
+<td>vet_specialties</td>
+<td>獣医師専門分野</td>
+<td>獣医師と専門分野の関連を管理</td>
+</tr>
+<tr>
+<td>appointments</td>
+<td>診察予約</td>
+<td>ペットの診察予約情報を管理</td>
+</tr>
+<tr>
+<td>vet_schedules</td>
+<td>獣医師スケジュール</td>
+<td>獣医師の勤務時間を管理</td>
+</tr>
+<tr>
+<td>vet_holidays</td>
+<td>獣医師休診日</td>
+<td>獣医師の休診日を管理</td>
+</tr>
+</tbody>
+</table>
+<h3 id="テーブル詳細">2.2 テーブル詳細</h3>
+<h4 id="owners飼い主">2.2.1 owners（飼い主）</h4>
+<table>
+<thead>
+<tr>
+<th>カラム名</th>
+<th>データ型</th>
+<th>制約</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>INTEGER</td>
+<td>PRIMARY KEY, AUTO_INCREMENT</td>
+<td>飼い主ID</td>
+</tr>
+<tr>
+<td>first_name</td>
+<td>VARCHAR(30)</td>
+<td>NOT NULL</td>
+<td>名前</td>
+</tr>
+<tr>
+<td>last_name</td>
+<td>VARCHAR(30)</td>
+<td>NOT NULL</td>
+<td>姓</td>
+</tr>
+<tr>
+<td>address</td>
+<td>VARCHAR(255)</td>
+<td>-</td>
+<td>住所</td>
+</tr>
+<tr>
+<td>city</td>
+<td>VARCHAR(80)</td>
+<td>-</td>
+<td>市区町村</td>
+</tr>
+<tr>
+<td>telephone</td>
+<td>VARCHAR(20)</td>
+<td>-</td>
+<td>電話番号</td>
+</tr>
+</tbody>
+</table>
+<h4 id="petsペット">2.2.2 pets（ペット）</h4>
+<table>
+<thead>
+<tr>
+<th>カラム名</th>
+<th>データ型</th>
+<th>制約</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>INTEGER</td>
+<td>PRIMARY KEY, AUTO_INCREMENT</td>
+<td>ペットID</td>
+</tr>
+<tr>
+<td>name</td>
+<td>VARCHAR(30)</td>
+<td>NOT NULL</td>
+<td>ペット名</td>
+</tr>
+<tr>
+<td>birth_date</td>
+<td>DATE</td>
+<td>-</td>
+<td>生年月日</td>
+</tr>
+<tr>
+<td>type_id</td>
+<td>INTEGER</td>
+<td>NOT NULL, FK</td>
+<td>ペット種別ID</td>
+</tr>
+<tr>
+<td>owner_id</td>
+<td>INTEGER</td>
+<td>NOT NULL, FK</td>
+<td>飼い主ID</td>
+</tr>
+</tbody>
+</table>
+<h4 id="visits診療記録">2.2.3 visits（診療記録）</h4>
+<table>
+<thead>
+<tr>
+<th>カラム名</th>
+<th>データ型</th>
+<th>制約</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>INTEGER</td>
+<td>PRIMARY KEY, AUTO_INCREMENT</td>
+<td>診療記録ID</td>
+</tr>
+<tr>
+<td>pet_id</td>
+<td>INTEGER</td>
+<td>NOT NULL, FK</td>
+<td>ペットID</td>
+</tr>
+<tr>
+<td>visit_date</td>
+<td>DATE</td>
+<td>-</td>
+<td>診療日</td>
+</tr>
+<tr>
+<td>description</td>
+<td>VARCHAR(255)</td>
+<td>-</td>
+<td>診療内容</td>
+</tr>
+</tbody>
+</table>
+<h4 id="typesペット種別">2.2.4 types（ペット種別）</h4>
+<table>
+<thead>
+<tr>
+<th>カラム名</th>
+<th>データ型</th>
+<th>制約</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>INTEGER</td>
+<td>PRIMARY KEY, AUTO_INCREMENT</td>
+<td>ペット種別ID</td>
+</tr>
+<tr>
+<td>name</td>
+<td>VARCHAR(80)</td>
+<td>NOT NULL</td>
+<td>ペット種別名</td>
+</tr>
+</tbody>
+</table>
+<h4 id="vets獣医師">2.2.5 vets（獣医師）</h4>
+<table>
+<thead>
+<tr>
+<th>カラム名</th>
+<th>データ型</th>
+<th>制約</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>INTEGER</td>
+<td>PRIMARY KEY, AUTO_INCREMENT</td>
+<td>獣医師ID</td>
+</tr>
+<tr>
+<td>first_name</td>
+<td>VARCHAR(30)</td>
+<td>NOT NULL</td>
+<td>名前</td>
+</tr>
+<tr>
+<td>last_name</td>
+<td>VARCHAR(30)</td>
+<td>NOT NULL</td>
+<td>姓</td>
+</tr>
+</tbody>
+</table>
+<h4 id="specialties専門分野">2.2.6 specialties（専門分野）</h4>
+<table>
+<thead>
+<tr>
+<th>カラム名</th>
+<th>データ型</th>
+<th>制約</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>INTEGER</td>
+<td>PRIMARY KEY, AUTO_INCREMENT</td>
+<td>専門分野ID</td>
+</tr>
+<tr>
+<td>name</td>
+<td>VARCHAR(80)</td>
+<td>NOT NULL</td>
+<td>専門分野名</td>
+</tr>
+</tbody>
+</table>
+<h4 id="vet_specialties獣医師専門分野">2.2.7
+vet_specialties（獣医師専門分野）</h4>
+<table>
+<thead>
+<tr>
+<th>カラム名</th>
+<th>データ型</th>
+<th>制約</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>vet_id</td>
+<td>INTEGER</td>
+<td>NOT NULL, FK</td>
+<td>獣医師ID</td>
+</tr>
+<tr>
+<td>specialty_id</td>
+<td>INTEGER</td>
+<td>NOT NULL, FK</td>
+<td>専門分野ID</td>
+</tr>
+</tbody>
+</table>
+<h4 id="appointments診察予約">2.2.8 appointments（診察予約）</h4>
+<table>
+<thead>
+<tr>
+<th>カラム名</th>
+<th>データ型</th>
+<th>制約</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>INTEGER</td>
+<td>PRIMARY KEY, AUTO_INCREMENT</td>
+<td>予約ID</td>
+</tr>
+<tr>
+<td>pet_id</td>
+<td>INTEGER</td>
+<td>NOT NULL, FK</td>
+<td>ペットID</td>
+</tr>
+<tr>
+<td>vet_id</td>
+<td>INTEGER</td>
+<td>NOT NULL, FK</td>
+<td>獣医師ID</td>
+</tr>
+<tr>
+<td>appointment_date</td>
+<td>DATE</td>
+<td>NOT NULL</td>
+<td>予約日</td>
+</tr>
+<tr>
+<td>appointment_time</td>
+<td>TIME</td>
+<td>NOT NULL</td>
+<td>予約時刻</td>
+</tr>
+<tr>
+<td>duration_minutes</td>
+<td>INTEGER</td>
+<td>DEFAULT 30</td>
+<td>診察時間（分）</td>
+</tr>
+<tr>
+<td>reason</td>
+<td>VARCHAR(255)</td>
+<td>-</td>
+<td>診察理由</td>
+</tr>
+<tr>
+<td>symptoms</td>
+<td>TEXT</td>
+<td>-</td>
+<td>症状詳細</td>
+</tr>
+<tr>
+<td>status</td>
+<td>VARCHAR(20)</td>
+<td>DEFAULT ‘PENDING’</td>
+<td>予約ステータス</td>
+</tr>
+<tr>
+<td>notes</td>
+<td>TEXT</td>
+<td>-</td>
+<td>備考</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>TIMESTAMP</td>
+<td>DEFAULT CURRENT_TIMESTAMP</td>
+<td>作成日時</td>
+</tr>
+<tr>
+<td>updated_at</td>
+<td>TIMESTAMP</td>
+<td>DEFAULT CURRENT_TIMESTAMP</td>
+<td>更新日時</td>
+</tr>
+</tbody>
+</table>
+<h4 id="vet_schedules獣医師スケジュール">2.2.9
+vet_schedules（獣医師スケジュール）</h4>
+<table>
+<thead>
+<tr>
+<th>カラム名</th>
+<th>データ型</th>
+<th>制約</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>INTEGER</td>
+<td>PRIMARY KEY, AUTO_INCREMENT</td>
+<td>スケジュールID</td>
+</tr>
+<tr>
+<td>vet_id</td>
+<td>INTEGER</td>
+<td>NOT NULL, FK</td>
+<td>獣医師ID</td>
+</tr>
+<tr>
+<td>day_of_week</td>
+<td>INTEGER</td>
+<td>NOT NULL</td>
+<td>曜日（0=日曜、1=月曜…）</td>
+</tr>
+<tr>
+<td>start_time</td>
+<td>TIME</td>
+<td>NOT NULL</td>
+<td>勤務開始時刻</td>
+</tr>
+<tr>
+<td>end_time</td>
+<td>TIME</td>
+<td>NOT NULL</td>
+<td>勤務終了時刻</td>
+</tr>
+<tr>
+<td>is_available</td>
+<td>BOOLEAN</td>
+<td>DEFAULT TRUE</td>
+<td>診察可能フラグ</td>
+</tr>
+</tbody>
+</table>
+<h4 id="vet_holidays獣医師休診日">2.2.10
+vet_holidays（獣医師休診日）</h4>
+<table>
+<thead>
+<tr>
+<th>カラム名</th>
+<th>データ型</th>
+<th>制約</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>INTEGER</td>
+<td>PRIMARY KEY, AUTO_INCREMENT</td>
+<td>休診日ID</td>
+</tr>
+<tr>
+<td>vet_id</td>
+<td>INTEGER</td>
+<td>NOT NULL, FK</td>
+<td>獣医師ID</td>
+</tr>
+<tr>
+<td>holiday_date</td>
+<td>DATE</td>
+<td>NOT NULL</td>
+<td>休診日</td>
+</tr>
+<tr>
+<td>reason</td>
+<td>VARCHAR(255)</td>
+<td>-</td>
+<td>休診理由</td>
+</tr>
+</tbody>
+</table>
+<h3 id="er図entity-relationship-diagram">2.3 ER図（Entity Relationship
+Diagram）</h3>
+<h4 id="基本的なer図">2.3.1 基本的なER図</h4>
+<pre class="mermaid"><code>erDiagram
+    OWNERS {
+        int id PK
+        varchar first_name
+        varchar last_name
+        varchar address
+        varchar city
+        varchar telephone
+    }
+    
+    PETS {
+        int id PK
+        varchar name
+        date birth_date
+        int type_id FK
+        int owner_id FK
+    }
+    
+    VISITS {
+        int id PK
+        int pet_id FK
+        date visit_date
+        varchar description
+    }
+    
+    TYPES {
+        int id PK
+        varchar name
+    }
+    
+    VETS {
+        int id PK
+        varchar first_name
+        varchar last_name
+    }
+    
+    SPECIALTIES {
+        int id PK
+        varchar name
+    }
+    
+    VET_SPECIALTIES {
+        int vet_id FK
+        int specialty_id FK
+    }
+    
+    APPOINTMENTS {
+        int id PK
+        int pet_id FK
+        int vet_id FK
+        date appointment_date
+        time appointment_time
+        int duration_minutes
+        varchar reason
+        text symptoms
+        varchar status
+        text notes
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    VET_SCHEDULES {
+        int id PK
+        int vet_id FK
+        int day_of_week
+        time start_time
+        time end_time
+        boolean is_available
+    }
+    
+    VET_HOLIDAYS {
+        int id PK
+        int vet_id FK
+        date holiday_date
+        varchar reason
+    }
+    
+    OWNERS ||--o{ PETS : owns
+    PETS }o--|| TYPES : &quot;has type&quot;
+    PETS ||--o{ VISITS : &quot;has visits&quot;
+    PETS ||--o{ APPOINTMENTS : &quot;has appointments&quot;
+    VETS ||--o{ APPOINTMENTS : &quot;handles&quot;
+    VETS ||--o{ VET_SCHEDULES : &quot;has schedule&quot;
+    VETS ||--o{ VET_HOLIDAYS : &quot;has holidays&quot;
+    VETS }o--o{ VET_SPECIALTIES : &quot;has&quot;
+    SPECIALTIES }o--o{ VET_SPECIALTIES : &quot;belongs to&quot;</code></pre>
+<h4 id="詳細なer図カーディナリティ付き">2.3.2
+詳細なER図（カーディナリティ付き）</h4>
+<pre class="mermaid"><code>erDiagram
+    OWNERS {
+        int id PK &quot;飼い主ID&quot;
+        varchar first_name &quot;名前&quot;
+        varchar last_name &quot;姓&quot;
+        varchar address &quot;住所&quot;
+        varchar city &quot;市区町村&quot;
+        varchar telephone &quot;電話番号&quot;
+    }
+    
+    PETS {
+        int id PK &quot;ペットID&quot;
+        varchar name &quot;ペット名&quot;
+        date birth_date &quot;生年月日&quot;
+        int type_id FK &quot;ペット種別ID&quot;
+        int owner_id FK &quot;飼い主ID&quot;
+    }
+    
+    VISITS {
+        int id PK &quot;診療記録ID&quot;
+        int pet_id FK &quot;ペットID&quot;
+        date visit_date &quot;診療日&quot;
+        varchar description &quot;診療内容&quot;
+    }
+    
+    TYPES {
+        int id PK &quot;ペット種別ID&quot;
+        varchar name &quot;ペット種別名&quot;
+    }
+    
+    VETS {
+        int id PK &quot;獣医師ID&quot;
+        varchar first_name &quot;名前&quot;
+        varchar last_name &quot;姓&quot;
+    }
+    
+    SPECIALTIES {
+        int id PK &quot;専門分野ID&quot;
+        varchar name &quot;専門分野名&quot;
+    }
+    
+    VET_SPECIALTIES {
+        int vet_id FK &quot;獣医師ID&quot;
+        int specialty_id FK &quot;専門分野ID&quot;
+    }
+    
+    APPOINTMENTS {
+        int id PK &quot;予約ID&quot;
+        int pet_id FK &quot;ペットID&quot;
+        int vet_id FK &quot;獣医師ID&quot;
+        date appointment_date &quot;予約日&quot;
+        time appointment_time &quot;予約時刻&quot;
+        int duration_minutes &quot;診察時間（分）&quot;
+        varchar reason &quot;診察理由&quot;
+        text symptoms &quot;症状詳細&quot;
+        varchar status &quot;予約ステータス&quot;
+        text notes &quot;備考&quot;
+        timestamp created_at &quot;作成日時&quot;
+        timestamp updated_at &quot;更新日時&quot;
+    }
+    
+    VET_SCHEDULES {
+        int id PK &quot;スケジュールID&quot;
+        int vet_id FK &quot;獣医師ID&quot;
+        int day_of_week &quot;曜日&quot;
+        time start_time &quot;勤務開始時刻&quot;
+        time end_time &quot;勤務終了時刻&quot;
+        boolean is_available &quot;診察可能フラグ&quot;
+    }
+    
+    VET_HOLIDAYS {
+        int id PK &quot;休診日ID&quot;
+        int vet_id FK &quot;獣医師ID&quot;
+        date holiday_date &quot;休診日&quot;
+        varchar reason &quot;休診理由&quot;
+    }
+    
+    %% 関係性の定義
+    OWNERS ||--o{ PETS : &quot;1人の飼い主は複数のペットを所有&quot;
+    PETS }o--|| TYPES : &quot;複数のペットは1つの種別に属する&quot;
+    PETS ||--o{ VISITS : &quot;1匹のペットは複数の診療記録を持つ&quot;
+    PETS ||--o{ APPOINTMENTS : &quot;1匹のペットは複数の予約を持つ&quot;
+    VETS ||--o{ APPOINTMENTS : &quot;1人の獣医師は複数の予約を担当&quot;
+    VETS ||--o{ VET_SCHEDULES : &quot;1人の獣医師は複数のスケジュールを持つ&quot;
+    VETS ||--o{ VET_HOLIDAYS : &quot;1人の獣医師は複数の休診日を持つ&quot;
+    VETS ||--o{ VET_SPECIALTIES : &quot;1人の獣医師は複数の専門分野を持つ&quot;
+    SPECIALTIES ||--o{ VET_SPECIALTIES : &quot;1つの専門分野は複数の獣医師が持つ&quot;</code></pre>
+<h4 id="関係性の詳細">2.3.3 関係性の詳細</h4>
+<table>
+<thead>
+<tr>
+<th>関係</th>
+<th>カーディナリティ</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>OWNERS ↔︎ PETS</td>
+<td>1:N</td>
+<td>1人の飼い主は複数のペットを所有できる</td>
+</tr>
+<tr>
+<td>PETS ↔︎ TYPES</td>
+<td>N:1</td>
+<td>複数のペットは1つの種別に属する</td>
+</tr>
+<tr>
+<td>PETS ↔︎ VISITS</td>
+<td>1:N</td>
+<td>1匹のペットは複数の診療記録を持つ</td>
+</tr>
+<tr>
+<td>PETS ↔︎ APPOINTMENTS</td>
+<td>1:N</td>
+<td>1匹のペットは複数の予約を持つ</td>
+</tr>
+<tr>
+<td>VETS ↔︎ APPOINTMENTS</td>
+<td>1:N</td>
+<td>1人の獣医師は複数の予約を担当する</td>
+</tr>
+<tr>
+<td>VETS ↔︎ VET_SCHEDULES</td>
+<td>1:N</td>
+<td>1人の獣医師は複数のスケジュールを持つ</td>
+</tr>
+<tr>
+<td>VETS ↔︎ VET_HOLIDAYS</td>
+<td>1:N</td>
+<td>1人の獣医師は複数の休診日を持つ</td>
+</tr>
+<tr>
+<td>VETS ↔︎ SPECIALTIES</td>
+<td>N:N</td>
+<td>獣医師と専門分野は多対多の関係</td>
+</tr>
+</tbody>
+</table>
+<h4 id="外部キー制約">2.3.4 外部キー制約</h4>
+<pre class="mermaid"><code>graph TD
+    A[OWNERS] --&gt; B[PETS]
+    C[TYPES] --&gt; B
+    B --&gt; D[VISITS]
+    E[VETS] --&gt; F[VET_SPECIALTIES]
+    G[SPECIALTIES] --&gt; F
+    
+    subgraph &quot;主要エンティティ&quot;
+        A
+        B
+        C
+        D
+        E
+        G
+    end
+    
+    subgraph &quot;中間テーブル&quot;
+        F
+    end
+    
+    %% スタイル定義
+    classDef primaryEntity fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef bridgeEntity fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    
+    class A,B,C,D,E,G primaryEntity
+    class F bridgeEntity</code></pre>
+<h4 id="インデックス構成">2.3.5 インデックス構成</h4>
+<pre class="mermaid"><code>graph LR
+    subgraph &quot;検索最適化インデックス&quot;
+        I1[owners.last_name] --&gt; S1[飼い主検索]
+        I2[pets.name] --&gt; S2[ペット名検索]
+        I3[pets.owner_id] --&gt; S3[飼い主別ペット検索]
+        I4[visits.pet_id] --&gt; S4[ペット別診療記録検索]
+        I5[vets.last_name] --&gt; S5[獣医師検索]
+        I6[specialties.name] --&gt; S6[専門分野検索]
+        I7[types.name] --&gt; S7[ペット種別検索]
+    end
+    
+    %% スタイル定義
+    classDef indexStyle fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef searchStyle fill:#e8f5e8,stroke:#1b5e20,stroke-width:2px
+    
+    class I1,I2,I3,I4,I5,I6,I7 indexStyle
+    class S1,S2,S3,S4,S5,S6,S7 searchStyle</code></pre>
+<h3 id="データベース設計の特徴">2.4 データベース設計の特徴</h3>
+<h4 id="正規化レベル">🎯 <strong>正規化レベル</strong></h4>
+<ul>
+<li><strong>第3正規形（3NF）</strong>まで正規化済み</li>
+<li><strong>データの整合性</strong>が保たれている</li>
+<li><strong>更新異常・削除異常</strong>を防止</li>
+</ul>
+<h4 id="関係性設計">🔗 <strong>関係性設計</strong></h4>
+<ul>
+<li><strong>1対多関係</strong>:
+owners→pets、pets→visits、types→pets</li>
+<li><strong>多対多関係</strong>:
+vets↔︎specialties（中間テーブル経由）</li>
+<li><strong>参照整合性</strong>: 外部キー制約で
+データの整合性を保証</li>
+</ul>
+<h4 id="パフォーマンス最適化">📊
+<strong>パフォーマンス最適化</strong></h4>
+<ul>
+<li><strong>検索頻度の高いカラム</strong>にインデックス配置</li>
+<li><strong>ページネーション</strong>に対応した設計</li>
+<li><strong>適切なデータ型</strong>選択による容量最適化</li>
+</ul>
+<h4 id="データ品質">🛡️ <strong>データ品質</strong></h4>
+<ul>
+<li><strong>主キー制約</strong>: 全テーブルで一意性保証</li>
+<li><strong>外部キー制約</strong>: 参照整合性の保証</li>
+<li><strong>NOT NULL制約</strong>: 必須データの保証</li>
+</ul>
+<h2 id="クラス図">3. クラス図</h2>
+<h3 id="エンティティクラス図">3.1 エンティティクラス図</h3>
+<pre><code>BaseEntity
+├── NamedEntity
+│   ├── Pet
+│   ├── PetType
+│   └── Specialty
+├── Person
+│   ├── Owner
+│   └── Vet
+├── Visit
+├── Appointment
+├── VetSchedule
+└── VetHoliday</code></pre>
+<h3 id="主要クラスの関係性">3.2 主要クラスの関係性</h3>
+<pre><code>Owner (1) ←─→ (n) Pet (n) ←─→ (1) PetType
+                 ↓
+               Visit (n)
+                 ↓
+            Appointment (n) ←─→ (1) Vet (1) ←─→ (n) VetSchedule
+                                     ↓
+                                VetHoliday (n)
+                                     ↓
+                              VetSpecialty (n) ←─→ (1) Specialty
+
+関係性の詳細:
+- Owner と Pet: 1対多（1人の飼い主が複数のペット所有）
+- Pet と PetType: 多対1（複数のペットが1つの種別に属する）
+- Pet と Visit: 1対多（1匹のペットが複数の診療記録を持つ）
+- Pet と Appointment: 1対多（1匹のペットが複数の予約を持つ）
+- Vet と Appointment: 1対多（1人の獣医師が複数の予約を担当）
+- Vet と VetSchedule: 1対多（1人の獣医師が複数のスケジュールを持つ）
+- Vet と VetHoliday: 1対多（1人の獣医師が複数の休診日を持つ）
+- Vet と Specialty: 多対多（VetSpecialtyを介した関係）</code></pre>
+<h3 id="コントローラクラス構成">3.3 コントローラクラス構成</h3>
+<pre><code>@Controller
+├── OwnerController
+│   ├── 飼い主検索・一覧・詳細
+│   ├── 飼い主登録・更新
+│   └── ページネーション
+├── PetController
+│   ├── ペット登録・更新
+│   └── バリデーション
+├── VisitController
+│   └── 診療記録登録
+├── AppointmentController
+│   ├── 予約一覧・検索
+│   ├── 予約作成・更新・削除
+│   ├── 予約ステータス管理
+│   └── カレンダー表示
+├── ScheduleController
+│   ├── 獣医師スケジュール管理
+│   ├── 勤務時間設定
+│   └── 休診日管理
+├── VetController
+│   └── 獣医師一覧
+└── WelcomeController
+    └── ホーム画面</code></pre>
+<h2 id="各画面の基本設計書">4. 各画面の基本設計書</h2>
+<h3 id="ホーム画面top001">4.1 ホーム画面（TOP001）</h3>
+<h4 id="画面概要">4.1.1 画面概要</h4>
+<ul>
+<li><strong>画面ID</strong>: TOP001</li>
+<li><strong>画面名</strong>: ホーム画面</li>
+<li><strong>URL</strong>: <code>/</code></li>
+<li><strong>機能</strong>: アプリケーションのホーム画面</li>
+</ul>
+<h4 id="画面レイアウト">4.1.2 画面レイアウト</h4>
+<pre><code>┌─────────────────────────────────────┐
+│ Spring Petclinic                   │
+│ [Home] [Find owners] [Vets] [Error] │
+├─────────────────────────────────────┤
+│                                     │
+│      Welcome to Petclinic          │
+│                                     │
+│        [ペット画像]                 │
+│                                     │
+└─────────────────────────────────────┘</code></pre>
+<h4 id="機能詳細">4.1.3 機能詳細</h4>
+<ul>
+<li>ウェルカムメッセージ表示</li>
+<li>ペット画像表示</li>
+<li>ナビゲーションメニューから各機能へのアクセス</li>
+</ul>
+<h3 id="飼い主検索画面own001">4.2 飼い主検索画面（OWN001）</h3>
+<h4 id="画面概要-1">4.2.1 画面概要</h4>
+<ul>
+<li><strong>画面ID</strong>: OWN001</li>
+<li><strong>画面名</strong>: 飼い主検索画面</li>
+<li><strong>URL</strong>: <code>/owners/find</code></li>
+<li><strong>機能</strong>: 飼い主の検索</li>
+</ul>
+<h4 id="画面レイアウト-1">4.2.2 画面レイアウト</h4>
+<pre><code>┌─────────────────────────────────────┐
+│ Find Owners                        │
+├─────────────────────────────────────┤
+│                                     │
+│ Last name: [____________] [Find]    │
+│                                     │
+│ [Add Owner]                         │
+│                                     │
+└─────────────────────────────────────┘</code></pre>
+<h4 id="入力項目">4.2.3 入力項目</h4>
+<table>
+<thead>
+<tr>
+<th>項目名</th>
+<th>項目ID</th>
+<th>入力タイプ</th>
+<th>必須</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>姓</td>
+<td>lastName</td>
+<td>text</td>
+<td>-</td>
+<td>検索対象の姓（部分一致）</td>
+</tr>
+</tbody>
+</table>
+<h4 id="ボタン">4.2.4 ボタン</h4>
+<table>
+<thead>
+<tr>
+<th>ボタン名</th>
+<th>機能</th>
+<th>遷移先</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Find</td>
+<td>検索実行</td>
+<td>OWN002（飼い主一覧画面）</td>
+</tr>
+<tr>
+<td>Add Owner</td>
+<td>新規飼い主追加</td>
+<td>OWN003（飼い主登録画面）</td>
+</tr>
+</tbody>
+</table>
+<h3 id="飼い主一覧画面own002">4.3 飼い主一覧画面（OWN002）</h3>
+<h4 id="画面概要-2">4.3.1 画面概要</h4>
+<ul>
+<li><strong>画面ID</strong>: OWN002</li>
+<li><strong>画面名</strong>: 飼い主一覧画面</li>
+<li><strong>URL</strong>: <code>/owners</code></li>
+<li><strong>機能</strong>: 検索結果の飼い主一覧表示</li>
+</ul>
+<h4 id="画面レイアウト-2">4.3.2 画面レイアウト</h4>
+<pre><code>┌─────────────────────────────────────┐
+│ Owners                             │
+├─────────────────────────────────────┤
+│ Name      | Address | City | Phone  │
+├─────────────────────────────────────┤
+│ 田中太郎   | 東京都   | 新宿区 | 123   │
+│ 佐藤花子   | 神奈川県 | 横浜市 | 456   │
+├─────────────────────────────────────┤
+│ [&lt;&lt;] [&lt;] Page 1 of 3 [&gt;] [&gt;&gt;]      │
+└─────────────────────────────────────┘</code></pre>
+<h4 id="表示項目">4.3.3 表示項目</h4>
+<table>
+<thead>
+<tr>
+<th>項目名</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Name</td>
+<td>飼い主名（クリック可能）</td>
+</tr>
+<tr>
+<td>Address</td>
+<td>住所</td>
+</tr>
+<tr>
+<td>City</td>
+<td>市区町村</td>
+</tr>
+<tr>
+<td>Phone</td>
+<td>電話番号</td>
+</tr>
+<tr>
+<td>Pets</td>
+<td>ペット一覧（カンマ区切り）</td>
+</tr>
+</tbody>
+</table>
+<h4 id="機能詳細-1">4.3.4 機能詳細</h4>
+<ul>
+<li>ページネーション（5件ずつ表示）</li>
+<li>飼い主名クリックで詳細画面に遷移</li>
+</ul>
+<h3 id="飼い主詳細画面own004">4.4 飼い主詳細画面（OWN004）</h3>
+<h4 id="画面概要-3">4.4.1 画面概要</h4>
+<ul>
+<li><strong>画面ID</strong>: OWN004</li>
+<li><strong>画面名</strong>: 飼い主詳細画面</li>
+<li><strong>URL</strong>: <code>/owners/{id}</code></li>
+<li><strong>機能</strong>: 飼い主の詳細情報とペット一覧表示</li>
+</ul>
+<h4 id="画面レイアウト-3">4.4.2 画面レイアウト</h4>
+<pre><code>┌─────────────────────────────────────┐
+│ Owner Information                  │
+├─────────────────────────────────────┤
+│ Name: 田中太郎                      │
+│ Address: 東京都新宿区1-1-1         │
+│ City: 新宿区                       │
+│ Telephone: 03-1234-5678            │
+│ [Edit Owner] [Add New Pet]         │
+├─────────────────────────────────────┤
+│ Pets and Visits                    │
+│ Pet Name | Birth Date | Type       │
+│ ポチ     | 2020-01-01 | dog  [Edit]│
+│   Visit Date | Description        │
+│   2023-01-15 | 定期検診           │
+│   [Add Visit]                      │
+└─────────────────────────────────────┘</code></pre>
+<h4 id="表示項目-1">4.4.3 表示項目</h4>
+<p><strong>飼い主情報</strong> - 名前 - 住所 - 市区町村 - 電話番号</p>
+<p><strong>ペット情報</strong> - ペット名 - 生年月日 - 種類</p>
+<p><strong>診療記録</strong> - 診療日 - 診療内容</p>
+<h4 id="ボタン-1">4.4.4 ボタン</h4>
+<table>
+<thead>
+<tr>
+<th>ボタン名</th>
+<th>機能</th>
+<th>遷移先</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Edit Owner</td>
+<td>飼い主編集</td>
+<td>OWN003</td>
+</tr>
+<tr>
+<td>Add New Pet</td>
+<td>ペット追加</td>
+<td>PET001</td>
+</tr>
+<tr>
+<td>Edit Pet</td>
+<td>ペット編集</td>
+<td>PET001</td>
+</tr>
+<tr>
+<td>Add Visit</td>
+<td>診療記録追加</td>
+<td>PET002</td>
+</tr>
+</tbody>
+</table>
+<h3 id="ペット登録更新画面pet001">4.5
+ペット登録・更新画面（PET001）</h3>
+<h4 id="画面概要-4">4.5.1 画面概要</h4>
+<ul>
+<li><strong>画面ID</strong>: PET001</li>
+<li><strong>画面名</strong>: ペット登録・更新画面</li>
+<li><strong>URL</strong>: <code>/owners/{ownerId}/pets/new</code>,
+<code>/owners/{ownerId}/pets/{petId}/edit</code></li>
+<li><strong>機能</strong>: ペットの新規登録・更新</li>
+</ul>
+<h4 id="画面レイアウト-4">4.5.2 画面レイアウト</h4>
+<pre><code>┌─────────────────────────────────────┐
+│ Pet                                │
+├─────────────────────────────────────┤
+│ Owner: 田中太郎                     │
+│                                     │
+│ Name: [____________]               │
+│ Birth Date: [____-__-__]           │
+│ Type: [▼ dog        ]              │
+│                                     │
+│ [Update Pet]                       │
+└─────────────────────────────────────┘</code></pre>
+<h4 id="入力項目-1">4.5.3 入力項目</h4>
+<table>
+<thead>
+<tr>
+<th>項目名</th>
+<th>項目ID</th>
+<th>入力タイプ</th>
+<th>必須</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ペット名</td>
+<td>name</td>
+<td>text</td>
+<td>✓</td>
+<td>ペットの名前</td>
+</tr>
+<tr>
+<td>生年月日</td>
+<td>birthDate</td>
+<td>date</td>
+<td>-</td>
+<td>ペットの生年月日</td>
+</tr>
+<tr>
+<td>種類</td>
+<td>type</td>
+<td>select</td>
+<td>✓</td>
+<td>ペットの種類（dog, cat等）</td>
+</tr>
+</tbody>
+</table>
+<h4 id="バリデーション">4.5.4 バリデーション</h4>
+<ul>
+<li>ペット名は必須</li>
+<li>同じ飼い主のペット名は重複不可</li>
+<li>生年月日は未来日不可</li>
+</ul>
+<h3 id="診療記録登録画面pet002">4.6 診療記録登録画面（PET002）</h3>
+<h4 id="画面概要-5">4.6.1 画面概要</h4>
+<ul>
+<li><strong>画面ID</strong>: PET002</li>
+<li><strong>画面名</strong>: 診療記録登録画面</li>
+<li><strong>URL</strong>:
+<code>/owners/{ownerId}/pets/{petId}/visits/new</code></li>
+<li><strong>機能</strong>: ペットの診療記録登録</li>
+</ul>
+<h4 id="画面レイアウト-5">4.6.2 画面レイアウト</h4>
+<pre><code>┌─────────────────────────────────────┐
+│ New Visit                          │
+├─────────────────────────────────────┤
+│ Pet: ポチ (2020-01-01) dog         │
+│ Owner: 田中太郎                     │
+│                                     │
+│ Date: [____-__-__]                 │
+│ Description: [________________]    │
+│                                     │
+│ [Add Visit]                        │
+│                                     │
+│ Previous Visits:                   │
+│ 2023-01-15 - 定期検診              │
+│ 2022-12-01 - ワクチン接種          │
+└─────────────────────────────────────┘</code></pre>
+<h4 id="入力項目-2">4.6.3 入力項目</h4>
+<table>
+<thead>
+<tr>
+<th>項目名</th>
+<th>項目ID</th>
+<th>入力タイプ</th>
+<th>必須</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>診療日</td>
+<td>date</td>
+<td>date</td>
+<td>-</td>
+<td>診療を受けた日</td>
+</tr>
+<tr>
+<td>診療内容</td>
+<td>description</td>
+<td>text</td>
+<td>✓</td>
+<td>診療の内容・症状等</td>
+</tr>
+</tbody>
+</table>
+<h4 id="機能詳細-2">4.6.4 機能詳細</h4>
+<ul>
+<li>ペット情報の表示</li>
+<li>過去の診療記録表示</li>
+<li>新規診療記録の追加</li>
+</ul>
+<h3 id="獣医師一覧画面vet001">4.7 獣医師一覧画面（VET001）</h3>
+<h4 id="画面概要-6">4.7.1 画面概要</h4>
+<ul>
+<li><strong>画面ID</strong>: VET001</li>
+<li><strong>画面名</strong>: 獣医師一覧画面</li>
+<li><strong>URL</strong>: <code>/vets.html</code></li>
+<li><strong>機能</strong>: 獣医師一覧表示</li>
+</ul>
+<h4 id="画面レイアウト-6">4.7.2 画面レイアウト</h4>
+<pre><code>┌─────────────────────────────────────┐
+│ Veterinarians                      │
+├─────────────────────────────────────┤
+│ Name         | Specialties         │
+├─────────────────────────────────────┤
+│ 山田獣医師   | 歯科学               │
+│ 鈴木獣医師   | 内科学, 外科学       │
+│ 高橋獣医師   | none                │
+├─────────────────────────────────────┤
+│ [&lt;&lt;] [&lt;] Page 1 of 2 [&gt;] [&gt;&gt;]      │
+└─────────────────────────────────────┘</code></pre>
+<h4 id="表示項目-2">4.7.3 表示項目</h4>
+<table>
+<thead>
+<tr>
+<th>項目名</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Name</td>
+<td>獣医師名</td>
+</tr>
+<tr>
+<td>Specialties</td>
+<td>専門分野（複数可、なしの場合は”none”）</td>
+</tr>
+</tbody>
+</table>
+<h4 id="機能詳細-3">4.7.4 機能詳細</h4>
+<ul>
+<li>ページネーション（5件ずつ表示）</li>
+<li>専門分野の複数表示</li>
+<li>JSON形式での出力も可能</li>
+</ul>
+<h3 id="予約一覧画面app001">4.8 予約一覧画面（APP001）</h3>
+<h4 id="画面概要-7">4.8.1 画面概要</h4>
+<ul>
+<li><strong>画面ID</strong>: APP001</li>
+<li><strong>画面名</strong>: 予約一覧画面</li>
+<li><strong>URL</strong>: <code>/appointments</code></li>
+<li><strong>機能</strong>: 予約の検索・一覧表示</li>
+</ul>
+<h4 id="画面レイアウト-7">4.8.2 画面レイアウト</h4>
+<pre><code>┌─────────────────────────────────────┐
+│ Appointments                       │
+├─────────────────────────────────────┤
+│ Search: Date [____] Vet [____] [検索] │
+├─────────────────────────────────────┤
+│ Date | Time | Pet | Owner | Vet | Status │
+├─────────────────────────────────────┤
+│ 2024-01-15 | 10:00 | ポチ | 田中太郎 | 山田先生 | 確定 │
+│ 2024-01-15 | 14:30 | タマ | 佐藤花子 | 鈴木先生 | 待機 │
+├─────────────────────────────────────┤
+│ [&lt;&lt;] [&lt;] Page 1 of 5 [&gt;] [&gt;&gt;]      │
+│ [New Appointment] [Calendar View]   │
+└─────────────────────────────────────┘</code></pre>
+<h4 id="入力項目-3">4.8.3 入力項目</h4>
+<table>
+<thead>
+<tr>
+<th>項目名</th>
+<th>項目ID</th>
+<th>入力タイプ</th>
+<th>必須</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>検索日付</td>
+<td>searchDate</td>
+<td>date</td>
+<td>-</td>
+<td>予約日での絞り込み</td>
+</tr>
+<tr>
+<td>獣医師</td>
+<td>vetId</td>
+<td>select</td>
+<td>-</td>
+<td>獣医師での絞り込み</td>
+</tr>
+<tr>
+<td>ステータス</td>
+<td>status</td>
+<td>select</td>
+<td>-</td>
+<td>予約ステータスでの絞り込み</td>
+</tr>
+</tbody>
+</table>
+<h4 id="表示項目機能">4.8.4 表示項目・機能</h4>
+<ul>
+<li>予約日時、ペット名、飼い主名、獣医師名、ステータス</li>
+<li>ページネーション（10件ずつ表示）</li>
+<li>新規予約作成・カレンダー表示へのリンク</li>
+</ul>
+<h3 id="予約作成画面app002">4.9 予約作成画面（APP002）</h3>
+<h4 id="画面概要-8">4.9.1 画面概要</h4>
+<ul>
+<li><strong>画面ID</strong>: APP002</li>
+<li><strong>画面名</strong>: 予約作成画面</li>
+<li><strong>URL</strong>: <code>/appointments/new</code></li>
+<li><strong>機能</strong>: 新規予約の作成</li>
+</ul>
+<h4 id="画面レイアウト-8">4.9.2 画面レイアウト</h4>
+<pre><code>┌─────────────────────────────────────┐
+│ New Appointment                    │
+├─────────────────────────────────────┤
+│ Pet: [▼ Select Pet        ]        │
+│ Veterinarian: [▼ Select Vet    ]   │
+│ Date: [____-__-__]                 │
+│ Time: [__:__]                      │
+│ Duration: [30] minutes             │
+│ Reason: [________________]         │
+│ Symptoms: [________________]       │
+│           [________________]       │
+│                                    │
+│ [Create Appointment] [Cancel]      │
+└─────────────────────────────────────┘</code></pre>
+<h4 id="入力項目-4">4.9.3 入力項目</h4>
+<table>
+<thead>
+<tr>
+<th>項目名</th>
+<th>項目ID</th>
+<th>入力タイプ</th>
+<th>必須</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ペット</td>
+<td>petId</td>
+<td>select</td>
+<td>✓</td>
+<td>予約対象のペット</td>
+</tr>
+<tr>
+<td>獣医師</td>
+<td>vetId</td>
+<td>select</td>
+<td>✓</td>
+<td>担当獣医師</td>
+</tr>
+<tr>
+<td>予約日</td>
+<td>appointmentDate</td>
+<td>date</td>
+<td>✓</td>
+<td>予約日</td>
+</tr>
+<tr>
+<td>予約時刻</td>
+<td>appointmentTime</td>
+<td>time</td>
+<td>✓</td>
+<td>予約時刻</td>
+</tr>
+<tr>
+<td>診察時間</td>
+<td>durationMinutes</td>
+<td>number</td>
+<td>-</td>
+<td>診察予定時間（分）</td>
+</tr>
+<tr>
+<td>診察理由</td>
+<td>reason</td>
+<td>text</td>
+<td>-</td>
+<td>診察の理由</td>
+</tr>
+<tr>
+<td>症状</td>
+<td>symptoms</td>
+<td>textarea</td>
+<td>-</td>
+<td>詳細な症状</td>
+</tr>
+</tbody>
+</table>
+<h4 id="バリデーション機能">4.9.4 バリデーション・機能</h4>
+<ul>
+<li>予約日時の重複チェック</li>
+<li>獣医師の勤務時間チェック</li>
+<li>過去日時の予約禁止</li>
+<li>リアルタイム空き時間表示</li>
+</ul>
+<h3 id="予約詳細編集画面app003">4.10 予約詳細・編集画面（APP003）</h3>
+<h4 id="画面概要-9">4.10.1 画面概要</h4>
+<ul>
+<li><strong>画面ID</strong>: APP003</li>
+<li><strong>画面名</strong>: 予約詳細・編集画面</li>
+<li><strong>URL</strong>: <code>/appointments/{id}</code></li>
+<li><strong>機能</strong>: 予約内容の確認・編集</li>
+</ul>
+<h4 id="画面レイアウト-9">4.10.2 画面レイアウト</h4>
+<pre><code>┌─────────────────────────────────────┐
+│ Appointment Details                │
+├─────────────────────────────────────┤
+│ Pet: ポチ (田中太郎)                │
+│ Veterinarian: 山田先生             │
+│ Date: 2024-01-15                   │
+│ Time: 10:00 - 10:30                │
+│ Status: [▼ CONFIRMED ]             │
+│ Reason: 定期検診                   │
+│ Symptoms: 食欲不振、元気がない      │
+│ Notes: [________________]          │
+│        [________________]          │
+│                                    │
+│ [Update] [Cancel Appointment]      │
+│ [Mark as Completed]                │
+└─────────────────────────────────────┘</code></pre>
+<h4 id="機能詳細-4">4.10.3 機能詳細</h4>
+<ul>
+<li>予約ステータスの変更</li>
+<li>診察メモの追加・編集</li>
+<li>予約のキャンセル</li>
+<li>診察完了マーク</li>
+</ul>
+<h3 id="予約カレンダー画面app004">4.11 予約カレンダー画面（APP004）</h3>
+<h4 id="画面概要-10">4.11.1 画面概要</h4>
+<ul>
+<li><strong>画面ID</strong>: APP004</li>
+<li><strong>画面名</strong>: 予約カレンダー画面</li>
+<li><strong>URL</strong>: <code>/appointments/calendar</code></li>
+<li><strong>機能</strong>: カレンダー形式での予約表示</li>
+</ul>
+<h4 id="画面レイアウト-10">4.11.2 画面レイアウト</h4>
+<pre><code>┌─────────────────────────────────────┐
+│ Appointment Calendar               │
+├─────────────────────────────────────┤
+│ [&lt;] January 2024 [&gt;]  [Month][Week] │
+├─────────────────────────────────────┤
+│ Mon | Tue | Wed | Thu | Fri | Sat | Sun │
+├─────────────────────────────────────┤
+│  1  │  2  │  3  │  4  │  5  │  6  │  7  │
+│     │10:00│     │     │14:00│     │     │
+│     │ポチ │     │     │タマ │     │     │
+├─────────────────────────────────────┤
+│  8  │  9  │ 10  │ 11  │ 12  │ 13  │ 14  │
+│     │     │     │09:30│     │     │     │
+│     │     │     │花子 │     │     │     │
+└─────────────────────────────────────┘</code></pre>
+<h4 id="機能詳細-5">4.11.3 機能詳細</h4>
+<ul>
+<li>月表示・週表示の切り替え</li>
+<li>獣医師別表示フィルター</li>
+<li>予約のドラッグ&amp;ドロップ編集</li>
+<li>空き時間の視覚表示</li>
+</ul>
+<h3 id="獣医師スケジュール管理画面app005">4.12
+獣医師スケジュール管理画面（APP005）</h3>
+<h4 id="画面概要-11">4.12.1 画面概要</h4>
+<ul>
+<li><strong>画面ID</strong>: APP005</li>
+<li><strong>画面名</strong>: 獣医師スケジュール管理画面</li>
+<li><strong>URL</strong>: <code>/vets/{id}/schedule</code></li>
+<li><strong>機能</strong>: 獣医師の勤務時間・休診日設定</li>
+</ul>
+<h4 id="画面レイアウト-11">4.12.2 画面レイアウト</h4>
+<pre><code>┌─────────────────────────────────────┐
+│ Dr. 山田のスケジュール管理            │
+├─────────────────────────────────────┤
+│ 勤務時間設定                        │
+│ Monday:    [09:00] - [17:00] [✓]   │
+│ Tuesday:   [09:00] - [17:00] [✓]   │
+│ Wednesday: [09:00] - [12:00] [✓]   │
+│ Thursday:  [09:00] - [17:00] [✓]   │
+│ Friday:    [09:00] - [17:00] [✓]   │
+│ Saturday:  [09:00] - [15:00] [✓]   │
+│ Sunday:    [------] - [------] [ ]   │
+│                                    │
+│ 休診日設定                          │
+│ Date: [2024-01-20] Reason: [年末年始] │
+│ [Add Holiday]                      │
+│                                    │
+│ [Save Schedule]                    │
+└─────────────────────────────────────┘</code></pre>
+<h4 id="機能詳細-6">4.12.3 機能詳細</h4>
+<ul>
+<li>曜日別勤務時間設定</li>
+<li>休診日の個別設定</li>
+<li>診察可能フラグの管理</li>
+<li>スケジュール一括保存</li>
+</ul>
+<h2 id="技術的特徴">5. 技術的特徴</h2>
+<h3 id="使用技術">5.1 使用技術</h3>
+<ul>
+<li><strong>フレームワーク</strong>: Spring Boot</li>
+<li><strong>テンプレートエンジン</strong>: Thymeleaf</li>
+<li><strong>データベース</strong>: H2（開発）、MySQL、PostgreSQL</li>
+<li><strong>フロントエンド</strong>: Bootstrap、jQuery</li>
+<li><strong>バリデーション</strong>: Spring Validation</li>
+</ul>
+<h3 id="設計パターン">5.2 設計パターン</h3>
+<ul>
+<li><strong>MVC パターン</strong>: Model-View-Controller</li>
+<li><strong>Repository パターン</strong>: データアクセス層の抽象化</li>
+<li><strong>DI（Dependency Injection）</strong>: Spring DIコンテナ</li>
+<li><strong>ORM</strong>: JPA（Java Persistence API）</li>
+</ul>
+<h3 id="セキュリティ品質">5.3 セキュリティ・品質</h3>
+<ul>
+<li><strong>バリデーション</strong>: サーバーサイドバリデーション</li>
+<li><strong>国際化</strong>: メッセージリソース対応</li>
+<li><strong>エラーハンドリング</strong>: 統一的なエラー処理</li>
+<li><strong>テスト</strong>: 単体テスト・統合テスト</li>
+</ul>
+<h2 id="画面遷移図">6. 画面遷移図</h2>
+<h3 id="基本的な画面遷移フロー">6.1 基本的な画面遷移フロー</h3>
+<pre class="mermaid"><code>graph TB
+    A[ホーム画面&lt;br/&gt;&#39;/&#39;] --&gt; B[飼い主検索画面&lt;br/&gt;&#39;/owners/find&#39;]
+    A --&gt; H[獣医師一覧画面&lt;br/&gt;&#39;/vets.html&#39;]
+    A --&gt; I[エラー画面&lt;br/&gt;&#39;/oups&#39;]
+    A --&gt; L[予約一覧画面&lt;br/&gt;&#39;/appointments&#39;]
+    
+    B --&gt; C[飼い主一覧画面&lt;br/&gt;&#39;/owners&#39;]
+    B --&gt; D[飼い主登録画面&lt;br/&gt;&#39;/owners/new&#39;]
+    
+    C --&gt; E[飼い主詳細画面&lt;br/&gt;&#39;/owners/{id}&#39;]
+    
+    D --&gt; E
+    E --&gt; F[飼い主編集画面&lt;br/&gt;&#39;/owners/{id}/edit&#39;]
+    E --&gt; G[ペット登録画面&lt;br/&gt;&#39;/owners/{ownerId}/pets/new&#39;]
+    E --&gt; J[ペット編集画面&lt;br/&gt;&#39;/owners/{ownerId}/pets/{petId}/edit&#39;]
+    E --&gt; K[診療記録登録画面&lt;br/&gt;&#39;/owners/{ownerId}/pets/{petId}/visits/new&#39;]
+    E --&gt; M[予約作成画面&lt;br/&gt;&#39;/appointments/new&#39;]
+    
+    F --&gt; E
+    G --&gt; E
+    J --&gt; E
+    K --&gt; E
+    
+    L --&gt; N[予約詳細・編集画面&lt;br/&gt;&#39;/appointments/{id}&#39;]
+    L --&gt; M
+    L --&gt; O[予約カレンダー画面&lt;br/&gt;&#39;/appointments/calendar&#39;]
+    
+    M --&gt; L
+    N --&gt; L
+    O --&gt; L
+    O --&gt; N
+    
+    H --&gt; P[獣医師スケジュール管理画面&lt;br/&gt;&#39;/vets/{id}/schedule&#39;]
+    P --&gt; H
+    
+    %% スタイル定義
+    classDef homeStyle fill:#e1f5fe,stroke:#01579b,stroke-width:3px
+    classDef ownerStyle fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef petStyle fill:#e8f5e8,stroke:#1b5e20,stroke-width:2px
+    classDef vetStyle fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    classDef appointmentStyle fill:#f0f4c3,stroke:#827717,stroke-width:2px
+    classDef errorStyle fill:#ffebee,stroke:#c62828,stroke-width:2px
+    
+    class A homeStyle
+    class B,C,D,E,F ownerStyle
+    class G,J,K petStyle
+    class H,P vetStyle
+    class L,M,N,O appointmentStyle
+    class I errorStyle</code></pre>
+<h3 id="詳細な画面遷移フロー機能別">6.2
+詳細な画面遷移フロー（機能別）</h3>
+<pre class="mermaid"><code>graph TB
+    subgraph &quot;ホーム・基本機能&quot;
+        A[ホーム画面] --&gt; B[飼い主検索画面]
+        A --&gt; H[獣医師一覧画面]
+        A --&gt; I[エラー画面]
+        A --&gt; L[予約一覧画面]
+    end
+    
+    subgraph &quot;飼い主管理機能&quot;
+        B --&gt; |検索実行| C[飼い主一覧画面]
+        B --&gt; |Add Owner| D[飼い主登録画面]
+        C --&gt; |名前クリック| E[飼い主詳細画面]
+        D --&gt; |登録完了| E
+        E --&gt; |Edit Owner| F[飼い主編集画面]
+        F --&gt; |更新完了| E
+    end
+    
+    subgraph &quot;ペット管理機能&quot;
+        E --&gt; |Add New Pet| G[ペット登録画面]
+        E --&gt; |Edit Pet| J[ペット編集画面]
+        G --&gt; |登録完了| E
+        J --&gt; |更新完了| E
+    end
+    
+    subgraph &quot;診療記録機能&quot;
+        E --&gt; |Add Visit| K[診療記録登録画面]
+        K --&gt; |登録完了| E
+    end
+    
+    subgraph &quot;診察予約機能&quot;
+        E --&gt; |Book Appointment| M[予約作成画面]
+        L --&gt; |New Appointment| M
+        L --&gt; |View Details| N[予約詳細・編集画面]
+        L --&gt; |Calendar View| O[予約カレンダー画面]
+        M --&gt; |予約完了| L
+        N --&gt; |更新完了| L
+        O --&gt; |予約選択| N
+    end
+    
+    subgraph &quot;獣医師スケジュール機能&quot;
+        H --&gt; |Manage Schedule| P[獣医師スケジュール管理画面]
+        P --&gt; |設定完了| H
+    end
+    
+    %% ナビゲーション
+    B -.-&gt; |ナビゲーション| A
+    C -.-&gt; |ナビゲーション| A
+    E -.-&gt; |ナビゲーション| A
+    H -.-&gt; |ナビゲーション| A
+    L -.-&gt; |ナビゲーション| A
+    
+    %% スタイル定義
+    classDef homeStyle fill:#e1f5fe,stroke:#01579b,stroke-width:3px
+    classDef ownerStyle fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef petStyle fill:#e8f5e8,stroke:#1b5e20,stroke-width:2px
+    classDef vetStyle fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    classDef errorStyle fill:#ffebee,stroke:#c62828,stroke-width:2px
+    
+    class A homeStyle
+    class B,C,D,E,F ownerStyle
+    class G,J,K petStyle
+    class H vetStyle
+    class I errorStyle</code></pre>
+<h3 id="ユーザーのタスクフロー">6.3 ユーザーのタスクフロー</h3>
+<pre class="mermaid"><code>journey
+    title Spring Petclinic ユーザージャーニー
+    
+    section 新規飼い主登録
+        ホーム画面アクセス: 5: User
+        飼い主検索画面へ: 5: User
+        新規飼い主登録: 4: User
+        飼い主詳細確認: 5: User
+    
+    section ペット登録
+        飼い主詳細画面: 5: User
+        ペット新規登録: 4: User
+        ペット情報確認: 5: User
+    
+    section 診療記録登録
+        飼い主詳細画面: 5: User
+        診療記録追加: 4: User
+        診療履歴確認: 5: User
+    
+    section 飼い主検索
+        ホーム画面アクセス: 5: User
+        飼い主検索: 4: User
+        検索結果確認: 5: User
+        飼い主詳細確認: 5: User
+    
+    section 獣医師確認
+        ホーム画面アクセス: 5: User
+        獣医師一覧確認: 5: User</code></pre>
+<h3 id="状態遷移図">6.4 状態遷移図</h3>
+<pre class="mermaid"><code>stateDiagram-v2
+    [*] --&gt; Home: アプリケーション起動
+    
+    Home --&gt; FindOwner: Find owners
+    Home --&gt; VetList: Veterinarians
+    Home --&gt; AppointmentList: Appointments
+    Home --&gt; Error: Error (demo)
+    
+    FindOwner --&gt; OwnerList: 検索実行
+    FindOwner --&gt; CreateOwner: Add Owner
+    FindOwner --&gt; Home: ナビゲーション
+    
+    OwnerList --&gt; OwnerDetail: 飼い主選択
+    OwnerList --&gt; FindOwner: 検索条件変更
+    
+    CreateOwner --&gt; OwnerDetail: 登録完了
+    CreateOwner --&gt; FindOwner: キャンセル
+    
+    OwnerDetail --&gt; EditOwner: Edit Owner
+    OwnerDetail --&gt; CreatePet: Add New Pet
+    OwnerDetail --&gt; EditPet: Edit Pet
+    OwnerDetail --&gt; CreateVisit: Add Visit
+    OwnerDetail --&gt; CreateAppointment: Book Appointment
+    OwnerDetail --&gt; Home: ナビゲーション
+    
+    EditOwner --&gt; OwnerDetail: 更新完了
+    CreatePet --&gt; OwnerDetail: 登録完了
+    EditPet --&gt; OwnerDetail: 更新完了
+    CreateVisit --&gt; OwnerDetail: 登録完了
+    
+    AppointmentList --&gt; AppointmentDetail: 予約選択
+    AppointmentList --&gt; CreateAppointment: New Appointment
+    AppointmentList --&gt; AppointmentCalendar: Calendar View
+    AppointmentList --&gt; Home: ナビゲーション
+    
+    CreateAppointment --&gt; AppointmentDetail: 予約完了
+    CreateAppointment --&gt; OwnerDetail: ペット選択から戻る
+    CreateAppointment --&gt; AppointmentList: キャンセル
+    
+    AppointmentDetail --&gt; EditAppointment: Edit
+    AppointmentDetail --&gt; AppointmentList: 一覧に戻る
+    AppointmentDetail --&gt; OwnerDetail: 飼い主詳細へ
+    
+    EditAppointment --&gt; AppointmentDetail: 更新完了
+    
+    AppointmentCalendar --&gt; AppointmentDetail: 予約選択
+    AppointmentCalendar --&gt; AppointmentList: List View
+    AppointmentCalendar --&gt; VetSchedule: 獣医師スケジュール
+    
+    VetList --&gt; VetSchedule: スケジュール管理
+    VetList --&gt; Home: ナビゲーション
+    
+    VetSchedule --&gt; VetList: 一覧に戻る
+    VetSchedule --&gt; AppointmentCalendar: カレンダーに戻る
+    
+    Error --&gt; Home: ナビゲーション</code></pre>
+<h3 id="画面構成とナビゲーション">6.5 画面構成とナビゲーション</h3>
+<pre class="mermaid"><code>graph LR
+    subgraph &quot;Header Navigation&quot;
+        N1[Home] --&gt; N2[Find owners]
+        N2 --&gt; N3[Veterinarians]
+        N3 --&gt; N4[Error]
+    end
+    
+    subgraph &quot;Main Content Area&quot;
+        M1[動的コンテンツ] --&gt; M2[フォーム・一覧・詳細]
+        M2 --&gt; M3[ボタン・リンク]
+    end
+    
+    subgraph &quot;Footer&quot;
+        F1[Footer Information]
+    end
+    
+    N1 -.-&gt; M1
+    N2 -.-&gt; M1
+    N3 -.-&gt; M1
+    N4 -.-&gt; M1</code></pre>
+<h3 id="画面遷移の特徴">6.6 画面遷移の特徴</h3>
+<h4 id="主要な遷移パターン">🎯 <strong>主要な遷移パターン</strong></h4>
+<ol type="1">
+<li><strong>検索フロー</strong>: ホーム → 検索 → 一覧 → 詳細</li>
+<li><strong>CRUD操作</strong>: 詳細 → 編集/新規 → 詳細</li>
+<li><strong>ナビゲーション</strong>:
+全画面から共通ヘッダーでホームへ戻る</li>
+</ol>
+<h4 id="画面間の関係性">🔄 <strong>画面間の関係性</strong></h4>
+<ul>
+<li><strong>ハブ画面</strong>: 飼い主詳細画面が中心的な役割</li>
+<li><strong>エントリーポイント</strong>: ホーム画面と飼い主検索画面</li>
+<li><strong>終点</strong>: 各操作は飼い主詳細画面に戻る</li>
+</ul>
+<h4 id="ux設計">📱 <strong>UX設計</strong></h4>
+<ul>
+<li><strong>直感的な操作</strong>: 検索→一覧→詳細の自然な流れ</li>
+<li><strong>効率的な管理</strong>:
+飼い主詳細画面で全ての関連操作が可能</li>
+<li><strong>一貫性</strong>: 全画面で統一されたナビゲーション</li>
+</ul>
+<h3 id="予約一覧画面app001-1">4.10 予約一覧画面（APP001）</h3>
+<h4 id="画面概要-12">4.10.1 画面概要</h4>
+<ul>
+<li><strong>画面ID</strong>: APP001</li>
+<li><strong>画面名</strong>: 予約一覧画面</li>
+<li><strong>URL</strong>: <code>/appointments</code></li>
+<li><strong>機能</strong>: 予約の検索・一覧表示</li>
+</ul>
+<h4 id="画面レイアウト-12">4.10.2 画面レイアウト</h4>
+<pre><code>┌─────────────────────────────────────────────────────────┐
+│ Appointments                                           │
+├─────────────────────────────────────────────────────────┤
+│ 検索条件:                                               │
+│ 予約日: [2024-01-01] から [2024-01-31]                 │
+│ 獣医師: [すべて ▼] ステータス: [すべて ▼] [検索]      │
+│ [New Appointment] [Calendar View]                       │
+├─────────────────────────────────────────────────────────┤
+│ Date/Time | Pet | Owner | Vet | Status | Actions       │
+├─────────────────────────────────────────────────────────┤
+│ 01/15 10:00 | ポチ | 田中太郎 | 佐藤獣医 | CONFIRMED | [View] [Edit] │
+│ 01/15 11:00 | ミケ | 山田花子 | 佐藤獣医 | PENDING | [View] [Edit] │
+├─────────────────────────────────────────────────────────┤
+│ [&lt;&lt;] [&lt;] Page 1 of 5 [&gt;] [&gt;&gt;]                         │
+└─────────────────────────────────────────────────────────┘</code></pre>
+<h4 id="検索項目">4.10.3 検索項目</h4>
+<table>
+<thead>
+<tr>
+<th>項目名</th>
+<th>項目ID</th>
+<th>入力タイプ</th>
+<th>必須</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>予約日（開始）</td>
+<td>startDate</td>
+<td>date</td>
+<td>-</td>
+<td>検索期間の開始日</td>
+</tr>
+<tr>
+<td>予約日（終了）</td>
+<td>endDate</td>
+<td>date</td>
+<td>-</td>
+<td>検索期間の終了日</td>
+</tr>
+<tr>
+<td>獣医師</td>
+<td>vetId</td>
+<td>select</td>
+<td>-</td>
+<td>担当獣医師での絞り込み</td>
+</tr>
+<tr>
+<td>ステータス</td>
+<td>status</td>
+<td>select</td>
+<td>-</td>
+<td>予約ステータスでの絞り込み</td>
+</tr>
+</tbody>
+</table>
+<h4 id="表示項目-3">4.10.4 表示項目</h4>
+<table>
+<thead>
+<tr>
+<th>項目名</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Date/Time</td>
+<td>予約日時</td>
+</tr>
+<tr>
+<td>Pet</td>
+<td>ペット名</td>
+</tr>
+<tr>
+<td>Owner</td>
+<td>飼い主名</td>
+</tr>
+<tr>
+<td>Vet</td>
+<td>担当獣医師名</td>
+</tr>
+<tr>
+<td>Status</td>
+<td>予約ステータス（PENDING/CONFIRMED/COMPLETED/CANCELLED）</td>
+</tr>
+<tr>
+<td>Actions</td>
+<td>詳細表示・編集ボタン</td>
+</tr>
+</tbody>
+</table>
+<h4 id="機能詳細-7">4.10.5 機能詳細</h4>
+<ul>
+<li>予約の検索・絞り込み機能</li>
+<li>ページネーション（10件ずつ表示）</li>
+<li>カレンダービューへの切り替え</li>
+<li>新規予約作成</li>
+<li>予約詳細表示・編集</li>
+</ul>
+<h3 id="予約作成画面app002-1">4.11 予約作成画面（APP002）</h3>
+<h4 id="画面概要-13">4.11.1 画面概要</h4>
+<ul>
+<li><strong>画面ID</strong>: APP002</li>
+<li><strong>画面名</strong>: 予約作成画面</li>
+<li><strong>URL</strong>: <code>/appointments/new</code></li>
+<li><strong>機能</strong>: 新規予約の作成</li>
+</ul>
+<h4 id="画面レイアウト-13">4.11.2 画面レイアウト</h4>
+<pre><code>┌─────────────────────────────────────────────────────────┐
+│ New Appointment                                        │
+├─────────────────────────────────────────────────────────┤
+│ ペット情報:                                             │
+│ 飼い主: [検索...] [選択済み: 田中太郎]                  │
+│ ペット: [ポチ ▼]                                       │
+│                                                         │
+│ 予約情報:                                               │
+│ 予約日: [2024-01-15]                                   │
+│ 予約時刻: [10:00 ▼]                                    │
+│ 診察時間: [30分 ▼]                                     │
+│ 担当獣医師: [佐藤獣医 ▼]                               │
+│                                                         │
+│ 診察内容:                                               │
+│ 診察理由: [_________________________________]           │
+│ 症状詳細:                                               │
+│ [_________________________________________________]     │
+│ [_________________________________________________]     │
+│                                                         │
+│ 備考:                                                   │
+│ [_________________________________________________]     │
+│                                                         │
+│ [Save Appointment] [Cancel]                            │
+└─────────────────────────────────────────────────────────┘</code></pre>
+<h4 id="入力項目-5">4.11.3 入力項目</h4>
+<table>
+<thead>
+<tr>
+<th>項目名</th>
+<th>項目ID</th>
+<th>入力タイプ</th>
+<th>必須</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>飼い主</td>
+<td>ownerId</td>
+<td>search/select</td>
+<td>○</td>
+<td>飼い主の選択</td>
+</tr>
+<tr>
+<td>ペット</td>
+<td>petId</td>
+<td>select</td>
+<td>○</td>
+<td>選択された飼い主のペット</td>
+</tr>
+<tr>
+<td>予約日</td>
+<td>appointmentDate</td>
+<td>date</td>
+<td>○</td>
+<td>予約日</td>
+</tr>
+<tr>
+<td>予約時刻</td>
+<td>appointmentTime</td>
+<td>time</td>
+<td>○</td>
+<td>予約時刻</td>
+</tr>
+<tr>
+<td>診察時間</td>
+<td>duration</td>
+<td>select</td>
+<td>-</td>
+<td>診察予定時間（15/30/45/60分）</td>
+</tr>
+<tr>
+<td>担当獣医師</td>
+<td>vetId</td>
+<td>select</td>
+<td>○</td>
+<td>担当獣医師</td>
+</tr>
+<tr>
+<td>診察理由</td>
+<td>reason</td>
+<td>text</td>
+<td>-</td>
+<td>診察理由</td>
+</tr>
+<tr>
+<td>症状詳細</td>
+<td>symptoms</td>
+<td>textarea</td>
+<td>-</td>
+<td>症状の詳細説明</td>
+</tr>
+<tr>
+<td>備考</td>
+<td>notes</td>
+<td>textarea</td>
+<td>-</td>
+<td>その他備考</td>
+</tr>
+</tbody>
+</table>
+<h4 id="バリデーション-1">4.11.4 バリデーション</h4>
+<ul>
+<li>予約日時の重複チェック</li>
+<li>獣医師の勤務時間チェック</li>
+<li>獣医師の休診日チェック</li>
+<li>過去日の予約禁止</li>
+</ul>
+<h3 id="予約詳細編集画面app003-1">4.12 予約詳細・編集画面（APP003）</h3>
+<h4 id="画面概要-14">4.12.1 画面概要</h4>
+<ul>
+<li><strong>画面ID</strong>: APP003</li>
+<li><strong>画面名</strong>: 予約詳細・編集画面</li>
+<li><strong>URL</strong>: <code>/appointments/{id}</code></li>
+<li><strong>機能</strong>: 予約内容の確認・編集</li>
+</ul>
+<h4 id="画面レイアウト詳細表示モード">4.12.2
+画面レイアウト（詳細表示モード）</h4>
+<pre><code>┌─────────────────────────────────────────────────────────┐
+│ Appointment Details                                    │
+├─────────────────────────────────────────────────────────┤
+│ 予約ID: #12345                                         │
+│ ステータス: [CONFIRMED]                                │
+│                                                         │
+│ ペット情報:                                             │
+│ 飼い主: 田中太郎                                       │
+│ ペット: ポチ (犬, 3歳)                                 │
+│                                                         │
+│ 予約情報:                                               │
+│ 予約日時: 2024年1月15日 10:00-10:30                   │
+│ 担当獣医師: 佐藤獣医                                   │
+│                                                         │
+│ 診察内容:                                               │
+│ 診察理由: 定期検診                                     │
+│ 症状詳細: 特になし。健康状態チェック希望               │
+│                                                         │
+│ 備考: なし                                             │
+│                                                         │
+│ 作成日時: 2024/01/10 15:30                            │
+│ 更新日時: 2024/01/12 09:15                            │
+│                                                         │
+│ [Edit] [Cancel Appointment] [Back to List]            │
+└─────────────────────────────────────────────────────────┘</code></pre>
+<h3 id="予約カレンダー画面app004-1">4.13
+予約カレンダー画面（APP004）</h3>
+<h4 id="画面概要-15">4.13.1 画面概要</h4>
+<ul>
+<li><strong>画面ID</strong>: APP004</li>
+<li><strong>画面名</strong>: 予約カレンダー画面</li>
+<li><strong>URL</strong>: <code>/appointments/calendar</code></li>
+<li><strong>機能</strong>: カレンダー形式での予約表示</li>
+</ul>
+<h4 id="画面レイアウト-14">4.13.2 画面レイアウト</h4>
+<pre><code>┌─────────────────────────────────────────────────────────┐
+│ Appointment Calendar                                   │
+├─────────────────────────────────────────────────────────┤
+│ [&lt; 2024年1月 &gt;] [Today] [List View]                   │
+├─────────────────────────────────────────────────────────┤
+│ 日  月  火  水  木  金  土                              │
+├─────────────────────────────────────────────────────────┤
+│    1   2   3   4   5   6                              │
+│  7  8   9  10  11  12  13                             │
+│ 14 [15] 16  17  18  19  20                            │
+│ 21  22  23  24  25  26  27                            │
+│ 28  29  30  31                                         │
+├─────────────────────────────────────────────────────────┤
+│ 選択日: 2024年1月15日                                  │
+│ 10:00 ポチ(田中) - 佐藤獣医 [詳細]                     │
+│ 11:00 ミケ(山田) - 佐藤獣医 [詳細]                     │
+│ 14:00 [空き時間]                                       │
+│ 15:00 タロウ(鈴木) - 田中獣医 [詳細]                   │
+└─────────────────────────────────────────────────────────┘</code></pre>
+<h3 id="獣医師スケジュール管理画面app005-1">4.14
+獣医師スケジュール管理画面（APP005）</h3>
+<h4 id="画面概要-16">4.14.1 画面概要</h4>
+<ul>
+<li><strong>画面ID</strong>: APP005</li>
+<li><strong>画面名</strong>: 獣医師スケジュール管理画面</li>
+<li><strong>URL</strong>: <code>/vets/{id}/schedule</code></li>
+<li><strong>機能</strong>: 獣医師の勤務時間・休診日設定</li>
+</ul>
+<h4 id="画面レイアウト-15">4.14.2 画面レイアウト</h4>
+<pre><code>┌─────────────────────────────────────────────────────────┐
+│ Vet Schedule Management - 佐藤獣医                      │
+├─────────────────────────────────────────────────────────┤
+│ 基本勤務時間:                                           │
+│ 月曜日: [09:00] - [18:00] ☑診察可能                    │
+│ 火曜日: [09:00] - [18:00] ☑診察可能                    │
+│ 水曜日: [09:00] - [18:00] ☑診察可能                    │
+│ 木曜日: [09:00] - [18:00] ☑診察可能                    │
+│ 金曜日: [09:00] - [18:00] ☑診察可能                    │
+│ 土曜日: [09:00] - [14:00] ☑診察可能                    │
+│ 日曜日: [      ] - [      ] ☐診察可能                   │
+│                                                         │
+│ [Save Schedule]                                        │
+├─────────────────────────────────────────────────────────┤
+│ 休診日設定:                                             │
+│ 休診日: [2024-01-20] 理由: [学会参加___] [追加]        │
+│                                                         │
+│ 登録済み休診日:                                         │
+│ 2024/01/20 学会参加 [削除]                            │
+│ 2024/02/15 有給休暇 [削除]                            │
+│                                                         │
+│ [Back to Vet List]                                     │
+└─────────────────────────────────────────────────────────┘</code></pre>
+<h2 id="今後の拡張可能性">7. 今後の拡張可能性</h2>
+<h3 id="機能拡張">7.1 機能拡張</h3>
+<ul>
+<li>予約管理機能</li>
+<li>会計機能</li>
+<li>在庫管理機能</li>
+<li>レポート機能</li>
+</ul>
+<h3 id="技術的拡張">7.2 技術的拡張</h3>
+<ul>
+<li>REST API化</li>
+<li>セキュリティ強化（Spring Security）</li>
+<li>監視・ログ機能</li>
+<li>マイクロサービス化</li>
+</ul>
+</body>
+</html>
