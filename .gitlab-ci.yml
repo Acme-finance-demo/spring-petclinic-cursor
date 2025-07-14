@@ -41,15 +41,12 @@ export-merged-sbom:
 
 pages:
   stage: pages
-  image: maven:amazoncorretto
+  image: maven:3-jdk-8-alpine
   dependencies:
     - junit
   script:
     - mkdir -p public
     - cp -r target/surefire-reports public/
-    # JUnitレポートをHTMLに変換するオプション
-    - mvn surefire-report:report-only
-    - cp -r target/site public/
   artifacts:
     paths:
       - public
