@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+
+<html xmlns:th="https://www.thymeleaf.org" th:replace="~{fragments/layout :: layout (~{::body},'owners')}">
+
+<body>
+
+  <h2 th:text="'Appointments for ' + ${pet.name}">Appointments for Pet Name</h2>
+
+  <!-- Pet Information -->
+  <div class="row mb-4">
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-header">
+          <h5>Pet Information</h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <table class="table table-sm" th:object="${pet}">
+                <tr>
+                  <th>Name</th>
+                  <td th:text="*{name}">Pet Name</td>
+                </tr>
+                <tr>
+                  <th>Type</th>
+                  <td th:text="*{type.name}">Pet Type</td>
+                </tr>
+                <tr>
+                  <th>Birth Date</th>
+                  <td th:text="${#temporals.format(pet.birthDate, 'MMMM d, yyyy')}">January 1, 2020</td>
+                </tr>
+              </table>
+            </div>
+            <div class="col-md-6">
+              <table class="table table-sm" th:object="${owner}">
+                <tr>
+                  <th>Owner</th>
+                  <td>
+                    <a th:href="@{/owners/__${owner.id}__}" th:text="*{firstName + ' ' + lastName}">Owner Name</a>
+                  </td>
+                </tr>
+                <tr>
+                  <th>Address</th>
+                  <td th:text="*{address}">Address</td>
+                </tr>
+                <tr>
+                  <th>Telephone</th>
+                  <td>
+                    <a th:href="'tel:' + *{telephone}" th:text="*{telephone}">Telephone</a>
+                  </td>
+                </tr>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-header">
+          <h5>Quick Actions</h5>
+        </div>
+        <div class="card-body">
+          <a class="btn btn-success btn-block mb-2" th:href="@{/appointments/new(pet=${pet.id})}">
+            <span class="fa fa-plus"></span> New Appointment
+          </a>
+          <a class="btn btn-info btn-block mb-2" th:href="@{/owners/__${owner.id}__}">
+            <span class="fa fa-user"></span> Owner Details
+          </a>
+          <a class="btn btn-secondary btn-block" th:href="@{/appointments}">
+            <span class="fa fa-list"></span> All Appointments
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Appointment Statistics -->
+  <div class="row mb-4">
+    <div class="col-md-3">
+      <div class="card text-center">
+        <div class="card-body">
+          <h5 class="card-title text-primary" th:text="${stats.total ?: 0}">0</h5>
+          <p class="card-text">Total Appointments</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-center">
+        <div class="card-body">
+          <h5 class="card-title text-warning" th:text="${stats.pending ?: 0}">0</h5>
+          <p class="card-text">Pending</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-center">
+        <div class="card-body">
+          <h5 class="card-title text-success" th:text="${stats.confirmed ?: 0}">0</h5>
+          <p class="card-text">Confirmed</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-center">
+        <div class="card-body">
+          <h5 class="card-title text-info" th:text="${stats.completed ?: 0}">0</h5>
+          <p class="card-text">Completed</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter and Sort Options -->
+  <div class="row mb-3">
+    <div class="col-md-4">
+      <label for="statusFilter" class="form-label">Filter by Status:</label>
+      <select id="statusFilter" class="form-control" onchange="filterAppointments()">
+        <option value="">All Statuses</option>
+        <option value="PENDING">Pending</option>
+        <option value="CONFIRMED">Confirmed</option>
+        <option value="COMPLETED">Completed</option>
+        <option value="CANCELLED">Cancelled</option>
+      </select>
+    </div>
+    <div class="col-md-4">
+      <label for="sortOrder" class="form-label">Sort by:</label>
+      <select id="sortOrder" class="form-control" onchange="sortAppointments()">
+        <option value="date-desc">Newest First</option>
+        <option value="date-asc">Oldest First</option>
+        <option value="status">By Status</option>
+      </select>
+    </div>
+    <div class="col-md-4 d-flex align-items-end">
+      <button class="btn btn-info" onclick="resetFilters()">
+        <span class="fa fa-refresh"></span> Reset Filters
+      </button>
+    </div>
+  </div>
+
+  <!-- Appointments List -->
+  <div th:if="${appointments != null and not #lists.isEmpty(appointments)}">
+    
+    <!-- Upcoming Appointments -->
+    <div th:if="${upcomingAppointments != null and not #lists.isEmpty(upcomingAppointments)}">
+      <h4 class="mb-3">Upcoming Appointments</h4>
+      <div class="row mb-4">
+        <div th:each="appointment : ${upcomingAppointments}" class="col-md-6 mb-3">
+          <div class="card border-primary">
+            <div class="card-header bg-primary text-white">
+              <h6 class="mb-0">
+                <span th:text="${#temporals.format(appointment.appointmentDate, 'EEEE, MMMM d, yyyy')}">Date</span>
+                at
+                <span th:text="${#temporals.format(appointment.appointmentTime, 'h:mm a')}">Time</span>
+              </h6>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-8">
+                  <p class="mb-1"><strong>Veterinarian:</strong> <span th:text="${appointment.vet.firstName + ' ' + appointment.vet.lastName}">Vet Name</span></p>
+                  <p class="mb-1"><strong>Duration:</strong> <span th:text="${appointment.durationMinutes + ' minutes'}">30 minutes</span></p>
+                  <p class="mb-1" th:if="${appointment.reason}"><strong>Reason:</strong> <span th:text="${appointment.reason}">Reason</span></p>
+                  <p class="mb-0">
+                    <span th:class="'badge ' + ${appointment.status == 'CONFIRMED' ? 'bg-success' : 'bg-warning text-dark'}" 
+                          th:text="${appointment.status}">Status</span>
+                  </p>
+                </div>
+                <div class="col-4 text-end">
+                  <a class="btn btn-sm btn-primary mb-1" th:href="@{/appointments/__${appointment.id}__}">
+                    <span class="fa fa-eye"></span> View
+                  </a>
+                  <a class="btn btn-sm btn-warning" th:href="@{/appointments/__${appointment.id}__/edit}" 
+                     th:if="${appointment.status == 'PENDING'}">
+                    <span class="fa fa-edit"></span> Edit
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- All Appointments Table -->
+    <h4 class="mb-3">All Appointments</h4>
+    <div class="table-responsive">
+      <table id="appointmentsTable" class="table table-striped">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Time</th>
+            <th>Veterinarian</th>
+            <th>Duration</th>
+            <th>Status</th>
+            <th>Reason</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr th:each="appointment : ${appointments}" th:attr="data-status=${appointment.status}">
+            <td th:text="${#temporals.format(appointment.appointmentDate, 'yyyy-MM-dd')}">2023-12-01</td>
+            <td th:text="${#temporals.format(appointment.appointmentTime, 'HH:mm')}">10:00</td>
+            <td th:text="${appointment.vet.firstName + ' ' + appointment.vet.lastName}">Vet Name</td>
+            <td th:text="${appointment.durationMinutes + ' min'}">30 min</td>
+            <td>
+              <span th:class="'badge ' + ${appointment.status == 'CONFIRMED' ? 'bg-success' : appointment.status == 'PENDING' ? 'bg-warning text-dark' : appointment.status == 'COMPLETED' ? 'bg-info' : 'bg-secondary'}" 
+                    th:text="${appointment.status}">Status</span>
+            </td>
+            <td th:text="${appointment.reason ?: '-'}">Reason</td>
+            <td>
+              <div class="btn-group" role="group">
+                <a class="btn btn-sm btn-primary" th:href="@{/appointments/__${appointment.id}__}">
+                  <span class="fa fa-eye"></span>
+                </a>
+                <a class="btn btn-sm btn-warning" th:href="@{/appointments/__${appointment.id}__/edit}" 
+                   th:if="${appointment.status == 'PENDING'}">
+                  <span class="fa fa-edit"></span>
+                </a>
+                <a class="btn btn-sm btn-success" th:href="@{/appointments/__${appointment.id}__/confirm}" 
+                   th:if="${appointment.status == 'PENDING'}">
+                  <span class="fa fa-check"></span>
+                </a>
+                <a class="btn btn-sm btn-danger" th:href="@{/appointments/__${appointment.id}__/cancel}" 
+                   th:if="${appointment.status == 'PENDING' or appointment.status == 'CONFIRMED'}"
+                   onclick="return confirm('Are you sure you want to cancel this appointment?')">
+                  <span class="fa fa-times"></span>
+                </a>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- No Appointments Message -->
+  <div th:if="${appointments == null or #lists.isEmpty(appointments)}" class="alert alert-info text-center">
+    <h4>No appointments found</h4>
+    <p>This pet doesn't have any appointments yet.</p>
+    <a class="btn btn-success" th:href="@{/appointments/new(pet=${pet.id})}">
+      <span class="fa fa-plus"></span> Schedule First Appointment
+    </a>
+  </div>
+
+  <script>
+    function filterAppointments() {
+      var statusFilter = document.getElementById('statusFilter').value;
+      var table = document.getElementById('appointmentsTable');
+      var rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+      
+      for (var i = 0; i < rows.length; i++) {
+        var row = rows[i];
+        var status = row.getAttribute('data-status');
+        
+        if (statusFilter === '' || status === statusFilter) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      }
+    }
+
+    function sortAppointments() {
+      var sortOrder = document.getElementById('sortOrder').value;
+      var table = document.getElementById('appointmentsTable');
+      var tbody = table.getElementsByTagName('tbody')[0];
+      var rows = Array.from(tbody.getElementsByTagName('tr'));
+      
+      rows.sort(function(a, b) {
+        switch(sortOrder) {
+          case 'date-asc':
+            return new Date(a.cells[0].textContent + ' ' + a.cells[1].textContent) - 
+                   new Date(b.cells[0].textContent + ' ' + b.cells[1].textContent);
+          case 'date-desc':
+            return new Date(b.cells[0].textContent + ' ' + b.cells[1].textContent) - 
+                   new Date(a.cells[0].textContent + ' ' + a.cells[1].textContent);
+          case 'status':
+            return a.getAttribute('data-status').localeCompare(b.getAttribute('data-status'));
+          default:
+            return 0;
+        }
+      });
+      
+      rows.forEach(function(row) {
+        tbody.appendChild(row);
+      });
+    }
+
+    function resetFilters() {
+      document.getElementById('statusFilter').value = '';
+      document.getElementById('sortOrder').value = 'date-desc';
+      filterAppointments();
+      sortAppointments();
+    }
+  </script>
+
+</body>
+
+</html>

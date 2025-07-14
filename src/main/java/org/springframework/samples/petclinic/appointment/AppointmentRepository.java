@@ -17,6 +17,7 @@ package org.springframework.samples.petclinic.appointment;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Collection;
 import java.util.Optional;
 
@@ -94,11 +95,10 @@ public interface AppointmentRepository extends Repository<Appointment, Integer> 
 	 */
 	@Transactional(readOnly = true)
 	@Query("SELECT a FROM Appointment a WHERE a.vet.id = :vetId AND a.appointmentDate = :date "
-			+ "AND ((FUNCTION('TIMESTAMP', a.appointmentDate, a.appointmentTime) < :endDateTime) "
-			+ "AND (FUNCTION('TIMESTAMP', a.appointmentDate, a.appointmentTime) + FUNCTION('INTERVAL', a.durationMinutes, 'MINUTE') > :startDateTime)) "
+			+ "AND a.appointmentTime < :endTime AND a.appointmentTime >= :startTime "
 			+ "AND a.status IN ('PENDING', 'CONFIRMED') " + "AND a.id != :excludeId")
 	Collection<Appointment> findConflictingAppointments(@Param("vetId") Integer vetId, @Param("date") LocalDate date,
-			@Param("startDateTime") LocalDateTime startDateTime, @Param("endDateTime") LocalDateTime endDateTime,
+			@Param("startTime") LocalTime startTime, @Param("endTime") LocalTime endTime,
 			@Param("excludeId") Integer excludeId) throws DataAccessException;
 
 	/**

@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+
+<html xmlns:th="https://www.thymeleaf.org" th:replace="~{fragments/layout :: layout (~{::body},'appointments')}">
+
+<body>
+
+  <h2>Appointment Details</h2>
+
+  <!-- Success/Error Messages -->
+  <div th:if="${message}" class="alert alert-success" id="success-message">
+    <span th:text="${message}"></span>
+  </div>
+
+  <div th:if="${error}" class="alert alert-danger" id="error-message">
+    <span th:text="${error}"></span>
+  </div>
+
+  <!-- Appointment Information -->
+  <div class="row">
+    <div class="col-md-8">
+      <table class="table table-striped" th:object="${appointment}">
+        <tr>
+          <th>Date & Time</th>
+          <td>
+            <span th:text="${#temporals.format(appointment.appointmentDate, 'EEEE, MMMM d, yyyy')}">Friday, December 1, 2023</span>
+            at 
+            <span th:text="${#temporals.format(appointment.appointmentTime, 'h:mm a')}">10:00 AM</span>
+          </td>
+        </tr>
+        <tr>
+          <th>Duration</th>
+          <td th:text="*{durationMinutes + ' minutes'}">30 minutes</td>
+        </tr>
+        <tr>
+          <th>Status</th>
+          <td>
+            <span th:class="'badge badge-lg ' + ${appointment.status == 'CONFIRMED' ? 'bg-success' : appointment.status == 'PENDING' ? 'bg-warning text-dark' : appointment.status == 'COMPLETED' ? 'bg-info' : 'bg-secondary'}" 
+                  th:text="*{status}">Status</span>
+          </td>
+        </tr>
+        <tr>
+          <th>Pet</th>
+          <td>
+            <a th:href="@{/owners/__${appointment.pet.owner.id}__}" th:text="*{pet.name}">Pet Name</a>
+            (<span th:text="*{pet.type.name}">Pet Type</span>)
+          </td>
+        </tr>
+        <tr>
+          <th>Owner</th>
+          <td>
+            <a th:href="@{/owners/__${appointment.pet.owner.id}__}" 
+               th:text="*{pet.owner.firstName + ' ' + pet.owner.lastName}">Owner Name</a>
+          </td>
+        </tr>
+        <tr>
+          <th>Veterinarian</th>
+          <td th:text="*{vet.firstName + ' ' + vet.lastName}">Vet Name</td>
+        </tr>
+        <tr th:if="*{reason}">
+          <th>Reason</th>
+          <td th:text="*{reason}">Reason for appointment</td>
+        </tr>
+        <tr th:if="*{notes}">
+          <th>Notes</th>
+          <td th:text="*{notes}">Additional notes</td>
+        </tr>
+        <tr>
+          <th>Created</th>
+          <td th:text="${#temporals.format(appointment.createdAt, 'MMMM d, yyyy h:mm a')}">December 1, 2023 9:00 AM</td>
+        </tr>
+        <tr th:if="*{updatedAt}">
+          <th>Last Updated</th>
+          <td th:text="${#temporals.format(appointment.updatedAt, 'MMMM d, yyyy h:mm a')}">December 1, 2023 9:00 AM</td>
+        </tr>
+      </table>
+    </div>
+    
+    <!-- Action Buttons -->
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-header">
+          <h5>Actions</h5>
+        </div>
+        <div class="card-body">
+          
+          <!-- Edit Button -->
+          <a class="btn btn-warning btn-block mb-2" 
+             th:href="@{/appointments/__${appointment.id}__/edit}" 
+             th:if="${appointment.status == 'PENDING'}">
+            <span class="fa fa-edit"></span> Edit Appointment
+          </a>
+          
+          <!-- Confirm Button -->
+          <a class="btn btn-success btn-block mb-2" 
+             th:href="@{/appointments/__${appointment.id}__/confirm}" 
+             th:if="${appointment.status == 'PENDING'}">
+            <span class="fa fa-check"></span> Confirm Appointment
+          </a>
+          
+          <!-- Complete Button -->
+          <a class="btn btn-info btn-block mb-2" 
+             th:href="@{/appointments/__${appointment.id}__/complete}" 
+             th:if="${appointment.status == 'CONFIRMED'}">
+            <span class="fa fa-check-circle"></span> Mark as Completed
+          </a>
+          
+          <!-- Cancel Button -->
+          <a class="btn btn-danger btn-block mb-2" 
+             th:href="@{/appointments/__${appointment.id}__/cancel}" 
+             th:if="${appointment.status == 'PENDING' or appointment.status == 'CONFIRMED'}"
+             onclick="return confirm('Are you sure you want to cancel this appointment?')">
+            <span class="fa fa-times"></span> Cancel Appointment
+          </a>
+          
+          <!-- Delete Button -->
+          <a class="btn btn-outline-danger btn-block mb-2" 
+             th:href="@{/appointments/__${appointment.id}__/delete}" 
+             th:if="${appointment.status == 'CANCELLED'}"
+             onclick="return confirm('Are you sure you want to delete this appointment? This action cannot be undone.')">
+            <span class="fa fa-trash"></span> Delete Appointment
+          </a>
+          
+          <!-- Back to List -->
+          <a class="btn btn-secondary btn-block" th:href="@{/appointments}">
+            <span class="fa fa-list"></span> Back to Appointments
+          </a>
+          
+        </div>
+      </div>
+      
+      <!-- Quick Links -->
+      <div class="card mt-3">
+        <div class="card-header">
+          <h5>Quick Links</h5>
+        </div>
+        <div class="card-body">
+          <a class="btn btn-outline-primary btn-block mb-2" 
+             th:href="@{/owners/__${appointment.pet.owner.id}__/pets/__${appointment.pet.id}__/appointments}">
+            <span class="fa fa-calendar"></span> Pet's Appointments
+          </a>
+          <a class="btn btn-outline-info btn-block mb-2" 
+             th:href="@{/appointments/calendar(vet=${appointment.vet.id})}">
+            <span class="fa fa-calendar-alt"></span> Vet's Schedule
+          </a>
+          <a class="btn btn-outline-success btn-block" 
+             th:href="@{/appointments/new(pet=${appointment.pet.id})}">
+            <span class="fa fa-plus"></span> New Appointment
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <br/>
+
+  <!-- Related Information -->
+  <div class="row">
+    <div class="col-md-6">
+      <h4>Pet Information</h4>
+      <table class="table table-sm" th:object="${appointment.pet}">
+        <tr>
+          <th>Name</th>
+          <td th:text="*{name}">Pet Name</td>
+        </tr>
+        <tr>
+          <th>Type</th>
+          <td th:text="*{type.name}">Pet Type</td>
+        </tr>
+        <tr>
+          <th>Birth Date</th>
+          <td th:text="${#temporals.format(appointment.pet.birthDate, 'MMMM d, yyyy')}">January 1, 2020</td>
+        </tr>
+      </table>
+    </div>
+    
+    <div class="col-md-6">
+      <h4>Owner Contact</h4>
+      <table class="table table-sm" th:object="${appointment.pet.owner}">
+        <tr>
+          <th>Name</th>
+          <td th:text="*{firstName + ' ' + lastName}">Owner Name</td>
+        </tr>
+        <tr>
+          <th>Address</th>
+          <td th:text="*{address}">Address</td>
+        </tr>
+        <tr>
+          <th>City</th>
+          <td th:text="*{city}">City</td>
+        </tr>
+        <tr>
+          <th>Telephone</th>
+          <td>
+            <a th:href="'tel:' + *{telephone}" th:text="*{telephone}">Telephone</a>
+          </td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+</body>
+
+</html>

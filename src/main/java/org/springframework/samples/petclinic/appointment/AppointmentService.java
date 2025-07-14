@@ -189,12 +189,12 @@ public class AppointmentService {
 		}
 
 		// Check for conflicting appointments
-		LocalDateTime startDateTime = appointment.getAppointmentDateTime();
-		LocalDateTime endDateTime = appointment.getAppointmentEndDateTime();
-		if (startDateTime != null && endDateTime != null) {
+		LocalTime appointmentTime = appointment.getAppointmentTime();
+		LocalTime endTime = appointmentTime.plusMinutes(appointment.getDurationMinutes());
+		if (appointmentTime != null) {
 			Integer excludeId = appointment.getId() != null ? appointment.getId() : -1;
 			Collection<Appointment> conflicts = appointmentRepository.findConflictingAppointments(
-					appointment.getVet().getId(), appointment.getAppointmentDate(), startDateTime, endDateTime,
+					appointment.getVet().getId(), appointment.getAppointmentDate(), appointmentTime, endTime,
 					excludeId);
 			if (!conflicts.isEmpty()) {
 				result.addError("Time slot conflicts with existing appointment");

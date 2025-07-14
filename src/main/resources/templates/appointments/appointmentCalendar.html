@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+
+<html xmlns:th="https://www.thymeleaf.org" th:replace="~{fragments/layout :: layout (~{::body},'appointments')}">
+
+<head>
+  <!-- FullCalendar CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.css" rel="stylesheet">
+</head>
+
+<body>
+
+  <h2>Appointment Calendar</h2>
+
+  <!-- Filter Controls -->
+  <div class="row mb-3">
+    <div class="col-md-4">
+      <label for="vetFilter" class="form-label">Filter by Veterinarian:</label>
+      <select id="vetFilter" class="form-control">
+        <option value="">All Veterinarians</option>
+        <option th:each="vet : ${vets}" 
+                th:value="${vet.id}" 
+                th:text="${vet.firstName + ' ' + vet.lastName}"
+                th:selected="${selectedVet != null and selectedVet.id == vet.id}">
+          Vet Name
+        </option>
+      </select>
+    </div>
+    <div class="col-md-4">
+      <label for="statusFilter" class="form-label">Filter by Status:</label>
+      <select id="statusFilter" class="form-control">
+        <option value="">All Statuses</option>
+        <option value="PENDING">Pending</option>
+        <option value="CONFIRMED">Confirmed</option>
+        <option value="COMPLETED">Completed</option>
+        <option value="CANCELLED">Cancelled</option>
+      </select>
+    </div>
+    <div class="col-md-4 d-flex align-items-end">
+      <button id="refreshCalendar" class="btn btn-info me-2">
+        <span class="fa fa-refresh"></span> Refresh
+      </button>
+      <a class="btn btn-success" th:href="@{/appointments/new}">
+        <span class="fa fa-plus"></span> New Appointment
+      </a>
+    </div>
+  </div>
+
+  <!-- Legend -->
+  <div class="row mb-3">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-body">
+          <h6 class="card-title">Status Legend:</h6>
+          <span class="badge bg-warning text-dark me-2">Pending</span>
+          <span class="badge bg-success me-2">Confirmed</span>
+          <span class="badge bg-info me-2">Completed</span>
+          <span class="badge bg-secondary">Cancelled</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Calendar Container -->
+  <div id="calendar"></div>
+
+  <!-- Quick Stats -->
+  <div class="row mt-4">
+    <div class="col-md-3">
+      <div class="card text-center">
+        <div class="card-body">
+          <h5 class="card-title text-warning" th:text="${stats.pending ?: 0}">0</h5>
+          <p class="card-text">Pending</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-center">
+        <div class="card-body">
+          <h5 class="card-title text-success" th:text="${stats.confirmed ?: 0}">0</h5>
+          <p class="card-text">Confirmed</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-center">
+        <div class="card-body">
+          <h5 class="card-title text-info" th:text="${stats.completed ?: 0}">0</h5>
+          <p class="card-text">Completed</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-center">
+        <div class="card-body">
+          <h5 class="card-title text-secondary" th:text="${stats.cancelled ?: 0}">0</h5>
+          <p class="card-text">Cancelled</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Appointment Modal -->
+  <div class="modal fade" id="appointmentModal" tabindex="-1" aria-labelledby="appointmentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="appointmentModalLabel">Appointment Details</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" id="appointmentModalBody">
+          <!-- Content will be loaded dynamically -->
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <a id="viewAppointmentBtn" class="btn btn-primary" href="#" target="_blank">View Details</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FullCalendar JS -->
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+  
+  <script th:inline="javascript">
+    document.addEventListener('DOMContentLoaded', function() {
+      var calendarEl = document.getElementById('calendar');
+      var appointments = /*[[${appointments}]]*/ [];
+      
+      // Convert appointments to calendar events
+      var events = appointments.map(function(appointment) {
+        var statusColor = getStatusColor(appointment.status);
+        return {
+          id: appointment.id,
+          title: appointment.pet.name + ' (' + appointment.vet.firstName + ' ' + appointment.vet.lastName + ')',
+          start: appointment.appointmentDate + 'T' + appointment.appointmentTime,
+          end: calculateEndTime(appointment.appointmentDate, appointment.appointmentTime, appointment.durationMinutes),
+          backgroundColor: statusColor,
+          borderColor: statusColor,
+          extendedProps: {
+            appointmentId: appointment.id,
+            petName: appointment.pet.name,
+            ownerName: appointment.pet.owner.firstName + ' ' + appointment.pet.owner.lastName,
+            vetName: appointment.vet.firstName + ' ' + appointment.vet.lastName,
+            status: appointment.status,
+            reason: appointment.reason,
+            notes: appointment.notes
+          }
+        };
+      });
+
+      var calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'timeGridWeek',
+        headerToolbar: {
+          left: 'prev,next today',
+          center: 'title',
+          right: 'dayGridMonth,timeGridWeek,timeGridDay'
+        },
+        businessHours: {
+          daysOfWeek: [1, 2, 3, 4, 5, 6], // Monday - Saturday
+          startTime: '08:00',
+          endTime: '18:00'
+        },
+        slotMinTime: '07:00',
+        slotMaxTime: '19:00',
+        allDaySlot: false,
+        events: events,
+        eventClick: function(info) {
+          showAppointmentModal(info.event);
+        },
+        eventDidMount: function(info) {
+          // Add tooltip
+          info.el.setAttribute('title', 
+            'Pet: ' + info.event.extendedProps.petName + 
+            '\nOwner: ' + info.event.extendedProps.ownerName +
+            '\nStatus: ' + info.event.extendedProps.status
+          );
+        }
+      });
+
+      calendar.render();
+
+      // Filter functionality
+      document.getElementById('vetFilter').addEventListener('change', function() {
+        filterCalendar();
+      });
+
+      document.getElementById('statusFilter').addEventListener('change', function() {
+        filterCalendar();
+      });
+
+      document.getElementById('refreshCalendar').addEventListener('click', function() {
+        window.location.reload();
+      });
+
+      function getStatusColor(status) {
+        switch(status) {
+          case 'PENDING': return '#ffc107'; // warning
+          case 'CONFIRMED': return '#198754'; // success
+          case 'COMPLETED': return '#0dcaf0'; // info
+          case 'CANCELLED': return '#6c757d'; // secondary
+          default: return '#0d6efd'; // primary
+        }
+      }
+
+      function calculateEndTime(date, time, durationMinutes) {
+        var startDateTime = new Date(date + 'T' + time);
+        var endDateTime = new Date(startDateTime.getTime() + (durationMinutes * 60000));
+        return endDateTime.toISOString().slice(0, 19);
+      }
+
+      function filterCalendar() {
+        var vetFilter = document.getElementById('vetFilter').value;
+        var statusFilter = document.getElementById('statusFilter').value;
+        
+        // Build URL with filters
+        var url = new URL(window.location.href);
+        url.search = ''; // Clear existing params
+        
+        if (vetFilter) {
+          url.searchParams.set('vet', vetFilter);
+        }
+        if (statusFilter) {
+          url.searchParams.set('status', statusFilter);
+        }
+        
+        window.location.href = url.toString();
+      }
+
+      function showAppointmentModal(event) {
+        var modal = new bootstrap.Modal(document.getElementById('appointmentModal'));
+        var modalBody = document.getElementById('appointmentModalBody');
+        var viewBtn = document.getElementById('viewAppointmentBtn');
+        
+        modalBody.innerHTML = `
+          <div class="row">
+            <div class="col-md-6">
+              <h6>Appointment Information</h6>
+              <p><strong>Pet:</strong> ${event.extendedProps.petName}</p>
+              <p><strong>Owner:</strong> ${event.extendedProps.ownerName}</p>
+              <p><strong>Veterinarian:</strong> ${event.extendedProps.vetName}</p>
+              <p><strong>Status:</strong> <span class="badge bg-${getStatusBadgeClass(event.extendedProps.status)}">${event.extendedProps.status}</span></p>
+            </div>
+            <div class="col-md-6">
+              <h6>Time & Details</h6>
+              <p><strong>Date:</strong> ${new Date(event.start).toLocaleDateString()}</p>
+              <p><strong>Time:</strong> ${new Date(event.start).toLocaleTimeString()} - ${new Date(event.end).toLocaleTimeString()}</p>
+              ${event.extendedProps.reason ? '<p><strong>Reason:</strong> ' + event.extendedProps.reason + '</p>' : ''}
+              ${event.extendedProps.notes ? '<p><strong>Notes:</strong> ' + event.extendedProps.notes + '</p>' : ''}
+            </div>
+          </div>
+        `;
+        
+        viewBtn.href = '/appointments/' + event.extendedProps.appointmentId;
+        modal.show();
+      }
+
+      function getStatusBadgeClass(status) {
+        switch(status) {
+          case 'PENDING': return 'warning';
+          case 'CONFIRMED': return 'success';
+          case 'COMPLETED': return 'info';
+          case 'CANCELLED': return 'secondary';
+          default: return 'primary';
+        }
+      }
+    });
+  </script>
+
+</body>
+
+</html>
