@@ -26,6 +26,7 @@ import java.util.List;
 public class AppointmentValidationResult {
 
 	private final List<String> errors = new ArrayList<>();
+
 	private final List<String> warnings = new ArrayList<>();
 
 	/**

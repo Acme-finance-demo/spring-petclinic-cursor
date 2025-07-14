@@ -210,16 +210,16 @@ public class Appointment extends BaseEntity {
 		if (other == null || !this.vet.equals(other.vet) || !this.appointmentDate.equals(other.appointmentDate)) {
 			return false;
 		}
-		
+
 		LocalDateTime thisStart = this.getAppointmentDateTime();
 		LocalDateTime thisEnd = this.getAppointmentEndDateTime();
 		LocalDateTime otherStart = other.getAppointmentDateTime();
 		LocalDateTime otherEnd = other.getAppointmentEndDateTime();
-		
+
 		if (thisStart == null || thisEnd == null || otherStart == null || otherEnd == null) {
 			return false;
 		}
-		
+
 		return thisStart.isBefore(otherEnd) && otherStart.isBefore(thisEnd);
 	}
 

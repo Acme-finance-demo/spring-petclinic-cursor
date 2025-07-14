@@ -38,13 +38,14 @@ import org.springframework.transaction.annotation.Transactional;
 public class AppointmentService {
 
 	private final AppointmentRepository appointmentRepository;
+
 	private final VetScheduleRepository vetScheduleRepository;
+
 	private final VetHolidayRepository vetHolidayRepository;
 
 	@Autowired
-	public AppointmentService(AppointmentRepository appointmentRepository,
-							  VetScheduleRepository vetScheduleRepository,
-							  VetHolidayRepository vetHolidayRepository) {
+	public AppointmentService(AppointmentRepository appointmentRepository, VetScheduleRepository vetScheduleRepository,
+			VetHolidayRepository vetHolidayRepository) {
 		this.appointmentRepository = appointmentRepository;
 		this.vetScheduleRepository = vetScheduleRepository;
 		this.vetHolidayRepository = vetHolidayRepository;
@@ -78,9 +79,8 @@ public class AppointmentService {
 	 * Search appointments by criteria.
 	 */
 	@Transactional(readOnly = true)
-	public Page<Appointment> searchAppointments(LocalDate startDate, LocalDate endDate,
-												Integer vetId, AppointmentStatus status,
-												Pageable pageable) throws DataAccessException {
+	public Page<Appointment> searchAppointments(LocalDate startDate, LocalDate endDate, Integer vetId,
+			AppointmentStatus status, Pageable pageable) throws DataAccessException {
 		return appointmentRepository.searchAppointments(startDate, endDate, vetId, status, pageable);
 	}
 
@@ -88,7 +88,8 @@ public class AppointmentService {
 	 * Retrieve appointments by date range.
 	 */
 	@Transactional(readOnly = true)
-	public Collection<Appointment> findAppointmentsByDateRange(LocalDate startDate, LocalDate endDate) throws DataAccessException {
+	public Collection<Appointment> findAppointmentsByDateRange(LocalDate startDate, LocalDate endDate)
+			throws DataAccessException {
 		return appointmentRepository.findByDateRange(startDate, endDate);
 	}
 
@@ -112,7 +113,8 @@ public class AppointmentService {
 	 * Retrieve appointments by vet and date.
 	 */
 	@Transactional(readOnly = true)
-	public Collection<Appointment> findAppointmentsByVetIdAndDate(Integer vetId, LocalDate date) throws DataAccessException {
+	public Collection<Appointment> findAppointmentsByVetIdAndDate(Integer vetId, LocalDate date)
+			throws DataAccessException {
 		return appointmentRepository.findByVetIdAndDate(vetId, date);
 	}
 
@@ -176,9 +178,8 @@ public class AppointmentService {
 		}
 
 		// Check vet availability (schedule)
-		if (!isVetAvailableOnDateTime(appointment.getVet().getId(), 
-									  appointment.getAppointmentDate(), 
-									  appointment.getAppointmentTime())) {
+		if (!isVetAvailableOnDateTime(appointment.getVet().getId(), appointment.getAppointmentDate(),
+				appointment.getAppointmentTime())) {
 			result.addError("Veterinarian is not available at the requested time");
 		}
 
@@ -193,12 +194,8 @@ public class AppointmentService {
 		if (startDateTime != null && endDateTime != null) {
 			Integer excludeId = appointment.getId() != null ? appointment.getId() : -1;
 			Collection<Appointment> conflicts = appointmentRepository.findConflictingAppointments(
-				appointment.getVet().getId(),
-				appointment.getAppointmentDate(),
-				startDateTime,
-				endDateTime,
-				excludeId
-			);
+					appointment.getVet().getId(), appointment.getAppointmentDate(), startDateTime, endDateTime,
+					excludeId);
 			if (!conflicts.isEmpty()) {
 				result.addError("Time slot conflicts with existing appointment");
 			}
@@ -232,7 +229,7 @@ public class AppointmentService {
 		// This would typically return available time slots based on the vet's schedule
 		// and existing appointments. For brevity, we'll return a basic implementation.
 		java.util.List<LocalTime> slots = new java.util.ArrayList<>();
-		
+
 		DayOfWeek dayOfWeek = date.getDayOfWeek();
 		int dayOfWeekValue = dayOfWeek == DayOfWeek.SUNDAY ? 0 : dayOfWeek.getValue();
 
@@ -246,22 +243,22 @@ public class AppointmentService {
 
 		// Generate time slots (every 30 minutes by default)
 		LocalTime currentTime = schedule.getStartTime();
-		while (currentTime.plusMinutes(durationMinutes).isBefore(schedule.getEndTime()) || 
-			   currentTime.plusMinutes(durationMinutes).equals(schedule.getEndTime())) {
-			
+		while (currentTime.plusMinutes(durationMinutes).isBefore(schedule.getEndTime())
+				|| currentTime.plusMinutes(durationMinutes).equals(schedule.getEndTime())) {
+
 			boolean isAvailable = true;
 			LocalDateTime slotStart = LocalDateTime.of(date, currentTime);
 			LocalDateTime slotEnd = slotStart.plusMinutes(durationMinutes);
 
 			// Check conflicts with existing appointments
 			for (Appointment existing : existingAppointments) {
-				if (existing.getStatus() == AppointmentStatus.CONFIRMED || 
-					existing.getStatus() == AppointmentStatus.PENDING) {
+				if (existing.getStatus() == AppointmentStatus.CONFIRMED
+						|| existing.getStatus() == AppointmentStatus.PENDING) {
 					LocalDateTime existingStart = existing.getAppointmentDateTime();
 					LocalDateTime existingEnd = existing.getAppointmentEndDateTime();
-					
-					if (existingStart != null && existingEnd != null &&
-						slotStart.isBefore(existingEnd) && existingStart.isBefore(slotEnd)) {
+
+					if (existingStart != null && existingEnd != null && slotStart.isBefore(existingEnd)
+							&& existingStart.isBefore(slotEnd)) {
 						isAvailable = false;
 						break;
 					}

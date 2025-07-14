@@ -21,22 +21,22 @@ package org.springframework.samples.petclinic.appointment;
  * @author Spring Petclinic Team
  */
 public enum AppointmentStatus {
-	
+
 	/**
 	 * Appointment has been created but not yet confirmed
 	 */
 	PENDING("Pending"),
-	
+
 	/**
 	 * Appointment has been confirmed by the clinic
 	 */
 	CONFIRMED("Confirmed"),
-	
+
 	/**
 	 * Appointment has been completed
 	 */
 	COMPLETED("Completed"),
-	
+
 	/**
 	 * Appointment has been cancelled
 	 */

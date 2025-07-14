@@ -57,7 +57,8 @@ public interface AppointmentRepository extends Repository<Appointment, Integer> 
 	 */
 	@Transactional(readOnly = true)
 	@Query("SELECT a FROM Appointment a WHERE a.appointmentDate BETWEEN :startDate AND :endDate ORDER BY a.appointmentDate, a.appointmentTime")
-	Collection<Appointment> findByDateRange(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate) throws DataAccessException;
+	Collection<Appointment> findByDateRange(@Param("startDate") LocalDate startDate,
+			@Param("endDate") LocalDate endDate) throws DataAccessException;
 
 	/**
 	 * Retrieve <code>Appointment</code>s by pet id.
@@ -78,7 +79,8 @@ public interface AppointmentRepository extends Repository<Appointment, Integer> 
 	 */
 	@Transactional(readOnly = true)
 	@Query("SELECT a FROM Appointment a WHERE a.vet.id = :vetId AND a.appointmentDate = :date ORDER BY a.appointmentTime")
-	Collection<Appointment> findByVetIdAndDate(@Param("vetId") Integer vetId, @Param("date") LocalDate date) throws DataAccessException;
+	Collection<Appointment> findByVetIdAndDate(@Param("vetId") Integer vetId, @Param("date") LocalDate date)
+			throws DataAccessException;
 
 	/**
 	 * Retrieve <code>Appointment</code>s by status.
@@ -91,42 +93,31 @@ public interface AppointmentRepository extends Repository<Appointment, Integer> 
 	 * Find conflicting appointments for a vet on a specific date and time range.
 	 */
 	@Transactional(readOnly = true)
-	@Query("SELECT a FROM Appointment a WHERE a.vet.id = :vetId AND a.appointmentDate = :date " +
-		   "AND ((FUNCTION('TIMESTAMP', a.appointmentDate, a.appointmentTime) < :endDateTime) " +
-		   "AND (FUNCTION('TIMESTAMP', a.appointmentDate, a.appointmentTime) + FUNCTION('INTERVAL', a.durationMinutes, 'MINUTE') > :startDateTime)) " +
-		   "AND a.status IN ('PENDING', 'CONFIRMED') " +
-		   "AND a.id != :excludeId")
-	Collection<Appointment> findConflictingAppointments(
-		@Param("vetId") Integer vetId,
-		@Param("date") LocalDate date,
-		@Param("startDateTime") LocalDateTime startDateTime,
-		@Param("endDateTime") LocalDateTime endDateTime,
-		@Param("excludeId") Integer excludeId) throws DataAccessException;
+	@Query("SELECT a FROM Appointment a WHERE a.vet.id = :vetId AND a.appointmentDate = :date "
+			+ "AND ((FUNCTION('TIMESTAMP', a.appointmentDate, a.appointmentTime) < :endDateTime) "
+			+ "AND (FUNCTION('TIMESTAMP', a.appointmentDate, a.appointmentTime) + FUNCTION('INTERVAL', a.durationMinutes, 'MINUTE') > :startDateTime)) "
+			+ "AND a.status IN ('PENDING', 'CONFIRMED') " + "AND a.id != :excludeId")
+	Collection<Appointment> findConflictingAppointments(@Param("vetId") Integer vetId, @Param("date") LocalDate date,
+			@Param("startDateTime") LocalDateTime startDateTime, @Param("endDateTime") LocalDateTime endDateTime,
+			@Param("excludeId") Integer excludeId) throws DataAccessException;
 
 	/**
 	 * Search appointments by multiple criteria.
 	 */
 	@Transactional(readOnly = true)
-	@Query("SELECT a FROM Appointment a WHERE " +
-		   "(:startDate IS NULL OR a.appointmentDate >= :startDate) AND " +
-		   "(:endDate IS NULL OR a.appointmentDate <= :endDate) AND " +
-		   "(:vetId IS NULL OR a.vet.id = :vetId) AND " +
-		   "(:status IS NULL OR a.status = :status) " +
-		   "ORDER BY a.appointmentDate, a.appointmentTime")
-	Page<Appointment> searchAppointments(
-		@Param("startDate") LocalDate startDate,
-		@Param("endDate") LocalDate endDate,
-		@Param("vetId") Integer vetId,
-		@Param("status") AppointmentStatus status,
-		Pageable pageable) throws DataAccessException;
+	@Query("SELECT a FROM Appointment a WHERE " + "(:startDate IS NULL OR a.appointmentDate >= :startDate) AND "
+			+ "(:endDate IS NULL OR a.appointmentDate <= :endDate) AND " + "(:vetId IS NULL OR a.vet.id = :vetId) AND "
+			+ "(:status IS NULL OR a.status = :status) " + "ORDER BY a.appointmentDate, a.appointmentTime")
+	Page<Appointment> searchAppointments(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate,
+			@Param("vetId") Integer vetId, @Param("status") AppointmentStatus status, Pageable pageable)
+			throws DataAccessException;
 
 	/**
 	 * Get upcoming appointments (today and future).
 	 */
 	@Transactional(readOnly = true)
-	@Query("SELECT a FROM Appointment a WHERE a.appointmentDate >= CURRENT_DATE " +
-		   "AND a.status IN ('PENDING', 'CONFIRMED') " +
-		   "ORDER BY a.appointmentDate, a.appointmentTime")
+	@Query("SELECT a FROM Appointment a WHERE a.appointmentDate >= CURRENT_DATE "
+			+ "AND a.status IN ('PENDING', 'CONFIRMED') " + "ORDER BY a.appointmentDate, a.appointmentTime")
 	Collection<Appointment> findUpcomingAppointments() throws DataAccessException;
 
 	/**

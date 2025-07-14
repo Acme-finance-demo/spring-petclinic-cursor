@@ -33,11 +33,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class ScheduleService {
 
 	private final VetScheduleRepository vetScheduleRepository;
+
 	private final VetHolidayRepository vetHolidayRepository;
 
 	@Autowired
-	public ScheduleService(VetScheduleRepository vetScheduleRepository,
-						   VetHolidayRepository vetHolidayRepository) {
+	public ScheduleService(VetScheduleRepository vetScheduleRepository, VetHolidayRepository vetHolidayRepository) {
 		this.vetScheduleRepository = vetScheduleRepository;
 		this.vetHolidayRepository = vetHolidayRepository;
 	}
@@ -80,7 +80,8 @@ public class ScheduleService {
 	 * Find a specific schedule for a vet and day.
 	 */
 	@Transactional(readOnly = true)
-	public Optional<VetSchedule> findScheduleByVetIdAndDay(Integer vetId, Integer dayOfWeek) throws DataAccessException {
+	public Optional<VetSchedule> findScheduleByVetIdAndDay(Integer vetId, Integer dayOfWeek)
+			throws DataAccessException {
 		return vetScheduleRepository.findByVetIdAndDayOfWeek(vetId, dayOfWeek);
 	}
 
@@ -154,7 +155,8 @@ public class ScheduleService {
 	 * Find holidays by date range.
 	 */
 	@Transactional(readOnly = true)
-	public Collection<VetHoliday> findHolidaysByDateRange(LocalDate startDate, LocalDate endDate) throws DataAccessException {
+	public Collection<VetHoliday> findHolidaysByDateRange(LocalDate startDate, LocalDate endDate)
+			throws DataAccessException {
 		return vetHolidayRepository.findByDateRange(startDate, endDate);
 	}
 
@@ -162,7 +164,8 @@ public class ScheduleService {
 	 * Find holidays for a vet within a date range.
 	 */
 	@Transactional(readOnly = true)
-	public Collection<VetHoliday> findHolidaysByVetIdAndDateRange(Integer vetId, LocalDate startDate, LocalDate endDate) throws DataAccessException {
+	public Collection<VetHoliday> findHolidaysByVetIdAndDateRange(Integer vetId, LocalDate startDate, LocalDate endDate)
+			throws DataAccessException {
 		return vetHolidayRepository.findByVetIdAndDateRange(vetId, startDate, endDate);
 	}
 

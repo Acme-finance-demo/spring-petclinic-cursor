@@ -42,10 +42,13 @@ import jakarta.validation.Valid;
 public class ScheduleController {
 
 	private static final String VIEWS_SCHEDULE_MANAGEMENT = "schedules/scheduleManagement";
+
 	private static final String VIEWS_SCHEDULE_FORM = "schedules/scheduleForm";
+
 	private static final String VIEWS_HOLIDAY_FORM = "schedules/holidayForm";
 
 	private final ScheduleService scheduleService;
+
 	private final VetRepository vetRepository;
 
 	@Autowired
@@ -102,12 +105,9 @@ public class ScheduleController {
 	 * Process new schedule form submission.
 	 */
 	@PostMapping("/vets/{vetId}/schedule/new")
-	public String processNewScheduleForm(
-		@PathVariable Integer vetId,
-		@Valid @ModelAttribute("schedule") VetSchedule schedule,
-		BindingResult result,
-		RedirectAttributes redirectAttributes,
-		Model model) {
+	public String processNewScheduleForm(@PathVariable Integer vetId,
+			@Valid @ModelAttribute("schedule") VetSchedule schedule, BindingResult result,
+			RedirectAttributes redirectAttributes, Model model) {
 
 		Optional<Vet> vetOpt = vetRepository.findById(vetId);
 		if (vetOpt.isEmpty()) {
@@ -117,14 +117,15 @@ public class ScheduleController {
 		schedule.setVet(vetOpt.get());
 
 		// Check for existing schedule on the same day
-		Optional<VetSchedule> existingSchedule = scheduleService.findScheduleByVetIdAndDay(vetId, schedule.getDayOfWeek());
+		Optional<VetSchedule> existingSchedule = scheduleService.findScheduleByVetIdAndDay(vetId,
+				schedule.getDayOfWeek());
 		if (existingSchedule.isPresent()) {
 			result.rejectValue("dayOfWeek", "error.schedule.duplicate", "Schedule already exists for this day");
 		}
 
 		// Validate time range
-		if (schedule.getStartTime() != null && schedule.getEndTime() != null &&
-			!schedule.getStartTime().isBefore(schedule.getEndTime())) {
+		if (schedule.getStartTime() != null && schedule.getEndTime() != null
+				&& !schedule.getStartTime().isBefore(schedule.getEndTime())) {
 			result.rejectValue("endTime", "error.schedule.timeRange", "End time must be after start time");
 		}
 
@@ -142,10 +143,7 @@ public class ScheduleController {
 	 * Display edit schedule form.
 	 */
 	@GetMapping("/vets/{vetId}/schedule/{scheduleId}/edit")
-	public String showEditScheduleForm(
-		@PathVariable Integer vetId,
-		@PathVariable Integer scheduleId,
-		Model model) {
+	public String showEditScheduleForm(@PathVariable Integer vetId, @PathVariable Integer scheduleId, Model model) {
 
 		Optional<Vet> vetOpt = vetRepository.findById(vetId);
 		Optional<VetSchedule> scheduleOpt = scheduleService.findVetScheduleById(scheduleId);
@@ -164,13 +162,9 @@ public class ScheduleController {
 	 * Process edit schedule form submission.
 	 */
 	@PostMapping("/vets/{vetId}/schedule/{scheduleId}/edit")
-	public String processEditScheduleForm(
-		@PathVariable Integer vetId,
-		@PathVariable Integer scheduleId,
-		@Valid @ModelAttribute("schedule") VetSchedule schedule,
-		BindingResult result,
-		RedirectAttributes redirectAttributes,
-		Model model) {
+	public String processEditScheduleForm(@PathVariable Integer vetId, @PathVariable Integer scheduleId,
+			@Valid @ModelAttribute("schedule") VetSchedule schedule, BindingResult result,
+			RedirectAttributes redirectAttributes, Model model) {
 
 		Optional<Vet> vetOpt = vetRepository.findById(vetId);
 		if (vetOpt.isEmpty()) {
@@ -181,14 +175,15 @@ public class ScheduleController {
 		schedule.setVet(vetOpt.get());
 
 		// Check for duplicate schedule (excluding current one)
-		Optional<VetSchedule> existingSchedule = scheduleService.findScheduleByVetIdAndDay(vetId, schedule.getDayOfWeek());
+		Optional<VetSchedule> existingSchedule = scheduleService.findScheduleByVetIdAndDay(vetId,
+				schedule.getDayOfWeek());
 		if (existingSchedule.isPresent() && !existingSchedule.get().getId().equals(scheduleId)) {
 			result.rejectValue("dayOfWeek", "error.schedule.duplicate", "Schedule already exists for this day");
 		}
 
 		// Validate time range
-		if (schedule.getStartTime() != null && schedule.getEndTime() != null &&
-			!schedule.getStartTime().isBefore(schedule.getEndTime())) {
+		if (schedule.getStartTime() != null && schedule.getEndTime() != null
+				&& !schedule.getStartTime().isBefore(schedule.getEndTime())) {
 			result.rejectValue("endTime", "error.schedule.timeRange", "End time must be after start time");
 		}
 
@@ -206,10 +201,8 @@ public class ScheduleController {
 	 * Delete a schedule.
 	 */
 	@PostMapping("/vets/{vetId}/schedule/{scheduleId}/delete")
-	public String deleteSchedule(
-		@PathVariable Integer vetId,
-		@PathVariable Integer scheduleId,
-		RedirectAttributes redirectAttributes) {
+	public String deleteSchedule(@PathVariable Integer vetId, @PathVariable Integer scheduleId,
+			RedirectAttributes redirectAttributes) {
 
 		scheduleService.deleteVetSchedule(scheduleId);
 		redirectAttributes.addFlashAttribute("message", "Schedule deleted successfully!");
@@ -239,12 +232,9 @@ public class ScheduleController {
 	 * Process new holiday form submission.
 	 */
 	@PostMapping("/vets/{vetId}/holidays/new")
-	public String processNewHolidayForm(
-		@PathVariable Integer vetId,
-		@Valid @ModelAttribute("holiday") VetHoliday holiday,
-		BindingResult result,
-		RedirectAttributes redirectAttributes,
-		Model model) {
+	public String processNewHolidayForm(@PathVariable Integer vetId,
+			@Valid @ModelAttribute("holiday") VetHoliday holiday, BindingResult result,
+			RedirectAttributes redirectAttributes, Model model) {
 
 		Optional<Vet> vetOpt = vetRepository.findById(vetId);
 		if (vetOpt.isEmpty()) {
@@ -272,10 +262,8 @@ public class ScheduleController {
 	 * Delete a holiday.
 	 */
 	@PostMapping("/vets/{vetId}/holidays/{holidayId}/delete")
-	public String deleteHoliday(
-		@PathVariable Integer vetId,
-		@PathVariable Integer holidayId,
-		RedirectAttributes redirectAttributes) {
+	public String deleteHoliday(@PathVariable Integer vetId, @PathVariable Integer holidayId,
+			RedirectAttributes redirectAttributes) {
 
 		scheduleService.deleteVetHoliday(holidayId);
 		redirectAttributes.addFlashAttribute("message", "Holiday deleted successfully!");

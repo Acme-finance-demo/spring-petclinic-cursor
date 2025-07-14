@@ -36,10 +36,10 @@ public interface PetRepository extends JpaRepository<Pet, Integer> {
 	Optional<Pet> findById(@Nonnull Integer id);
 
 	/**
-	 * Retrieve all {@link Pet}s from the data store.
+	 * Retrieve all {@link Pet}s from the data store ordered by name.
 	 */
 	@Query("SELECT p FROM Pet p ORDER BY p.name")
-	Collection<Pet> findAll();
+	Collection<Pet> findAllOrderedByName();
 
 	/**
 	 * Retrieve {@link Pet}s by owner id.

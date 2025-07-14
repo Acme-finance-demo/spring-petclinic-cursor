@@ -69,14 +69,16 @@ public interface VetHolidayRepository extends Repository<VetHoliday, Integer> {
 	 */
 	@Transactional(readOnly = true)
 	@Query("SELECT vh FROM VetHoliday vh WHERE vh.holidayDate BETWEEN :startDate AND :endDate ORDER BY vh.holidayDate, vh.vet.lastName")
-	Collection<VetHoliday> findByDateRange(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate) throws DataAccessException;
+	Collection<VetHoliday> findByDateRange(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate)
+			throws DataAccessException;
 
 	/**
 	 * Retrieve <code>VetHoliday</code>s for a specific vet and date range.
 	 */
 	@Transactional(readOnly = true)
 	@Query("SELECT vh FROM VetHoliday vh WHERE vh.vet.id = :vetId AND vh.holidayDate BETWEEN :startDate AND :endDate ORDER BY vh.holidayDate")
-	Collection<VetHoliday> findByVetIdAndDateRange(@Param("vetId") Integer vetId, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate) throws DataAccessException;
+	Collection<VetHoliday> findByVetIdAndDateRange(@Param("vetId") Integer vetId,
+			@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate) throws DataAccessException;
 
 	/**
 	 * Retrieve all holidays for today.

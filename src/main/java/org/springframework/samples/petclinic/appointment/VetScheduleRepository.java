@@ -54,7 +54,8 @@ public interface VetScheduleRepository extends Repository<VetSchedule, Integer> 
 	 */
 	@Transactional(readOnly = true)
 	@Query("SELECT vs FROM VetSchedule vs WHERE vs.vet.id = :vetId AND vs.dayOfWeek = :dayOfWeek")
-	Optional<VetSchedule> findByVetIdAndDayOfWeek(@Param("vetId") Integer vetId, @Param("dayOfWeek") Integer dayOfWeek) throws DataAccessException;
+	Optional<VetSchedule> findByVetIdAndDayOfWeek(@Param("vetId") Integer vetId, @Param("dayOfWeek") Integer dayOfWeek)
+			throws DataAccessException;
 
 	/**
 	 * Retrieve all available <code>VetSchedule</code>s for a specific vet.
@@ -75,7 +76,8 @@ public interface VetScheduleRepository extends Repository<VetSchedule, Integer> 
 	 */
 	@Transactional(readOnly = true)
 	@Query("SELECT COUNT(vs) > 0 FROM VetSchedule vs WHERE vs.vet.id = :vetId AND vs.dayOfWeek = :dayOfWeek AND vs.isAvailable = true")
-	boolean isVetAvailableOnDay(@Param("vetId") Integer vetId, @Param("dayOfWeek") Integer dayOfWeek) throws DataAccessException;
+	boolean isVetAvailableOnDay(@Param("vetId") Integer vetId, @Param("dayOfWeek") Integer dayOfWeek)
+			throws DataAccessException;
 
 	/**
 	 * Delete a schedule by id.

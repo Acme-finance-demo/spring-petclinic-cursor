@@ -52,20 +52,24 @@ import jakarta.validation.Valid;
 public class AppointmentController {
 
 	private static final String VIEWS_APPOINTMENT_LIST = "appointments/appointmentList";
+
 	private static final String VIEWS_APPOINTMENT_FORM = "appointments/appointmentForm";
+
 	private static final String VIEWS_APPOINTMENT_DETAILS = "appointments/appointmentDetails";
+
 	private static final String VIEWS_APPOINTMENT_CALENDAR = "appointments/appointmentCalendar";
 
 	private final AppointmentService appointmentService;
+
 	private final OwnerRepository ownerRepository;
+
 	private final PetRepository petRepository;
+
 	private final VetRepository vetRepository;
 
 	@Autowired
-	public AppointmentController(AppointmentService appointmentService,
-								 OwnerRepository ownerRepository,
-								 PetRepository petRepository,
-								 VetRepository vetRepository) {
+	public AppointmentController(AppointmentService appointmentService, OwnerRepository ownerRepository,
+			PetRepository petRepository, VetRepository vetRepository) {
 		this.appointmentService = appointmentService;
 		this.ownerRepository = ownerRepository;
 		this.petRepository = petRepository;
@@ -76,13 +80,10 @@ public class AppointmentController {
 	 * Display appointment list with search functionality.
 	 */
 	@GetMapping("/appointments")
-	public String showAppointmentList(
-		@RequestParam(defaultValue = "0") int page,
-		@RequestParam(required = false) String startDate,
-		@RequestParam(required = false) String endDate,
-		@RequestParam(required = false) Integer vetId,
-		@RequestParam(required = false) AppointmentStatus status,
-		Model model) {
+	public String showAppointmentList(@RequestParam(defaultValue = "0") int page,
+			@RequestParam(required = false) String startDate, @RequestParam(required = false) String endDate,
+			@RequestParam(required = false) Integer vetId, @RequestParam(required = false) AppointmentStatus status,
+			Model model) {
 
 		// Parse dates
 		LocalDate start = null;
@@ -94,7 +95,8 @@ public class AppointmentController {
 			if (endDate != null && !endDate.isEmpty()) {
 				end = LocalDate.parse(endDate);
 			}
-		} catch (Exception e) {
+		}
+		catch (Exception e) {
 			// Invalid date format, ignore
 		}
 
@@ -124,12 +126,10 @@ public class AppointmentController {
 	 * Display new appointment form.
 	 */
 	@GetMapping("/appointments/new")
-	public String showNewAppointmentForm(
-		@RequestParam(required = false) Integer petId,
-		Model model) {
+	public String showNewAppointmentForm(@RequestParam(required = false) Integer petId, Model model) {
 
 		Appointment appointment = new Appointment();
-		
+
 		// Pre-select pet if provided
 		if (petId != null) {
 			Optional<Pet> petOpt = petRepository.findById(petId);
@@ -150,11 +150,8 @@ public class AppointmentController {
 	 * Process new appointment form submission.
 	 */
 	@PostMapping("/appointments/new")
-	public String processNewAppointmentForm(
-		@Valid @ModelAttribute Appointment appointment,
-		BindingResult result,
-		RedirectAttributes redirectAttributes,
-		Model model) {
+	public String processNewAppointmentForm(@Valid @ModelAttribute Appointment appointment, BindingResult result,
+			RedirectAttributes redirectAttributes, Model model) {
 
 		// Validate business rules
 		if (!result.hasErrors()) {
@@ -184,7 +181,7 @@ public class AppointmentController {
 	@GetMapping("/appointments/{appointmentId}")
 	public String showAppointmentDetails(@PathVariable Integer appointmentId, Model model) {
 		Optional<Appointment> appointmentOpt = appointmentService.findAppointmentById(appointmentId);
-		
+
 		if (appointmentOpt.isEmpty()) {
 			return "redirect:/appointments";
 		}
@@ -199,7 +196,7 @@ public class AppointmentController {
 	@GetMapping("/appointments/{appointmentId}/edit")
 	public String showEditAppointmentForm(@PathVariable Integer appointmentId, Model model) {
 		Optional<Appointment> appointmentOpt = appointmentService.findAppointmentById(appointmentId);
-		
+
 		if (appointmentOpt.isEmpty()) {
 			return "redirect:/appointments";
 		}
@@ -216,12 +213,9 @@ public class AppointmentController {
 	 * Process edit appointment form submission.
 	 */
 	@PostMapping("/appointments/{appointmentId}/edit")
-	public String processEditAppointmentForm(
-		@PathVariable Integer appointmentId,
-		@Valid @ModelAttribute Appointment appointment,
-		BindingResult result,
-		RedirectAttributes redirectAttributes,
-		Model model) {
+	public String processEditAppointmentForm(@PathVariable Integer appointmentId,
+			@Valid @ModelAttribute Appointment appointment, BindingResult result, RedirectAttributes redirectAttributes,
+			Model model) {
 
 		appointment.setId(appointmentId);
 
@@ -291,37 +285,38 @@ public class AppointmentController {
 	 * Display appointment calendar view.
 	 */
 	@GetMapping("/appointments/calendar")
-	public String showAppointmentCalendar(
-		@RequestParam(required = false) String date,
-		@RequestParam(required = false) Integer vetId,
-		Model model) {
+	public String showAppointmentCalendar(@RequestParam(required = false) String date,
+			@RequestParam(required = false) Integer vetId, Model model) {
 
 		LocalDate selectedDate = LocalDate.now();
 		try {
 			if (date != null && !date.isEmpty()) {
 				selectedDate = LocalDate.parse(date);
 			}
-		} catch (Exception e) {
+		}
+		catch (Exception e) {
 			// Invalid date format, use current date
 		}
 
 		// Get appointments for the selected month
 		LocalDate monthStart = selectedDate.withDayOfMonth(1);
 		LocalDate monthEnd = selectedDate.withDayOfMonth(selectedDate.lengthOfMonth());
-		
+
 		Collection<Appointment> appointments;
 		if (vetId != null) {
 			appointments = appointmentService.findAppointmentsByDateRange(monthStart, monthEnd)
 				.stream()
 				.filter(a -> a.getVet().getId().equals(vetId))
 				.toList();
-		} else {
+		}
+		else {
 			appointments = appointmentService.findAppointmentsByDateRange(monthStart, monthEnd);
 		}
 
 		// Get appointments for the selected date
+		final LocalDate finalSelectedDate = selectedDate;
 		Collection<Appointment> dayAppointments = appointments.stream()
-			.filter(a -> a.getAppointmentDate().equals(selectedDate))
+			.filter(a -> a.getAppointmentDate().equals(finalSelectedDate))
 			.toList();
 
 		model.addAttribute("selectedDate", selectedDate);
@@ -339,14 +334,11 @@ public class AppointmentController {
 	 * Add appointments link to pet details by owner.
 	 */
 	@GetMapping("/owners/{ownerId}/pets/{petId}/appointments")
-	public String showPetAppointments(
-		@PathVariable Integer ownerId,
-		@PathVariable Integer petId,
-		Model model) {
+	public String showPetAppointments(@PathVariable Integer ownerId, @PathVariable Integer petId, Model model) {
 
 		Collection<Appointment> appointments = appointmentService.findAppointmentsByPetId(petId);
 		Optional<Pet> petOpt = petRepository.findById(petId);
-		
+
 		if (petOpt.isEmpty()) {
 			return "redirect:/owners/" + ownerId;
 		}

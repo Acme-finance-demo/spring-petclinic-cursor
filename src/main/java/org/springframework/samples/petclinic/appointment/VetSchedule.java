@@ -78,13 +78,14 @@ public class VetSchedule extends BaseEntity {
 	}
 
 	/**
-	 * Set day of week using Java's DayOfWeek enum
-	 * Note: DayOfWeek.MONDAY = 1, but our database uses 1 for Monday
+	 * Set day of week using Java's DayOfWeek enum Note: DayOfWeek.MONDAY = 1, but our
+	 * database uses 1 for Monday
 	 */
 	public void setDayOfWeek(DayOfWeek dayOfWeek) {
 		if (dayOfWeek == DayOfWeek.SUNDAY) {
 			this.dayOfWeek = 0;
-		} else {
+		}
+		else {
 			this.dayOfWeek = dayOfWeek.getValue();
 		}
 	}
