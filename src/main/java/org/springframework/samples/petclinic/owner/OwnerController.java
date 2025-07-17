@@ -170,4 +170,17 @@ class OwnerController {
 		return mav;
 	}
 
+
+	// 問題のある実装
+	@RequestMapping("/risky")
+	public String createProduct(@RequestBody Map<String, String> requestData) {
+
+		String name = requestData.get("name");
+		String price = requestData.get("price");
+		productService.saveProduct(name, Double.parseDouble(price));
+
+		return "Product created!";
+	}
+
+
 }
