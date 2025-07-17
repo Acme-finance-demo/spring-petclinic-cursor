@@ -170,28 +170,15 @@ class OwnerController {
 		return mav;
 	}
 
-	@RestController
-	@RequestMapping("/api/products")
-	public class ProductController {
+	// 問題のある実装
+	@RequestMapping("/risky")
+	public String createProduct(@RequestBody Map<String, String> requestData) {
 
-		@Autowired
-		private ProductService productService;
+		String name = requestData.get("name");
+		String price = requestData.get("price");
+		productService.saveProduct(name, Double.parseDouble(price));
 
-		// 問題のある実装
-		@PostMapping("/create")
-		public String createProduct(@RequestBody Map<String, String> requestData) {
-
-			// セキュリティ懸念①：入力バリデーションが一切ない
-			String name = requestData.get("name");
-			String price = requestData.get("price");
-
-			// セキュリティ懸念②：SQLインジェクションのリスク（もしこのままSQLに使われた場合）
-			// 性能懸念①：サービス層に渡す前の前処理・妥当性チェックがゼロ
-			// 性能懸念②：戻り値が固定文字列であり、レスポンスの一貫性がない
-			productService.saveProduct(name, Double.parseDouble(price));
-
-			return "Product created!";
-		}
+		return "Product created!";
 	}
 
 
