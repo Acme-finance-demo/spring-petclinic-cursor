@@ -8,51 +8,15 @@ image: docker:git
 services:
 - docker:dind
 
-junit:
-  stage: test
-  image: maven:amazoncorretto
+build-job:      # This job runs in the deploy stage.
+  stage: build 
   script:
-    - mvn test
-  artifacts:
-    paths:
-      - target/surefire-reports/
-    reports:
-      junit: target/surefire-reports/TEST-*.xml
-
-
+    - echo "building  application..."
 
 deploy-job:      # This job runs in the deploy stage.
   stage: deploy 
-  environment: production
   script:
     - echo "Deploying application..."
-    - echo "Application successfully deployed."
-
-export-merged-sbom:
-  image: alpine
-  before_script:
-    - apk add --update jq curl
-  stage: .post
-  script:
-    - /bin/sh sbom_export.sh
-  artifacts:
-    paths:
-      - "gl-sbom-merged-*.cdx.json"
-
-pages:
-  stage: pages
-  image: maven:3-jdk-8-alpine
-  dependencies:
-    - junit
-  script:
-    - mkdir -p public
-    - cp -r target/surefire-reports public/
-  artifacts:
-    paths:
-      - public
-  only:
-    - main  # または master ブランチ
-
 
 
 include:
