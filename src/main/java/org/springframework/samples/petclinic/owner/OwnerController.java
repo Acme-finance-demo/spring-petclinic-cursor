@@ -171,8 +171,8 @@ class OwnerController {
 	}
 
 
-	// 問題のある実装
-	@RequestMapping("/risky")
+	// Fixed implementation with explicit HTTP method
+	@RequestMapping(value = "/risky", method = RequestMethod.POST)
 	public String createProduct(@RequestBody Map<String, String> requestData) {
 
 		String name = requestData.get("name");
@@ -186,3 +186,4 @@ class OwnerController {
 
 
 }
+
