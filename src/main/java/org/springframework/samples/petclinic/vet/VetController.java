@@ -75,4 +75,15 @@ class VetController {
 		return vets;
 	}
 
+	//idを指定して vet を返却
+
+	@GetMapping("/vets/{vetId}")
+	public @ResponseBody Vet showVet(@PathVariable("vetId") int vetId) {
+		return this.vetRepository.findById(vetId);
+	}
+
+
+	
+
+
 }
