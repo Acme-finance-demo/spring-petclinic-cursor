@@ -27,16 +27,13 @@ class WelcomeController {
 		return "welcome";
 	}
 
-	// 指定されたプロダクトの生産個数を取得
-
-	@GetMapping("/products/{productId}/quantity")
-	public String getProductQuantity(@PathVariable("productId") int productId) {
-		// This is a placeholder for actual logic to retrieve product quantity
-		// In a real application, you would fetch this from a service or repository
-		int quantity = 100; // Example quantity
-		return "Product " + productId + " quantity: " + quantity;
+	// Hello worldを返す
+	@GetMapping("/hello")
+	public String helloWorld() {
+		return "helloWorld";
 	}
 
+	
 
 
 		
