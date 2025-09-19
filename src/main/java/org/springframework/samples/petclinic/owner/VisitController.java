@@ -21,6 +21,7 @@ import java.util.Optional;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -95,6 +96,46 @@ class VisitController {
 		this.owners.save(owner);
 		redirectAttributes.addFlashAttribute("message", "Your visit has been booked");
 		return "redirect:/owners/{ownerId}";
+	}
+
+	/**
+	 * Delete a visit for a specific pet
+	 * @param ownerId the owner ID
+	 * @param petId the pet ID
+	 * @param visitId the visit ID to delete
+	 * @param redirectAttributes for flash messages
+	 * @return redirect to owner details page
+	 */
+	@DeleteMapping("/owners/{ownerId}/pets/{petId}/visits/{visitId}")
+	public String deleteVisit(@PathVariable int ownerId, @PathVariable int petId, @PathVariable int visitId,
+			RedirectAttributes redirectAttributes) {
+		try {
+			Optional<Owner> optionalOwner = owners.findById(ownerId);
+			Owner owner = optionalOwner.orElseThrow(() -> new IllegalArgumentException(
+					"Owner not found with id: " + ownerId + ". Please ensure the ID is correct"));
+
+			Pet pet = owner.getPet(petId);
+			if (pet == null) {
+				throw new IllegalArgumentException("Pet not found with id: " + petId);
+			}
+
+			// Find and remove the visit
+			boolean visitRemoved = pet.getVisits().removeIf(visit -> visit.getId().equals(visitId));
+			
+			if (!visitRemoved) {
+				throw new IllegalArgumentException("Visit not found with id: " + visitId);
+			}
+
+			this.owners.save(owner);
+			redirectAttributes.addFlashAttribute("message", "Visit has been successfully deleted");
+			
+		} catch (IllegalArgumentException e) {
+			redirectAttributes.addFlashAttribute("error", "Error deleting visit: " + e.getMessage());
+		} catch (Exception e) {
+			redirectAttributes.addFlashAttribute("error", "An unexpected error occurred while deleting the visit");
+		}
+		
+		return "redirect:/owners/" + ownerId;
 	}
 
 }
