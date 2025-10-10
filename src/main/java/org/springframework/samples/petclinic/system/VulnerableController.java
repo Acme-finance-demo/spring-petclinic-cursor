@@ -96,8 +96,9 @@ public class VulnerableController {
     @ResponseBody
     public String readFile(@RequestParam String filename) {
         try {
-            // VULNERABLE: Path traversal - no validation of file path
-            File file = new File("/var/log/" + filename);
+            // Fixed: Path traversal - sanitize the filename to prevent directory traversal
+            String sanitizedFilename = org.apache.commons.io.FilenameUtils.getName(filename);
+            File file = new File("/var/log/" + sanitizedFilename);
             FileInputStream fis = new FileInputStream(file);
             byte[] data = new byte[(int) file.length()];
             fis.read(data);
