@@ -168,7 +168,6 @@ public final class DateUtils {
 		Objects.requireNonNull(startDate, "Start date cannot be null");
 		Objects.requireNonNull(endDate, "End date cannot be null");
 		return !date.isBefore(startDate) && !date.isAfter(endDate);
-	}
 
 	// 2つの日付をLocalDate型で受け取り、間にある平日の日数を返す
 
