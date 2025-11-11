@@ -121,4 +121,20 @@ class ProductControllerTests {
 			.andExpect(jsonPath("$.status").value("error"));
 	}
 
+	@Test
+	void testCreateProduct_ValidationError_EmptyName() throws Exception {
+		// 商品名が空文字のテストデータ
+		Product product = new Product();
+		product.setName("");
+		product.setPrice(new BigDecimal("1000"));
+		product.setCategory("テストカテゴリ");
+		product.setStock(10);
+
+		// APIリクエスト実行
+		mockMvc.perform(post("/api/products").contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(product)))
+			.andExpect(status().isBadRequest())
+			.andExpect(jsonPath("$.status").value("error"));
+	}
+
 }
