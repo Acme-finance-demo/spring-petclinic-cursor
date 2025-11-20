@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+
+<html xmlns:th="https://www.thymeleaf.org" th:replace="~{fragments/layout :: layout (~{::body},'appointments')}">
+
+<body>
+
+  <h2>
+    <th:block th:if="${appointment['new']}" th:text="'New'">New </th:block>
+    <th:block th:if="${not appointment['new']}" th:text="'Edit'">Edit </th:block>
+    Appointment
+  </h2>
+  
+  <form th:object="${appointment}" class="form-horizontal" method="post">
+    <input type="hidden" name="id" th:value="*{id}" />
+    
+    <div class="form-group has-feedback">
+      
+      <!-- Pet Selection -->
+      <div class="form-group">
+        <label class="col-sm-2 control-label">Pet</label>
+        <div class="col-sm-10">
+          <select class="form-control" th:field="*{pet}" required>
+            <option value="">Select a Pet</option>
+            <option th:each="pet : ${pets}" 
+                    th:value="${pet.id}" 
+                    th:text="${pet.name + ' (' + pet.owner.firstName + ' ' + pet.owner.lastName + ')'}">
+              Pet Name (Owner Name)
+            </option>
+          </select>
+          <span class="help-inline" th:if="${#fields.hasErrors('pet')}">
+            <font color="red" th:errors="*{pet}">Pet Error</font>
+          </span>
+        </div>
+      </div>
+
+      <!-- Veterinarian Selection -->
+      <div class="form-group">
+        <label class="col-sm-2 control-label">Veterinarian</label>
+        <div class="col-sm-10">
+          <select class="form-control" th:field="*{vet}" required>
+            <option value="">Select a Veterinarian</option>
+            <option th:each="vet : ${vets}" 
+                    th:value="${vet.id}" 
+                    th:text="${vet.firstName + ' ' + vet.lastName}">
+              Vet Name
+            </option>
+          </select>
+          <span class="help-inline" th:if="${#fields.hasErrors('vet')}">
+            <font color="red" th:errors="*{vet}">Vet Error</font>
+          </span>
+        </div>
+      </div>
+
+      <!-- Appointment Date -->
+      <div class="form-group">
+        <label class="col-sm-2 control-label">Date</label>
+        <div class="col-sm-10">
+          <input class="form-control" th:field="*{appointmentDate}" type="date" required />
+          <span class="help-inline" th:if="${#fields.hasErrors('appointmentDate')}">
+            <font color="red" th:errors="*{appointmentDate}">Date Error</font>
+          </span>
+        </div>
+      </div>
+
+      <!-- Appointment Time -->
+      <div class="form-group">
+        <label class="col-sm-2 control-label">Time</label>
+        <div class="col-sm-10">
+          <input class="form-control" th:field="*{appointmentTime}" type="time" required />
+          <span class="help-inline" th:if="${#fields.hasErrors('appointmentTime')}">
+            <font color="red" th:errors="*{appointmentTime}">Time Error</font>
+          </span>
+        </div>
+      </div>
+
+      <!-- Duration -->
+      <div class="form-group">
+        <label class="col-sm-2 control-label">Duration (minutes)</label>
+        <div class="col-sm-10">
+          <select class="form-control" th:field="*{durationMinutes}" required>
+            <option value="30">30 minutes</option>
+            <option value="45">45 minutes</option>
+            <option value="60">1 hour</option>
+            <option value="90">1.5 hours</option>
+            <option value="120">2 hours</option>
+          </select>
+          <span class="help-inline" th:if="${#fields.hasErrors('durationMinutes')}">
+            <font color="red" th:errors="*{durationMinutes}">Duration Error</font>
+          </span>
+        </div>
+      </div>
+
+      <!-- Reason -->
+      <div class="form-group">
+        <label class="col-sm-2 control-label">Reason</label>
+        <div class="col-sm-10">
+          <textarea class="form-control" th:field="*{reason}" rows="3" maxlength="500" 
+                    placeholder="Reason for the appointment"></textarea>
+          <span class="help-inline" th:if="${#fields.hasErrors('reason')}">
+            <font color="red" th:errors="*{reason}">Reason Error</font>
+          </span>
+        </div>
+      </div>
+
+      <!-- Notes -->
+      <div class="form-group">
+        <label class="col-sm-2 control-label">Notes</label>
+        <div class="col-sm-10">
+          <textarea class="form-control" th:field="*{notes}" rows="3" maxlength="1000" 
+                    placeholder="Additional notes (optional)"></textarea>
+          <span class="help-inline" th:if="${#fields.hasErrors('notes')}">
+            <font color="red" th:errors="*{notes}">Notes Error</font>
+          </span>
+        </div>
+      </div>
+
+      <!-- Status (only for edit mode) -->
+      <div class="form-group" th:if="${not appointment['new']}">
+        <label class="col-sm-2 control-label">Status</label>
+        <div class="col-sm-10">
+          <select class="form-control" th:field="*{status}">
+            <option th:each="status : ${statuses}" 
+                    th:value="${status}" 
+                    th:text="${status}">Status</option>
+          </select>
+          <span class="help-inline" th:if="${#fields.hasErrors('status')}">
+            <font color="red" th:errors="*{status}">Status Error</font>
+          </span>
+        </div>
+      </div>
+
+    </div>
+    
+    <!-- Form Buttons -->
+    <div class="form-group">
+      <div class="col-sm-offset-2 col-sm-10">
+        <button th:with="text=${appointment['new']} ? 'Create Appointment' : 'Update Appointment'" 
+                class="btn btn-primary" type="submit" th:text="${text}">
+          Create Appointment
+        </button>
+        <a class="btn btn-secondary" th:href="@{/appointments}">Cancel</a>
+      </div>
+    </div>
+  </form>
+
+  <!-- Validation Error Summary -->
+  <div th:if="${#fields.hasErrors('appointment')}" class="alert alert-danger">
+    <h4>Please correct the following errors:</h4>
+    <ul>
+      <li th:each="error : ${#fields.errors('appointment')}" th:text="${error}">Error</li>
+    </ul>
+  </div>
+
+</body>
+
+</html>

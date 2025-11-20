@@ -53,3 +53,46 @@ CREATE TABLE IF NOT EXISTS visits (
   description VARCHAR(255),
   FOREIGN KEY (pet_id) REFERENCES pets(id)
 ) engine=InnoDB;
+
+CREATE TABLE IF NOT EXISTS appointments (
+  id INT(4) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  pet_id INT(4) UNSIGNED NOT NULL,
+  vet_id INT(4) UNSIGNED NOT NULL,
+  appointment_date DATE NOT NULL,
+  appointment_time TIME NOT NULL,
+  duration_minutes INT DEFAULT 30,
+  reason VARCHAR(255),
+  symptoms TEXT,
+  status VARCHAR(20) DEFAULT 'PENDING',
+  notes TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX(pet_id),
+  INDEX(vet_id),
+  INDEX(appointment_date),
+  INDEX(status),
+  FOREIGN KEY (pet_id) REFERENCES pets(id),
+  FOREIGN KEY (vet_id) REFERENCES vets(id)
+) engine=InnoDB;
+
+CREATE TABLE IF NOT EXISTS vet_schedules (
+  id INT(4) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  vet_id INT(4) UNSIGNED NOT NULL,
+  day_of_week INT NOT NULL,
+  start_time TIME NOT NULL,
+  end_time TIME NOT NULL,
+  is_available BOOLEAN DEFAULT TRUE,
+  INDEX(vet_id),
+  INDEX(day_of_week),
+  FOREIGN KEY (vet_id) REFERENCES vets(id)
+) engine=InnoDB;
+
+CREATE TABLE IF NOT EXISTS vet_holidays (
+  id INT(4) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  vet_id INT(4) UNSIGNED NOT NULL,
+  holiday_date DATE NOT NULL,
+  reason VARCHAR(255),
+  INDEX(vet_id),
+  INDEX(holiday_date),
+  FOREIGN KEY (vet_id) REFERENCES vets(id)
+) engine=InnoDB;

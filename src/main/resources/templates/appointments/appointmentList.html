@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+
+<html xmlns:th="https://www.thymeleaf.org" th:replace="~{fragments/layout :: layout (~{::body},'appointments')}">
+
+<body>
+
+  <h2>Appointments</h2>
+
+  <!-- Search Form -->
+  <form th:object="${appointment}" th:action="@{/appointments}" method="get" class="form-horizontal" id="search-appointment-form">
+    <div class="form-group">
+      <div class="control-group" id="date">
+        <label class="col-sm-2 control-label">Date</label>
+        <div class="col-sm-10">
+          <input class="form-control" th:field="*{appointmentDate}" size="30" maxlength="80" type="date"/>
+          <span class="help-inline"><font color="red"></font></span>
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <div class="control-group" id="vet">
+        <label class="col-sm-2 control-label">Veterinarian</label>
+        <div class="col-sm-10">
+          <select class="form-control" th:field="*{vet}">
+            <option value="">All Veterinarians</option>
+            <option th:each="vet : ${vets}" th:value="${vet.id}" th:text="${vet.firstName + ' ' + vet.lastName}">Vet Name</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <div class="control-group" id="status">
+        <label class="col-sm-2 control-label">Status</label>
+        <div class="col-sm-10">
+          <select class="form-control" th:field="*{status}">
+            <option value="">All Statuses</option>
+            <option th:each="status : ${statuses}" th:value="${status}" th:text="${status}">Status</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <div class="col-sm-offset-2 col-sm-10">
+        <button type="submit" class="btn btn-primary">Search Appointments</button>
+        <a class="btn btn-secondary" th:href="@{/appointments}">Reset</a>
+      </div>
+    </div>
+  </form>
+
+  <br/>
+  
+  <!-- Action Buttons -->
+  <div class="row">
+    <div class="col-md-12">
+      <a class="btn btn-success" th:href="@{/appointments/new}">
+        <span class="fa fa-plus"></span> New Appointment
+      </a>
+      <a class="btn btn-info" th:href="@{/appointments/calendar}">
+        <span class="fa fa-calendar"></span> Calendar View
+      </a>
+    </div>
+  </div>
+
+  <br/>
+
+  <!-- Appointments Table -->
+  <div th:if="${appointments != null and not #lists.isEmpty(appointments)}">
+    <table id="appointments" class="table table-striped">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Time</th>
+          <th>Pet</th>
+          <th>Owner</th>
+          <th>Veterinarian</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr th:each="appointment : ${appointments}">
+          <td th:text="${#temporals.format(appointment.appointmentDate, 'yyyy-MM-dd')}">2023-12-01</td>
+          <td th:text="${#temporals.format(appointment.appointmentTime, 'HH:mm')}">10:00</td>
+          <td>
+            <a th:href="@{/owners/__${appointment.pet.owner.id}__}" th:text="${appointment.pet.name}">Pet Name</a>
+          </td>
+          <td>
+            <a th:href="@{/owners/__${appointment.pet.owner.id}__}" th:text="${appointment.pet.owner.firstName + ' ' + appointment.pet.owner.lastName}">Owner Name</a>
+          </td>
+          <td th:text="${appointment.vet.firstName + ' ' + appointment.vet.lastName}">Vet Name</td>
+          <td>
+            <span th:class="'badge ' + ${appointment.status == 'CONFIRMED' ? 'bg-success' : appointment.status == 'PENDING' ? 'bg-warning' : appointment.status == 'COMPLETED' ? 'bg-info' : 'bg-secondary'}" 
+                  th:text="${appointment.status}">Status</span>
+          </td>
+          <td>
+            <a class="btn btn-sm btn-primary" th:href="@{/appointments/__${appointment.id}__}">
+              <span class="fa fa-eye"></span> View
+            </a>
+            <a class="btn btn-sm btn-warning" th:href="@{/appointments/__${appointment.id}__/edit}" th:if="${appointment.status == 'PENDING'}">
+              <span class="fa fa-edit"></span> Edit
+            </a>
+            <a class="btn btn-sm btn-success" th:href="@{/appointments/__${appointment.id}__/confirm}" th:if="${appointment.status == 'PENDING'}">
+              <span class="fa fa-check"></span> Confirm
+            </a>
+            <a class="btn btn-sm btn-info" th:href="@{/appointments/__${appointment.id}__/complete}" th:if="${appointment.status == 'CONFIRMED'}">
+              <span class="fa fa-check-circle"></span> Complete
+            </a>
+            <a class="btn btn-sm btn-danger" th:href="@{/appointments/__${appointment.id}__/cancel}" th:if="${appointment.status == 'PENDING' or appointment.status == 'CONFIRMED'}">
+              <span class="fa fa-times"></span> Cancel
+            </a>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- No Appointments Message -->
+  <div th:if="${appointments == null or #lists.isEmpty(appointments)}" class="alert alert-info">
+    <h4>No appointments found</h4>
+    <p>No appointments match your search criteria. Try adjusting your search parameters or <a th:href="@{/appointments/new}">create a new appointment</a>.</p>
+  </div>
+
+</body>
+
+</html>

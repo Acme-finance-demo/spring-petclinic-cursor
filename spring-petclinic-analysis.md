@@ -27,6 +27,15 @@
 |--------|--------|-----|----------|
 | VET001 | 獣医師一覧画面 | `/vets.html` | 獣医師一覧表示 |
 
+### 1.5 診察予約管理画面
+| 画面ID | 画面名 | URL | 機能概要 |
+|--------|--------|-----|----------|
+| APP001 | 予約一覧画面 | `/appointments` | 予約の検索・一覧表示 |
+| APP002 | 予約作成画面 | `/appointments/new` | 新規予約の作成フォーム |
+| APP003 | 予約詳細・編集画面 | `/appointments/{id}` | 予約内容の確認・編集 |
+| APP004 | 予約カレンダー画面 | `/appointments/calendar` | カレンダー形式での予約表示 |
+| APP005 | 獣医師スケジュール管理画面 | `/vets/{id}/schedule` | 獣医師の勤務時間・休診日設定 |
+
 ## 2. テーブル一覧
 
 ### 2.1 テーブル概要
@@ -39,6 +48,9 @@
 | vets | 獣医師 | 獣医師の基本情報を管理 |
 | specialties | 専門分野 | 獣医師の専門分野を管理 |
 | vet_specialties | 獣医師専門分野 | 獣医師と専門分野の関連を管理 |
+| appointments | 診察予約 | ペットの診察予約情報を管理 |
+| vet_schedules | 獣医師スケジュール | 獣医師の勤務時間を管理 |
+| vet_holidays | 獣医師休診日 | 獣医師の休診日を管理 |
 
 ### 2.2 テーブル詳細
 
@@ -94,6 +106,40 @@
 | vet_id | INTEGER | NOT NULL, FK | 獣医師ID |
 | specialty_id | INTEGER | NOT NULL, FK | 専門分野ID |
 
+#### 2.2.8 appointments（診察予約）
+| カラム名 | データ型 | 制約 | 説明 |
+|----------|----------|------|------|
+| id | INTEGER | PRIMARY KEY, AUTO_INCREMENT | 予約ID |
+| pet_id | INTEGER | NOT NULL, FK | ペットID |
+| vet_id | INTEGER | NOT NULL, FK | 獣医師ID |
+| appointment_date | DATE | NOT NULL | 予約日 |
+| appointment_time | TIME | NOT NULL | 予約時刻 |
+| duration_minutes | INTEGER | DEFAULT 30 | 診察時間（分） |
+| reason | VARCHAR(255) | - | 診察理由 |
+| symptoms | TEXT | - | 症状詳細 |
+| status | VARCHAR(20) | DEFAULT 'PENDING' | 予約ステータス |
+| notes | TEXT | - | 備考 |
+| created_at | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP | 作成日時 |
+| updated_at | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP | 更新日時 |
+
+#### 2.2.9 vet_schedules（獣医師スケジュール）
+| カラム名 | データ型 | 制約 | 説明 |
+|----------|----------|------|------|
+| id | INTEGER | PRIMARY KEY, AUTO_INCREMENT | スケジュールID |
+| vet_id | INTEGER | NOT NULL, FK | 獣医師ID |
+| day_of_week | INTEGER | NOT NULL | 曜日（0=日曜、1=月曜...） |
+| start_time | TIME | NOT NULL | 勤務開始時刻 |
+| end_time | TIME | NOT NULL | 勤務終了時刻 |
+| is_available | BOOLEAN | DEFAULT TRUE | 診察可能フラグ |
+
+#### 2.2.10 vet_holidays（獣医師休診日）
+| カラム名 | データ型 | 制約 | 説明 |
+|----------|----------|------|------|
+| id | INTEGER | PRIMARY KEY, AUTO_INCREMENT | 休診日ID |
+| vet_id | INTEGER | NOT NULL, FK | 獣医師ID |
+| holiday_date | DATE | NOT NULL | 休診日 |
+| reason | VARCHAR(255) | - | 休診理由 |
+
 ### 2.3 ER図（Entity Relationship Diagram）
 
 #### 2.3.1 基本的なER図
@@ -145,9 +191,44 @@ erDiagram
         int specialty_id FK
     }
     
+    APPOINTMENTS {
+        int id PK
+        int pet_id FK
+        int vet_id FK
+        date appointment_date
+        time appointment_time
+        int duration_minutes
+        varchar reason
+        text symptoms
+        varchar status
+        text notes
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    VET_SCHEDULES {
+        int id PK
+        int vet_id FK
+        int day_of_week
+        time start_time
+        time end_time
+        boolean is_available
+    }
+    
+    VET_HOLIDAYS {
+        int id PK
+        int vet_id FK
+        date holiday_date
+        varchar reason
+    }
+    
     OWNERS ||--o{ PETS : owns
     PETS }o--|| TYPES : "has type"
     PETS ||--o{ VISITS : "has visits"
+    PETS ||--o{ APPOINTMENTS : "has appointments"
+    VETS ||--o{ APPOINTMENTS : "handles"
+    VETS ||--o{ VET_SCHEDULES : "has schedule"
+    VETS ||--o{ VET_HOLIDAYS : "has holidays"
     VETS }o--o{ VET_SPECIALTIES : "has"
     SPECIALTIES }o--o{ VET_SPECIALTIES : "belongs to"
 ```
@@ -201,10 +282,45 @@ erDiagram
         int specialty_id FK "専門分野ID"
     }
     
+    APPOINTMENTS {
+        int id PK "予約ID"
+        int pet_id FK "ペットID"
+        int vet_id FK "獣医師ID"
+        date appointment_date "予約日"
+        time appointment_time "予約時刻"
+        int duration_minutes "診察時間（分）"
+        varchar reason "診察理由"
+        text symptoms "症状詳細"
+        varchar status "予約ステータス"
+        text notes "備考"
+        timestamp created_at "作成日時"
+        timestamp updated_at "更新日時"
+    }
+    
+    VET_SCHEDULES {
+        int id PK "スケジュールID"
+        int vet_id FK "獣医師ID"
+        int day_of_week "曜日"
+        time start_time "勤務開始時刻"
+        time end_time "勤務終了時刻"
+        boolean is_available "診察可能フラグ"
+    }
+    
+    VET_HOLIDAYS {
+        int id PK "休診日ID"
+        int vet_id FK "獣医師ID"
+        date holiday_date "休診日"
+        varchar reason "休診理由"
+    }
+    
     %% 関係性の定義
     OWNERS ||--o{ PETS : "1人の飼い主は複数のペットを所有"
     PETS }o--|| TYPES : "複数のペットは1つの種別に属する"
     PETS ||--o{ VISITS : "1匹のペットは複数の診療記録を持つ"
+    PETS ||--o{ APPOINTMENTS : "1匹のペットは複数の予約を持つ"
+    VETS ||--o{ APPOINTMENTS : "1人の獣医師は複数の予約を担当"
+    VETS ||--o{ VET_SCHEDULES : "1人の獣医師は複数のスケジュールを持つ"
+    VETS ||--o{ VET_HOLIDAYS : "1人の獣医師は複数の休診日を持つ"
     VETS ||--o{ VET_SPECIALTIES : "1人の獣医師は複数の専門分野を持つ"
     SPECIALTIES ||--o{ VET_SPECIALTIES : "1つの専門分野は複数の獣医師が持つ"
 ```
@@ -216,6 +332,10 @@ erDiagram
 | OWNERS ↔ PETS | 1:N | 1人の飼い主は複数のペットを所有できる |
 | PETS ↔ TYPES | N:1 | 複数のペットは1つの種別に属する |
 | PETS ↔ VISITS | 1:N | 1匹のペットは複数の診療記録を持つ |
+| PETS ↔ APPOINTMENTS | 1:N | 1匹のペットは複数の予約を持つ |
+| VETS ↔ APPOINTMENTS | 1:N | 1人の獣医師は複数の予約を担当する |
+| VETS ↔ VET_SCHEDULES | 1:N | 1人の獣医師は複数のスケジュールを持つ |
+| VETS ↔ VET_HOLIDAYS | 1:N | 1人の獣医師は複数の休診日を持つ |
 | VETS ↔ SPECIALTIES | N:N | 獣医師と専門分野は多対多の関係 |
 
 #### 2.3.4 外部キー制約
@@ -306,7 +426,10 @@ BaseEntity
 ├── Person
 │   ├── Owner
 │   └── Vet
-└── Visit
+├── Visit
+├── Appointment
+├── VetSchedule
+└── VetHoliday
 ```
 
 ### 3.2 主要クラスの関係性
@@ -315,8 +438,22 @@ BaseEntity
 Owner (1) ←─→ (n) Pet (n) ←─→ (1) PetType
                  ↓
                Visit (n)
+                 ↓
+            Appointment (n) ←─→ (1) Vet (1) ←─→ (n) VetSchedule
+                                     ↓
+                                VetHoliday (n)
+                                     ↓
+                              VetSpecialty (n) ←─→ (1) Specialty
 
-Vet (n) ←─→ (n) Specialty
+関係性の詳細:
+- Owner と Pet: 1対多（1人の飼い主が複数のペット所有）
+- Pet と PetType: 多対1（複数のペットが1つの種別に属する）
+- Pet と Visit: 1対多（1匹のペットが複数の診療記録を持つ）
+- Pet と Appointment: 1対多（1匹のペットが複数の予約を持つ）
+- Vet と Appointment: 1対多（1人の獣医師が複数の予約を担当）
+- Vet と VetSchedule: 1対多（1人の獣医師が複数のスケジュールを持つ）
+- Vet と VetHoliday: 1対多（1人の獣医師が複数の休診日を持つ）
+- Vet と Specialty: 多対多（VetSpecialtyを介した関係）
 ```
 
 ### 3.3 コントローラクラス構成
@@ -332,6 +469,15 @@ Vet (n) ←─→ (n) Specialty
 │   └── バリデーション
 ├── VisitController
 │   └── 診療記録登録
+├── AppointmentController
+│   ├── 予約一覧・検索
+│   ├── 予約作成・更新・削除
+│   ├── 予約ステータス管理
+│   └── カレンダー表示
+├── ScheduleController
+│   ├── 獣医師スケジュール管理
+│   ├── 勤務時間設定
+│   └── 休診日管理
 ├── VetController
 │   └── 獣医師一覧
 └── WelcomeController
@@ -593,6 +739,189 @@ Vet (n) ←─→ (n) Specialty
 - 専門分野の複数表示
 - JSON形式での出力も可能
 
+### 4.8 予約一覧画面（APP001）
+
+#### 4.8.1 画面概要
+- **画面ID**: APP001
+- **画面名**: 予約一覧画面
+- **URL**: `/appointments`
+- **機能**: 予約の検索・一覧表示
+
+#### 4.8.2 画面レイアウト
+```
+┌─────────────────────────────────────┐
+│ Appointments                       │
+├─────────────────────────────────────┤
+│ Search: Date [____] Vet [____] [検索] │
+├─────────────────────────────────────┤
+│ Date | Time | Pet | Owner | Vet | Status │
+├─────────────────────────────────────┤
+│ 2024-01-15 | 10:00 | ポチ | 田中太郎 | 山田先生 | 確定 │
+│ 2024-01-15 | 14:30 | タマ | 佐藤花子 | 鈴木先生 | 待機 │
+├─────────────────────────────────────┤
+│ [<<] [<] Page 1 of 5 [>] [>>]      │
+│ [New Appointment] [Calendar View]   │
+└─────────────────────────────────────┘
+```
+
+#### 4.8.3 入力項目
+| 項目名 | 項目ID | 入力タイプ | 必須 | 説明 |
+|--------|--------|-----------|------|------|
+| 検索日付 | searchDate | date | - | 予約日での絞り込み |
+| 獣医師 | vetId | select | - | 獣医師での絞り込み |
+| ステータス | status | select | - | 予約ステータスでの絞り込み |
+
+#### 4.8.4 表示項目・機能
+- 予約日時、ペット名、飼い主名、獣医師名、ステータス
+- ページネーション（10件ずつ表示）
+- 新規予約作成・カレンダー表示へのリンク
+
+### 4.9 予約作成画面（APP002）
+
+#### 4.9.1 画面概要
+- **画面ID**: APP002
+- **画面名**: 予約作成画面
+- **URL**: `/appointments/new`
+- **機能**: 新規予約の作成
+
+#### 4.9.2 画面レイアウト
+```
+┌─────────────────────────────────────┐
+│ New Appointment                    │
+├─────────────────────────────────────┤
+│ Pet: [▼ Select Pet        ]        │
+│ Veterinarian: [▼ Select Vet    ]   │
+│ Date: [____-__-__]                 │
+│ Time: [__:__]                      │
+│ Duration: [30] minutes             │
+│ Reason: [________________]         │
+│ Symptoms: [________________]       │
+│           [________________]       │
+│                                    │
+│ [Create Appointment] [Cancel]      │
+└─────────────────────────────────────┘
+```
+
+#### 4.9.3 入力項目
+| 項目名 | 項目ID | 入力タイプ | 必須 | 説明 |
+|--------|--------|-----------|------|------|
+| ペット | petId | select | ✓ | 予約対象のペット |
+| 獣医師 | vetId | select | ✓ | 担当獣医師 |
+| 予約日 | appointmentDate | date | ✓ | 予約日 |
+| 予約時刻 | appointmentTime | time | ✓ | 予約時刻 |
+| 診察時間 | durationMinutes | number | - | 診察予定時間（分） |
+| 診察理由 | reason | text | - | 診察の理由 |
+| 症状 | symptoms | textarea | - | 詳細な症状 |
+
+#### 4.9.4 バリデーション・機能
+- 予約日時の重複チェック
+- 獣医師の勤務時間チェック
+- 過去日時の予約禁止
+- リアルタイム空き時間表示
+
+### 4.10 予約詳細・編集画面（APP003）
+
+#### 4.10.1 画面概要
+- **画面ID**: APP003
+- **画面名**: 予約詳細・編集画面
+- **URL**: `/appointments/{id}`
+- **機能**: 予約内容の確認・編集
+
+#### 4.10.2 画面レイアウト
+```
+┌─────────────────────────────────────┐
+│ Appointment Details                │
+├─────────────────────────────────────┤
+│ Pet: ポチ (田中太郎)                │
+│ Veterinarian: 山田先生             │
+│ Date: 2024-01-15                   │
+│ Time: 10:00 - 10:30                │
+│ Status: [▼ CONFIRMED ]             │
+│ Reason: 定期検診                   │
+│ Symptoms: 食欲不振、元気がない      │
+│ Notes: [________________]          │
+│        [________________]          │
+│                                    │
+│ [Update] [Cancel Appointment]      │
+│ [Mark as Completed]                │
+└─────────────────────────────────────┘
+```
+
+#### 4.10.3 機能詳細
+- 予約ステータスの変更
+- 診察メモの追加・編集
+- 予約のキャンセル
+- 診察完了マーク
+
+### 4.11 予約カレンダー画面（APP004）
+
+#### 4.11.1 画面概要
+- **画面ID**: APP004
+- **画面名**: 予約カレンダー画面
+- **URL**: `/appointments/calendar`
+- **機能**: カレンダー形式での予約表示
+
+#### 4.11.2 画面レイアウト
+```
+┌─────────────────────────────────────┐
+│ Appointment Calendar               │
+├─────────────────────────────────────┤
+│ [<] January 2024 [>]  [Month][Week] │
+├─────────────────────────────────────┤
+│ Mon | Tue | Wed | Thu | Fri | Sat | Sun │
+├─────────────────────────────────────┤
+│  1  │  2  │  3  │  4  │  5  │  6  │  7  │
+│     │10:00│     │     │14:00│     │     │
+│     │ポチ │     │     │タマ │     │     │
+├─────────────────────────────────────┤
+│  8  │  9  │ 10  │ 11  │ 12  │ 13  │ 14  │
+│     │     │     │09:30│     │     │     │
+│     │     │     │花子 │     │     │     │
+└─────────────────────────────────────┘
+```
+
+#### 4.11.3 機能詳細
+- 月表示・週表示の切り替え
+- 獣医師別表示フィルター
+- 予約のドラッグ&ドロップ編集
+- 空き時間の視覚表示
+
+### 4.12 獣医師スケジュール管理画面（APP005）
+
+#### 4.12.1 画面概要
+- **画面ID**: APP005
+- **画面名**: 獣医師スケジュール管理画面
+- **URL**: `/vets/{id}/schedule`
+- **機能**: 獣医師の勤務時間・休診日設定
+
+#### 4.12.2 画面レイアウト
+```
+┌─────────────────────────────────────┐
+│ Dr. 山田のスケジュール管理            │
+├─────────────────────────────────────┤
+│ 勤務時間設定                        │
+│ Monday:    [09:00] - [17:00] [✓]   │
+│ Tuesday:   [09:00] - [17:00] [✓]   │
+│ Wednesday: [09:00] - [12:00] [✓]   │
+│ Thursday:  [09:00] - [17:00] [✓]   │
+│ Friday:    [09:00] - [17:00] [✓]   │
+│ Saturday:  [09:00] - [15:00] [✓]   │
+│ Sunday:    [------] - [------] [ ]   │
+│                                    │
+│ 休診日設定                          │
+│ Date: [2024-01-20] Reason: [年末年始] │
+│ [Add Holiday]                      │
+│                                    │
+│ [Save Schedule]                    │
+└─────────────────────────────────────┘
+```
+
+#### 4.12.3 機能詳細
+- 曜日別勤務時間設定
+- 休診日の個別設定
+- 診察可能フラグの管理
+- スケジュール一括保存
+
 ## 5. 技術的特徴
 
 ### 5.1 使用技術
@@ -623,6 +952,7 @@ graph TB
     A[ホーム画面<br/>'/'] --> B[飼い主検索画面<br/>'/owners/find']
     A --> H[獣医師一覧画面<br/>'/vets.html']
     A --> I[エラー画面<br/>'/oups']
+    A --> L[予約一覧画面<br/>'/appointments']
     
     B --> C[飼い主一覧画面<br/>'/owners']
     B --> D[飼い主登録画面<br/>'/owners/new']
@@ -634,23 +964,38 @@ graph TB
     E --> G[ペット登録画面<br/>'/owners/{ownerId}/pets/new']
     E --> J[ペット編集画面<br/>'/owners/{ownerId}/pets/{petId}/edit']
     E --> K[診療記録登録画面<br/>'/owners/{ownerId}/pets/{petId}/visits/new']
+    E --> M[予約作成画面<br/>'/appointments/new']
     
     F --> E
     G --> E
     J --> E
     K --> E
     
+    L --> N[予約詳細・編集画面<br/>'/appointments/{id}']
+    L --> M
+    L --> O[予約カレンダー画面<br/>'/appointments/calendar']
+    
+    M --> L
+    N --> L
+    O --> L
+    O --> N
+    
+    H --> P[獣医師スケジュール管理画面<br/>'/vets/{id}/schedule']
+    P --> H
+    
     %% スタイル定義
     classDef homeStyle fill:#e1f5fe,stroke:#01579b,stroke-width:3px
     classDef ownerStyle fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
     classDef petStyle fill:#e8f5e8,stroke:#1b5e20,stroke-width:2px
     classDef vetStyle fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    classDef appointmentStyle fill:#f0f4c3,stroke:#827717,stroke-width:2px
     classDef errorStyle fill:#ffebee,stroke:#c62828,stroke-width:2px
     
     class A homeStyle
     class B,C,D,E,F ownerStyle
     class G,J,K petStyle
-    class H vetStyle
+    class H,P vetStyle
+    class L,M,N,O appointmentStyle
     class I errorStyle
 ```
 
@@ -662,6 +1007,7 @@ graph TB
         A[ホーム画面] --> B[飼い主検索画面]
         A --> H[獣医師一覧画面]
         A --> I[エラー画面]
+        A --> L[予約一覧画面]
     end
     
     subgraph "飼い主管理機能"
@@ -685,11 +1031,27 @@ graph TB
         K --> |登録完了| E
     end
     
+    subgraph "診察予約機能"
+        E --> |Book Appointment| M[予約作成画面]
+        L --> |New Appointment| M
+        L --> |View Details| N[予約詳細・編集画面]
+        L --> |Calendar View| O[予約カレンダー画面]
+        M --> |予約完了| L
+        N --> |更新完了| L
+        O --> |予約選択| N
+    end
+    
+    subgraph "獣医師スケジュール機能"
+        H --> |Manage Schedule| P[獣医師スケジュール管理画面]
+        P --> |設定完了| H
+    end
+    
     %% ナビゲーション
     B -.-> |ナビゲーション| A
     C -.-> |ナビゲーション| A
     E -.-> |ナビゲーション| A
     H -.-> |ナビゲーション| A
+    L -.-> |ナビゲーション| A
     
     %% スタイル定義
     classDef homeStyle fill:#e1f5fe,stroke:#01579b,stroke-width:3px
@@ -746,6 +1108,7 @@ stateDiagram-v2
     
     Home --> FindOwner: Find owners
     Home --> VetList: Veterinarians
+    Home --> AppointmentList: Appointments
     Home --> Error: Error (demo)
     
     FindOwner --> OwnerList: 検索実行
@@ -762,6 +1125,7 @@ stateDiagram-v2
     OwnerDetail --> CreatePet: Add New Pet
     OwnerDetail --> EditPet: Edit Pet
     OwnerDetail --> CreateVisit: Add Visit
+    OwnerDetail --> CreateAppointment: Book Appointment
     OwnerDetail --> Home: ナビゲーション
     
     EditOwner --> OwnerDetail: 更新完了
@@ -769,7 +1133,31 @@ stateDiagram-v2
     EditPet --> OwnerDetail: 更新完了
     CreateVisit --> OwnerDetail: 登録完了
     
+    AppointmentList --> AppointmentDetail: 予約選択
+    AppointmentList --> CreateAppointment: New Appointment
+    AppointmentList --> AppointmentCalendar: Calendar View
+    AppointmentList --> Home: ナビゲーション
+    
+    CreateAppointment --> AppointmentDetail: 予約完了
+    CreateAppointment --> OwnerDetail: ペット選択から戻る
+    CreateAppointment --> AppointmentList: キャンセル
+    
+    AppointmentDetail --> EditAppointment: Edit
+    AppointmentDetail --> AppointmentList: 一覧に戻る
+    AppointmentDetail --> OwnerDetail: 飼い主詳細へ
+    
+    EditAppointment --> AppointmentDetail: 更新完了
+    
+    AppointmentCalendar --> AppointmentDetail: 予約選択
+    AppointmentCalendar --> AppointmentList: List View
+    AppointmentCalendar --> VetSchedule: 獣医師スケジュール
+    
+    VetList --> VetSchedule: スケジュール管理
     VetList --> Home: ナビゲーション
+    
+    VetSchedule --> VetList: 一覧に戻る
+    VetSchedule --> AppointmentCalendar: カレンダーに戻る
+    
     Error --> Home: ナビゲーション
 ```
 
@@ -814,6 +1202,216 @@ graph LR
 - **直感的な操作**: 検索→一覧→詳細の自然な流れ
 - **効率的な管理**: 飼い主詳細画面で全ての関連操作が可能
 - **一貫性**: 全画面で統一されたナビゲーション
+
+### 4.10 予約一覧画面（APP001）
+
+#### 4.10.1 画面概要
+- **画面ID**: APP001
+- **画面名**: 予約一覧画面
+- **URL**: `/appointments`
+- **機能**: 予約の検索・一覧表示
+
+#### 4.10.2 画面レイアウト
+```
+┌─────────────────────────────────────────────────────────┐
+│ Appointments                                           │
+├─────────────────────────────────────────────────────────┤
+│ 検索条件:                                               │
+│ 予約日: [2024-01-01] から [2024-01-31]                 │
+│ 獣医師: [すべて ▼] ステータス: [すべて ▼] [検索]      │
+│ [New Appointment] [Calendar View]                       │
+├─────────────────────────────────────────────────────────┤
+│ Date/Time | Pet | Owner | Vet | Status | Actions       │
+├─────────────────────────────────────────────────────────┤
+│ 01/15 10:00 | ポチ | 田中太郎 | 佐藤獣医 | CONFIRMED | [View] [Edit] │
+│ 01/15 11:00 | ミケ | 山田花子 | 佐藤獣医 | PENDING | [View] [Edit] │
+├─────────────────────────────────────────────────────────┤
+│ [<<] [<] Page 1 of 5 [>] [>>]                         │
+└─────────────────────────────────────────────────────────┘
+```
+
+#### 4.10.3 検索項目
+| 項目名 | 項目ID | 入力タイプ | 必須 | 説明 |
+|--------|--------|-----------|------|------|
+| 予約日（開始） | startDate | date | - | 検索期間の開始日 |
+| 予約日（終了） | endDate | date | - | 検索期間の終了日 |
+| 獣医師 | vetId | select | - | 担当獣医師での絞り込み |
+| ステータス | status | select | - | 予約ステータスでの絞り込み |
+
+#### 4.10.4 表示項目
+| 項目名 | 説明 |
+|--------|------|
+| Date/Time | 予約日時 |
+| Pet | ペット名 |
+| Owner | 飼い主名 |
+| Vet | 担当獣医師名 |
+| Status | 予約ステータス（PENDING/CONFIRMED/COMPLETED/CANCELLED） |
+| Actions | 詳細表示・編集ボタン |
+
+#### 4.10.5 機能詳細
+- 予約の検索・絞り込み機能
+- ページネーション（10件ずつ表示）
+- カレンダービューへの切り替え
+- 新規予約作成
+- 予約詳細表示・編集
+
+### 4.11 予約作成画面（APP002）
+
+#### 4.11.1 画面概要
+- **画面ID**: APP002
+- **画面名**: 予約作成画面
+- **URL**: `/appointments/new`
+- **機能**: 新規予約の作成
+
+#### 4.11.2 画面レイアウト
+```
+┌─────────────────────────────────────────────────────────┐
+│ New Appointment                                        │
+├─────────────────────────────────────────────────────────┤
+│ ペット情報:                                             │
+│ 飼い主: [検索...] [選択済み: 田中太郎]                  │
+│ ペット: [ポチ ▼]                                       │
+│                                                         │
+│ 予約情報:                                               │
+│ 予約日: [2024-01-15]                                   │
+│ 予約時刻: [10:00 ▼]                                    │
+│ 診察時間: [30分 ▼]                                     │
+│ 担当獣医師: [佐藤獣医 ▼]                               │
+│                                                         │
+│ 診察内容:                                               │
+│ 診察理由: [_________________________________]           │
+│ 症状詳細:                                               │
+│ [_________________________________________________]     │
+│ [_________________________________________________]     │
+│                                                         │
+│ 備考:                                                   │
+│ [_________________________________________________]     │
+│                                                         │
+│ [Save Appointment] [Cancel]                            │
+└─────────────────────────────────────────────────────────┘
+```
+
+#### 4.11.3 入力項目
+| 項目名 | 項目ID | 入力タイプ | 必須 | 説明 |
+|--------|--------|-----------|------|------|
+| 飼い主 | ownerId | search/select | ○ | 飼い主の選択 |
+| ペット | petId | select | ○ | 選択された飼い主のペット |
+| 予約日 | appointmentDate | date | ○ | 予約日 |
+| 予約時刻 | appointmentTime | time | ○ | 予約時刻 |
+| 診察時間 | duration | select | - | 診察予定時間（15/30/45/60分） |
+| 担当獣医師 | vetId | select | ○ | 担当獣医師 |
+| 診察理由 | reason | text | - | 診察理由 |
+| 症状詳細 | symptoms | textarea | - | 症状の詳細説明 |
+| 備考 | notes | textarea | - | その他備考 |
+
+#### 4.11.4 バリデーション
+- 予約日時の重複チェック
+- 獣医師の勤務時間チェック
+- 獣医師の休診日チェック
+- 過去日の予約禁止
+
+### 4.12 予約詳細・編集画面（APP003）
+
+#### 4.12.1 画面概要
+- **画面ID**: APP003
+- **画面名**: 予約詳細・編集画面
+- **URL**: `/appointments/{id}`
+- **機能**: 予約内容の確認・編集
+
+#### 4.12.2 画面レイアウト（詳細表示モード）
+```
+┌─────────────────────────────────────────────────────────┐
+│ Appointment Details                                    │
+├─────────────────────────────────────────────────────────┤
+│ 予約ID: #12345                                         │
+│ ステータス: [CONFIRMED]                                │
+│                                                         │
+│ ペット情報:                                             │
+│ 飼い主: 田中太郎                                       │
+│ ペット: ポチ (犬, 3歳)                                 │
+│                                                         │
+│ 予約情報:                                               │
+│ 予約日時: 2024年1月15日 10:00-10:30                   │
+│ 担当獣医師: 佐藤獣医                                   │
+│                                                         │
+│ 診察内容:                                               │
+│ 診察理由: 定期検診                                     │
+│ 症状詳細: 特になし。健康状態チェック希望               │
+│                                                         │
+│ 備考: なし                                             │
+│                                                         │
+│ 作成日時: 2024/01/10 15:30                            │
+│ 更新日時: 2024/01/12 09:15                            │
+│                                                         │
+│ [Edit] [Cancel Appointment] [Back to List]            │
+└─────────────────────────────────────────────────────────┘
+```
+
+### 4.13 予約カレンダー画面（APP004）
+
+#### 4.13.1 画面概要
+- **画面ID**: APP004
+- **画面名**: 予約カレンダー画面
+- **URL**: `/appointments/calendar`
+- **機能**: カレンダー形式での予約表示
+
+#### 4.13.2 画面レイアウト
+```
+┌─────────────────────────────────────────────────────────┐
+│ Appointment Calendar                                   │
+├─────────────────────────────────────────────────────────┤
+│ [< 2024年1月 >] [Today] [List View]                   │
+├─────────────────────────────────────────────────────────┤
+│ 日  月  火  水  木  金  土                              │
+├─────────────────────────────────────────────────────────┤
+│    1   2   3   4   5   6                              │
+│  7  8   9  10  11  12  13                             │
+│ 14 [15] 16  17  18  19  20                            │
+│ 21  22  23  24  25  26  27                            │
+│ 28  29  30  31                                         │
+├─────────────────────────────────────────────────────────┤
+│ 選択日: 2024年1月15日                                  │
+│ 10:00 ポチ(田中) - 佐藤獣医 [詳細]                     │
+│ 11:00 ミケ(山田) - 佐藤獣医 [詳細]                     │
+│ 14:00 [空き時間]                                       │
+│ 15:00 タロウ(鈴木) - 田中獣医 [詳細]                   │
+└─────────────────────────────────────────────────────────┘
+```
+
+### 4.14 獣医師スケジュール管理画面（APP005）
+
+#### 4.14.1 画面概要
+- **画面ID**: APP005
+- **画面名**: 獣医師スケジュール管理画面
+- **URL**: `/vets/{id}/schedule`
+- **機能**: 獣医師の勤務時間・休診日設定
+
+#### 4.14.2 画面レイアウト
+```
+┌─────────────────────────────────────────────────────────┐
+│ Vet Schedule Management - 佐藤獣医                      │
+├─────────────────────────────────────────────────────────┤
+│ 基本勤務時間:                                           │
+│ 月曜日: [09:00] - [18:00] ☑診察可能                    │
+│ 火曜日: [09:00] - [18:00] ☑診察可能                    │
+│ 水曜日: [09:00] - [18:00] ☑診察可能                    │
+│ 木曜日: [09:00] - [18:00] ☑診察可能                    │
+│ 金曜日: [09:00] - [18:00] ☑診察可能                    │
+│ 土曜日: [09:00] - [14:00] ☑診察可能                    │
+│ 日曜日: [      ] - [      ] ☐診察可能                   │
+│                                                         │
+│ [Save Schedule]                                        │
+├─────────────────────────────────────────────────────────┤
+│ 休診日設定:                                             │
+│ 休診日: [2024-01-20] 理由: [学会参加___] [追加]        │
+│                                                         │
+│ 登録済み休診日:                                         │
+│ 2024/01/20 学会参加 [削除]                            │
+│ 2024/02/15 有給休暇 [削除]                            │
+│                                                         │
+│ [Back to Vet List]                                     │
+└─────────────────────────────────────────────────────────┘
+```
 
 ## 7. 今後の拡張可能性
 
