@@ -33,9 +33,9 @@ import org.springframework.samples.petclinic.model.BaseEntity;
 public class Product extends BaseEntity {
 
 	@Column(name = "name")
-	@NotBlank(message = "商品名は必須です")
+	@Column(name = "name")
+	@NotNull(message = "商品名はnullにできません")
 	private String name;
-
 	@Column(name = "price")
 	@NotNull(message = "価格は必須です")
 	@Min(value = 0, message = "価格は0以上である必要があります")
