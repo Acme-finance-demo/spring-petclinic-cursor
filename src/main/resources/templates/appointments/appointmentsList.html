@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+
+<html xmlns:th="https://www.thymeleaf.org" th:replace="~{fragments/layout :: layout (~{::body},'owners')}">
+
+<body>
+
+  <h2>
+    <span th:text="#{appointments}">Appointments</span>
+    <span th:text="' for ' + ${pet.name}"></span>
+  </h2>
+
+  <b th:text="#{pet}">Pet</b>
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th th:text="#{name}">Name</th>
+        <th th:text="#{birthDate}">Birth Date</th>
+        <th th:text="#{type}">Type</th>
+        <th th:text="#{owner}">Owner</th>
+      </tr>
+    </thead>
+    <tr>
+      <td th:text="${pet.name}"></td>
+      <td th:text="${#temporals.format(pet.birthDate, 'yyyy-MM-dd')}"></td>
+      <td th:text="${pet.type}"></td>
+      <td th:text="${owner?.firstName + ' ' + owner?.lastName}"></td>
+    </tr>
+  </table>
+
+  <br />
+  <h3 th:text="#{appointmentInformation}">Appointment Information</h3>
+  
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th th:text="#{appointmentDate}">Appointment Date</th>
+        <th th:text="#{veterinarian}">Veterinarian</th>
+        <th th:text="#{reason}">Reason</th>
+        <th th:text="#{appointmentStatus}">Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr th:if="${#lists.isEmpty(appointments)}">
+        <td colspan="5">No appointments found for this pet.</td>
+      </tr>
+      <tr th:each="appointment : ${appointments}">
+        <td th:text="${#temporals.format(appointment.appointmentDate, 'yyyy-MM-dd HH:mm')}"></td>
+        <td th:text="${appointment.vet.firstName + ' ' + appointment.vet.lastName}"></td>
+        <td th:text="${appointment.reason}"></td>
+        <td th:text="${appointment.status}"></td>
+        <td>
+          <a th:href="@{/owners/__${owner.id}__/pets/__${pet.id}__/appointments/__${appointment.id}__/edit}" 
+             th:text="#{editAppointment}">Edit</a>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <br />
+  <a th:href="@{/owners/__${owner.id}__}" class="btn btn-primary">Back to Owner</a>
+  <a th:href="@{/owners/__${owner.id}__/pets/__${pet.id}__/appointments/new}" 
+     class="btn btn-primary" th:text="#{addAppointment}">Add Appointment</a>
+
+</body>
+
+</html>
