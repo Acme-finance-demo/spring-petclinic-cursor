@@ -77,6 +77,9 @@ class AppointmentController {
 	public Appointment loadAppointmentWithPetAndVet(@PathVariable(name = "appointmentId", required = false) Integer appointmentId,
 			@PathVariable("petId") int petId, ModelMap model) {
 		Pet pet = this.pets.findById(petId);
+		if (pet == null) {
+			throw new IllegalArgumentException("Pet not found: " + petId);
+		}
 		model.put("pet", pet);
 		
 		Owner owner = pet.getOwner();
