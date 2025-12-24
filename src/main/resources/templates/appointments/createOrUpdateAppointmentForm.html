@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+
+<html xmlns:th="https://www.thymeleaf.org" th:replace="~{fragments/layout :: layout (~{::body},'owners')}">
+
+<body>
+
+  <h2>
+    <th:block th:if="${appointment['new']}" th:text="#{newAppointment}">New Appointment</th:block>
+    <th:block th:unless="${appointment['new']}" th:text="#{editAppointment}">Edit Appointment</th:block>
+  </h2>
+
+  <b th:text="#{pet}">Pet</b>
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th th:text="#{name}">Name</th>
+        <th th:text="#{birthDate}">Birth Date</th>
+        <th th:text="#{type}">Type</th>
+        <th th:text="#{owner}">Owner</th>
+      </tr>
+    </thead>
+    <tr>
+      <td th:text="${pet.name}"></td>
+      <td th:text="${#temporals.format(pet.birthDate, 'yyyy-MM-dd')}"></td>
+      <td th:text="${pet.type}"></td>
+      <td th:text="${owner?.firstName + ' ' + owner?.lastName}"></td>
+    </tr>
+  </table>
+
+  <div id="validation-errors" class="alert alert-danger" style="display: none;" role="alert" aria-live="polite">
+    <ul id="error-list"></ul>
+  </div>
+
+  <form th:object="${appointment}" class="form-horizontal" method="post" id="appointmentForm">
+    <div class="form-group has-feedback">
+      <input th:replace="~{fragments/datetimeField :: datetime (#{appointmentDate}, 'appointmentDate')}" />
+      <input th:replace="~{fragments/inputField :: input (#{reason}, 'reason', 'text')}" />
+      <input th:replace="~{fragments/selectField :: select (#{veterinarian}, 'vet', ${vets})}" />
+    </div>
+
+    <div class="form-group">
+      <div class="col-sm-offset-2 col-sm-10">
+        <input type="hidden" name="petId" th:value="${pet.id}" />
+        <button class="btn btn-primary" type="submit" 
+          th:text="${appointment['new']} ? #{addAppointment} : #{updateAppointment}">Add Appointment</button>
+      </div>
+    </div>
+  </form>
+
+  <script th:inline="javascript">
+    /*<![CDATA[*/
+    document.getElementById('appointmentForm').addEventListener('submit', function(event) {
+      var errors = [];
+      var errorDiv = document.getElementById('validation-errors');
+      var errorList = document.getElementById('error-list');
+      
+      // Clear previous errors
+      errorList.innerHTML = '';
+      errorDiv.style.display = 'none';
+      
+      // Get form values
+      var appointmentDate = document.querySelector('input[name="appointmentDate"]').value;
+      var reason = document.querySelector('input[name="reason"]').value;
+      var vet = document.querySelector('select[name="vet"]').value;
+      
+      // Validate appointment date is not in the past
+      if (appointmentDate) {
+        var selectedDate = new Date(appointmentDate);
+        var now = new Date();
+        if (selectedDate < now) {
+          errors.push(/*[[#{appointmentDate.future}]]*/ 'Appointment date must be in the future');
+        }
+      } else {
+        errors.push(/*[[#{appointmentDate.required}]]*/ 'Appointment date is required');
+      }
+      
+      // Validate reason
+      if (!reason || reason.trim().length === 0) {
+        errors.push(/*[[#{reason.required}]]*/ 'Reason is required');
+      } else if (reason.trim().length < 5) {
+        errors.push(/*[[#{reason.minLength}]]*/ 'Reason must be at least 5 characters');
+      }
+      
+      // Validate vet selection
+      if (!vet || vet.trim().length === 0) {
+        errors.push(/*[[#{vet.required}]]*/ 'Please select a veterinarian');
+      }
+      
+      // Display errors if any
+      if (errors.length > 0) {
+        event.preventDefault();
+        errors.forEach(function(error) {
+          var li = document.createElement('li');
+          li.textContent = error;
+          errorList.appendChild(li);
+        });
+        errorDiv.style.display = 'block';
+        errorDiv.focus();
+        return false;
+      }
+      
+      return true;
+    });
+    /*]]>*/
+  </script>
+
+</body>
+
+</html>
