@@ -1,28 +1,80 @@
-stages:      
+stages:
   - build
   - test
-  - pages
+  - security
   - deploy
 
-image: docker:git
-services:
-- docker:dind
+variables:
+  MAVEN_OPTS: "-Dmaven.repo.local=$CI_PROJECT_DIR/.m2/repository"
+  MAVEN_CLI_OPTS: "-s $CI_PROJECT_DIR/.m2/settings.xml --batch-mode --errors --fail-at-end --show-version"
 
-build-job:      # This job runs in the deploy stage.
-  stage: build 
+cache:
+  paths:
+    - .m2/repository/
+    - target/
+
+build-job:
+  stage: build
+  image: maven:3.9-eclipse-temurin-17
   script:
-    - echo "building  application..."
+    - mvn clean package -DskipTests $MAVEN_CLI_OPTS
+  artifacts:
+    paths:
+      - target/
+    expire_in: 1 hour
+  cache:
+    paths:
+      - .m2/repository/
 
-deploy-job:      # This job runs in the deploy stage.
-  stage: deploy 
+test-job:
+  stage: test
+  image: maven:3.9-eclipse-temurin-17
+  script:
+    - mvn test $MAVEN_CLI_OPTS
+  artifacts:
+    reports:
+      junit: target/surefire-reports/TEST-*.xml
+    expire_in: 30 days
+  cache:
+    paths:
+      - .m2/repository/
+  dependencies:
+    - build-job
+
+code-quality-job:
+  stage: test
+  image: maven:3.9-eclipse-temurin-17
+  script:
+    - mvn verify $MAVEN_CLI_OPTS
+  cache:
+    paths:
+      - .m2/repository/
+  allow_failure: true
+
+sast-job:
+  stage: security
+  allow_failure: true
+
+secret-detection-job:
+  stage: security
+  allow_failure: true
+
+dependency-scanning-job:
+  stage: security
+  allow_failure: true
+
+deploy-job:
+  stage: deploy
+  image: alpine:latest
   script:
     - echo "Deploying application..."
-
+  when: manual
+  only:
+    - main
 
 include:
-  - template: Jobs/Code-Intelligence.gitlab-ci.yml  
-  - template: Jobs/SAST.gitlab-ci.yml  
-  - template: Jobs/Secret-Detection.gitlab-ci.yml  
+  - template: Jobs/SAST.gitlab-ci.yml
+  - template: Jobs/Secret-Detection.gitlab-ci.yml
   - template: Jobs/Dependency-Scanning.gitlab-ci.yml
 
 
