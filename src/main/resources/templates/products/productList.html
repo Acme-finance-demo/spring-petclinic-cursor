@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{fragments/layout :: layout (~{::body})}">
+<head>
+    <meta charset="UTF-8"/>
+    <title>商品一覧</title>
+</head>
+<body>
+<h2>商品一覧</h2>
+
+<table class="table table-striped">
+    <thead>
+    <tr>
+        <th>商品ID</th>
+        <th>商品名</th>
+        <th>価格</th>
+        <th>カテゴリ</th>
+        <th>説明</th>
+        <th>操作</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="product : ${products}">
+        <td th:text="${product.id}">1</td>
+        <td th:text="${product.name}">商品名</td>
+        <td th:text="${product.price}">1000</td>
+        <td th:text="${product.category}">カテゴリ</td>
+        <td th:text="${product.description}">説明</td>
+        <td>
+            <a th:href="@{/products/{id}/edit(id=${product.id})}" class="btn btn-primary btn-sm">編集</a>
+            <form th:action="@{/products/{id}/delete(id=${product.id})}" method="post" style="display:inline;">
+                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('削除してもよろしいですか？');">削除</button>
+            </form>
+        </td>
+    </tr>
+    </tbody>
+</table>
+
+<a href="/products/new" class="btn btn-success">新規作成</a>
+
+</body>
+</html>
