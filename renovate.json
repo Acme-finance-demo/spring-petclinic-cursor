@@ -1,0 +1,29 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended"
+  ],
+  "labels": ["dependencies"],
+  "assignees": ["naosasaki"],
+  "packageRules": [
+    {
+      "matchManagers": ["maven"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "automerge": false,
+      "groupName": "Maven dependencies (minor and patch)"
+    },
+    {
+      "matchManagers": ["maven"],
+      "matchUpdateTypes": ["major"],
+      "automerge": false,
+      "groupName": "Maven dependencies (major)"
+    },
+    {
+      "matchPackageNames": ["org.springframework.boot:spring-boot-starter-parent"],
+      "groupName": "Spring Boot"
+    }
+  ],
+  "schedule": ["before 9am on Monday"],
+  "prConcurrentLimit": 5,
+  "branchPrefix": "renovate/"
+}
