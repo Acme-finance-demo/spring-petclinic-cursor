@@ -41,7 +41,7 @@ public class Visit extends BaseEntity {
 	@DateTimeFormat(pattern = "yyyy-MM-dd")
 	private LocalDate date;
 
-	@Column(name = "appointment_time")
+	@Column(name = "visit_time")
 	@DateTimeFormat(pattern = "HH:mm")
 	@NotNull
 	private LocalTime appointmentTime;
