@@ -27,7 +27,7 @@ renovate:
     RENOVATE_TOKEN: $RENOVATE_TOKEN
     RENOVATE_PLATFORM: gitlab
     RENOVATE_ENDPOINT: https://gitlab.com/api/v4
-    RENOVATE_REPOSITORIES: "gl-demo-ultimate-nsasaki/app/py/dap-swag-shop"
+    RENOVATE_REPOSITORIES: "gl-demo-ultimate-nsasaki/app/java/spring-petclinic/"
     LOG_LEVEL: debug
   script:
     - renovate
