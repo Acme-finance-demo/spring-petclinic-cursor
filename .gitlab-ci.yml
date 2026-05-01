@@ -3,6 +3,7 @@ stages:
   - test
   - pages
   - deploy
+  - maintenance
 
 image: docker:git
 services:
@@ -18,6 +19,21 @@ deploy-job:      # This job runs in the deploy stage.
   script:
     - echo "Deploying application..."
 
+
+renovate:
+  stage: maintenance
+  image: renovate/renovate:latest
+  variables:
+    RENOVATE_TOKEN: $RENOVATE_TOKEN
+    RENOVATE_PLATFORM: gitlab
+    RENOVATE_ENDPOINT: https://gitlab.com/api/v4
+    RENOVATE_REPOSITORIES: "gl-demo-ultimate-nsasaki/app/py/dap-swag-shop"
+    LOG_LEVEL: debug
+  script:
+    - renovate
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+  tags: []
 
 include:
   - template: Jobs/Code-Intelligence.gitlab-ci.yml  
