@@ -1,9 +1,9 @@
 stages:      
+  - renovate
   - build
   - test
   - pages
   - deploy
-  - maintenance
 
 image: docker:git
 services:
@@ -21,7 +21,7 @@ deploy-job:      # This job runs in the deploy stage.
 
 
 renovate:
-  stage: maintenance
+  stage: renovate
   image: renovate/renovate:latest
   variables:
     RENOVATE_TOKEN: $RENOVATE_TOKEN
