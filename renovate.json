@@ -8,7 +8,8 @@
     {
       "matchManagers": ["maven"],
       "labels": ["dependencies", "renovate"],
-      "automerge": false
+      "automerge": false,
+      "minimumReleaseAge": "7 days"
     }
   ],
   "prConcurrentLimit": 5
