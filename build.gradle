@@ -25,7 +25,7 @@ repositories {
 }
 
 ext.checkstyleVersion = "10.25.0"
-ext.springJavaformatCheckstyleVersion = "0.0.46"
+ext.springJavaformatCheckstyleVersion = "0.0.47"
 ext.webjarsLocatorLiteVersion = "1.1.0"
 ext.webjarsFontawesomeVersion = "4.7.0"
 ext.webjarsBootstrapVersion = "5.3.6"
