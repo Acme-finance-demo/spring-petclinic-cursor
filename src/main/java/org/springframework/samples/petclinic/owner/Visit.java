@@ -16,6 +16,7 @@
 package org.springframework.samples.petclinic.owner;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.samples.petclinic.model.BaseEntity;
@@ -24,6 +25,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * Simple JavaBean domain object representing a visit.
@@ -38,6 +40,15 @@ public class Visit extends BaseEntity {
 	@Column(name = "visit_date")
 	@DateTimeFormat(pattern = "yyyy-MM-dd")
 	private LocalDate date;
+
+	@Column(name = "visit_time")
+	@DateTimeFormat(pattern = "HH:mm")
+	@NotNull
+	private LocalTime appointmentTime;
+
+	@Column(name = "vet_id")
+	@NotNull
+	private Integer vetId;
 
 	@NotBlank
 	private String description;
@@ -55,6 +66,22 @@ public class Visit extends BaseEntity {
 
 	public void setDate(LocalDate date) {
 		this.date = date;
+	}
+
+	public LocalTime getAppointmentTime() {
+		return this.appointmentTime;
+	}
+
+	public void setAppointmentTime(LocalTime appointmentTime) {
+		this.appointmentTime = appointmentTime;
+	}
+
+	public Integer getVetId() {
+		return this.vetId;
+	}
+
+	public void setVetId(Integer vetId) {
+		this.vetId = vetId;
 	}
 
 	public String getDescription() {

@@ -6,7 +6,7 @@
 
   <h2>
     <th:block th:if="${visit['new']}" th:text="#{new}">New </th:block>
-    Visit
+    <span th:text="#{visit}">Visit</span>
   </h2>
 
   <b th:text="#{pet}">Pet</b>
@@ -27,16 +27,95 @@
     </tr>
   </table>
 
-  <form th:object="${visit}" class="form-horizontal" method="post">
+  <form th:object="${visit}" class="form-horizontal" method="post" id="visitForm" novalidate>
     <div class="form-group has-feedback">
-      <input th:replace="~{fragments/inputField :: input ('Date', 'date', 'date')}" />
-      <input th:replace="~{fragments/inputField :: input ('Description', 'description', 'text')}" />
+
+      <!-- Vet Selection -->
+      <div th:with="valid=${!#fields.hasErrors('vetId')}"
+           th:class="${'form-group' + (valid ? '' : ' has-error')}" class="form-group">
+        <label for="vetId" class="col-sm-2 control-label" th:text="#{vet}">Veterinarian</label>
+        <div class="col-sm-10">
+          <select id="vetId" th:field="*{vetId}" class="form-control" required>
+            <option value="" th:text="#{selectVet}">-- Select a Veterinarian --</option>
+            <option th:each="vet : ${vets}"
+                    th:value="${vet.id}"
+                    th:text="${vet.firstName + ' ' + vet.lastName}">Vet Name</option>
+          </select>
+          <span th:if="${valid}" class="fa fa-ok form-control-feedback" aria-hidden="true"></span>
+          <th:block th:if="${!valid}">
+            <span class="fa fa-remove form-control-feedback" aria-hidden="true"></span>
+            <span class="help-inline" th:errors="*{vetId}" th:text="#{error}">Error</span>
+          </th:block>
+        </div>
+      </div>
+
+      <!-- Appointment Date -->
+      <div th:with="valid=${!#fields.hasErrors('date')}"
+           th:class="${'form-group' + (valid ? '' : ' has-error')}" class="form-group">
+        <label for="date" class="col-sm-2 control-label" th:text="#{date}">Date</label>
+        <div class="col-sm-10">
+          <input id="date" class="form-control" type="date" th:field="*{date}" required />
+          <span th:if="${valid}" class="fa fa-ok form-control-feedback" aria-hidden="true"></span>
+          <th:block th:if="${!valid}">
+            <span class="fa fa-remove form-control-feedback" aria-hidden="true"></span>
+            <span class="help-inline" th:errors="*{date}" th:text="#{error}">Error</span>
+          </th:block>
+        </div>
+      </div>
+
+      <!-- Appointment Time -->
+      <div th:with="valid=${!#fields.hasErrors('appointmentTime')}"
+           th:class="${'form-group' + (valid ? '' : ' has-error')}" class="form-group">
+        <label for="appointmentTime" class="col-sm-2 control-label" th:text="#{appointmentTime}">Time</label>
+        <div class="col-sm-10">
+          <select id="appointmentTime" th:field="*{appointmentTime}" class="form-control" required>
+            <option value="" th:text="#{selectTime}">-- Select a Time --</option>
+            <option value="09:00">09:00</option>
+            <option value="09:30">09:30</option>
+            <option value="10:00">10:00</option>
+            <option value="10:30">10:30</option>
+            <option value="11:00">11:00</option>
+            <option value="11:30">11:30</option>
+            <option value="13:00">13:00</option>
+            <option value="13:30">13:30</option>
+            <option value="14:00">14:00</option>
+            <option value="14:30">14:30</option>
+            <option value="15:00">15:00</option>
+            <option value="15:30">15:30</option>
+            <option value="16:00">16:00</option>
+            <option value="16:30">16:30</option>
+          </select>
+          <span th:if="${valid}" class="fa fa-ok form-control-feedback" aria-hidden="true"></span>
+          <th:block th:if="${!valid}">
+            <span class="fa fa-remove form-control-feedback" aria-hidden="true"></span>
+            <span class="help-inline" th:errors="*{appointmentTime}" th:text="#{error}">Error</span>
+          </th:block>
+          <small class="form-text text-muted" th:text="#{businessHoursNote}">Business hours: 09:00-12:00, 13:00-17:00</small>
+        </div>
+      </div>
+
+      <!-- Description -->
+      <div th:with="valid=${!#fields.hasErrors('description')}"
+           th:class="${'form-group' + (valid ? '' : ' has-error')}" class="form-group">
+        <label for="description" class="col-sm-2 control-label" th:text="#{description}">Description</label>
+        <div class="col-sm-10">
+          <input id="description" class="form-control" type="text" th:field="*{description}" required />
+          <span th:if="${valid}" class="fa fa-ok form-control-feedback" aria-hidden="true"></span>
+          <th:block th:if="${!valid}">
+            <span class="fa fa-remove form-control-feedback" aria-hidden="true"></span>
+            <span class="help-inline" th:errors="*{description}" th:text="#{error}">Error</span>
+          </th:block>
+        </div>
+      </div>
+
     </div>
 
     <div class="form-group">
       <div class="col-sm-offset-2 col-sm-10">
         <input type="hidden" name="petId" th:value="${pet.id}" />
-        <button class="btn btn-primary" type="submit" th:text="#{addVisit}">Add Visit</button>
+        <button class="btn btn-primary" type="submit"
+                th:text="${visit['new']} ? #{addVisit} : #{updateVisit}">Add Visit</button>
+        <a th:href="@{/owners/__${owner.id}__}" class="btn btn-default" th:text="#{cancel}">Cancel</a>
       </div>
     </div>
   </form>
@@ -46,13 +125,46 @@
   <table class="table table-striped">
     <tr>
       <th th:text="#{date}">Date</th>
+      <th th:text="#{appointmentTime}">Time</th>
       <th th:text="#{description}">Description</th>
     </tr>
     <tr th:if="${!visit['new']}" th:each="visit : ${pet.visits}">
       <td th:text="${#temporals.format(visit.date, 'yyyy-MM-dd')}"></td>
-      <td th:text=" ${visit.description}"></td>
+      <td th:text="${visit.appointmentTime != null ? #temporals.format(visit.appointmentTime, 'HH:mm') : '-'}"></td>
+      <td th:text="${visit.description}"></td>
     </tr>
   </table>
+
+  <script>
+    // Client-side validation: prevent past dates
+    document.addEventListener('DOMContentLoaded', function () {
+      var dateInput = document.getElementById('date');
+      if (dateInput) {
+        var today = new Date().toISOString().split('T')[0];
+        dateInput.setAttribute('min', today);
+
+        dateInput.addEventListener('change', function () {
+          if (this.value < today) {
+            this.setCustomValidity(/*[[#{pastDateError}]]*/ 'Appointment date must not be in the past');
+          } else {
+            this.setCustomValidity('');
+          }
+        });
+      }
+
+      // Validate required fields on submit
+      var form = document.getElementById('visitForm');
+      if (form) {
+        form.addEventListener('submit', function (event) {
+          if (!form.checkValidity()) {
+            event.preventDefault();
+            event.stopPropagation();
+          }
+          form.classList.add('was-validated');
+        });
+      }
+    });
+  </script>
 
 </body>
 

@@ -23,16 +23,19 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
+import java.time.LocalDate;
+import java.util.Collections;
+import java.util.Optional;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledInNativeImage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.samples.petclinic.vet.VetRepository;
 import org.springframework.test.context.aot.DisabledInAotMode;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-
-import java.util.Optional;
 
 /**
  * Test class for {@link VisitController}
@@ -49,11 +52,19 @@ class VisitControllerTests {
 
 	private static final int TEST_PET_ID = 1;
 
+	private static final int TEST_VISIT_ID = 1;
+
 	@Autowired
 	private MockMvc mockMvc;
 
 	@MockitoBean
 	private OwnerRepository owners;
+
+	@MockitoBean
+	private VetRepository vets;
+
+	@MockitoBean
+	private VisitRepository visits;
 
 	@BeforeEach
 	void init() {
@@ -62,6 +73,14 @@ class VisitControllerTests {
 		owner.addPet(pet);
 		pet.setId(TEST_PET_ID);
 		given(this.owners.findById(TEST_OWNER_ID)).willReturn(Optional.of(owner));
+		given(this.vets.findAll()).willReturn(Collections.emptyList());
+
+		Visit visit = new Visit();
+		visit.setId(TEST_VISIT_ID);
+		visit.setDescription("Test visit");
+		visit.setVetId(1);
+		visit.setDate(LocalDate.now().plusDays(1));
+		given(this.visits.findById(TEST_VISIT_ID)).willReturn(Optional.of(visit));
 	}
 
 	@Test
@@ -76,7 +95,10 @@ class VisitControllerTests {
 		mockMvc
 			.perform(post("/owners/{ownerId}/pets/{petId}/visits/new", TEST_OWNER_ID, TEST_PET_ID)
 				.param("name", "George")
-				.param("description", "Visit Description"))
+				.param("description", "Visit Description")
+				.param("vetId", "1")
+				.param("date", LocalDate.now().plusDays(1).toString())
+				.param("appointmentTime", "10:00"))
 			.andExpect(status().is3xxRedirection())
 			.andExpect(view().name("redirect:/owners/{ownerId}"));
 	}
@@ -86,6 +108,40 @@ class VisitControllerTests {
 		mockMvc
 			.perform(post("/owners/{ownerId}/pets/{petId}/visits/new", TEST_OWNER_ID, TEST_PET_ID).param("name",
 					"George"))
+			.andExpect(model().attributeHasErrors("visit"))
+			.andExpect(status().isOk())
+			.andExpect(view().name("pets/createOrUpdateVisitForm"));
+	}
+
+	@Test
+	void testInitEditVisitForm() throws Exception {
+		mockMvc
+			.perform(get("/owners/{ownerId}/pets/{petId}/visits/{visitId}/edit", TEST_OWNER_ID, TEST_PET_ID,
+					TEST_VISIT_ID))
+			.andExpect(status().isOk())
+			.andExpect(view().name("pets/createOrUpdateVisitForm"))
+			.andExpect(model().attributeExists("visit"));
+	}
+
+	@Test
+	void testProcessEditVisitFormSuccess() throws Exception {
+		mockMvc
+			.perform(post("/owners/{ownerId}/pets/{petId}/visits/{visitId}/edit", TEST_OWNER_ID, TEST_PET_ID,
+					TEST_VISIT_ID)
+				.param("description", "Updated Description")
+				.param("vetId", "1")
+				.param("date", LocalDate.now().plusDays(1).toString())
+				.param("appointmentTime", "10:00"))
+			.andExpect(status().is3xxRedirection())
+			.andExpect(view().name("redirect:/owners/{ownerId}"));
+	}
+
+	@Test
+	void testProcessEditVisitFormHasErrors() throws Exception {
+		mockMvc
+			.perform(post("/owners/{ownerId}/pets/{petId}/visits/{visitId}/edit", TEST_OWNER_ID, TEST_PET_ID,
+					TEST_VISIT_ID)
+				.param("name", "George"))
 			.andExpect(model().attributeHasErrors("visit"))
 			.andExpect(status().isOk())
 			.andExpect(view().name("pets/createOrUpdateVisitForm"));
