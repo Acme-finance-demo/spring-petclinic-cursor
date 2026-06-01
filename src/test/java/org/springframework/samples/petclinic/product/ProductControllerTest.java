@@ -97,21 +97,37 @@ class ProductControllerTest {
                 .content(objectMapper.writeValueAsString(invalidProduct)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("バリデーションエラー"));
-    }
-
     @Test
     @WithMockUser
-    void testCreateProductWithNegativeStock() throws Exception {
+    void testCreateProductWithNegativePrice() throws Exception {
         Product invalidProduct = new Product();
         invalidProduct.setProductName("テスト商品");
-        invalidProduct.setPrice(1000);
+        invalidProduct.setPrice(-100);
         invalidProduct.setCategory("テストカテゴリ");
-        invalidProduct.setStock(-5);
+        invalidProduct.setStock(10);
 
         mockMvc.perform(post("/api/products")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(invalidProduct)))
                 .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("バリデーションエラー"));
+    }
+
+    @Test
+    @WithMockUser
+    void testCreateProductWithHalfWidthKatakana() throws Exception {
+        Product invalidProduct = new Product();
+        invalidProduct.setProductName("ﾃｽﾄ商品"); // 半角カタカナを含む商品名
+        invalidProduct.setPrice(100);
+        invalidProduct.setCategory("テストカテゴリ");
+        invalidProduct.setStock(10);
+
+        mockMvc.perform(post("/api/products")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(invalidProduct)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("バリデーションエラー"));
+    }
                 .andExpect(jsonPath("$.message").value("バリデーションエラー"));
     }
 }
