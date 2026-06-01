@@ -15,31 +15,37 @@
  */
 package org.springframework.samples.petclinic.product;
 
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.validation.Valid;
 
 /**
- * REST controller for managing {@link Product} resources.
+ * REST controller for product registration.
  */
 @RestController
 @RequestMapping("/api/products")
 class ProductController {
 
-	private final ProductService productService;
+	private final ProductRepository productRepository;
 
-	ProductController(ProductService productService) {
-		this.productService = productService;
+	ProductController(ProductRepository productRepository) {
+		this.productRepository = productRepository;
 	}
 
 	@PostMapping
-	public ResponseEntity<Product> createProduct(@Valid @RequestBody Product product) {
-		Product saved = productService.save(product);
-		return ResponseEntity.ok(saved);
+	@ResponseStatus(HttpStatus.CREATED)
+	public Product createProduct(@Valid @RequestBody ProductRequest request) {
+		Product product = new Product();
+		product.setProductName(request.getProductName());
+		product.setPrice(request.getPrice());
+		product.setCategory(request.getCategory());
+		product.setStock(request.getStock());
+		return productRepository.save(product);
 	}
 
 }

@@ -20,11 +20,6 @@ import org.springframework.samples.petclinic.model.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 
 /**
  * Simple JavaBean domain object representing a product.
@@ -34,25 +29,15 @@ import jakarta.validation.constraints.Size;
 public class Product extends BaseEntity {
 
 	@Column(name = "product_name")
-	@NotBlank
-	@Size(min = 1, max = 100)
 	private String productName;
 
 	@Column(name = "price")
-	@NotNull
-	@Min(1)
-	@Max(1000000)
 	private Integer price;
 
 	@Column(name = "category")
-	@NotBlank
-	@Size(min = 1, max = 100)
 	private String category;
 
 	@Column(name = "stock")
-	@NotNull
-	@Min(1)
-	@Max(10000)
 	private Integer stock;
 
 	public String getProductName() {

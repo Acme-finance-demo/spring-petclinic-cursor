@@ -55,9 +55,9 @@ CREATE TABLE IF NOT EXISTS visits (
 ) engine=InnoDB;
 
 CREATE TABLE IF NOT EXISTS products (
-  id           INT(4) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  id INT(4) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
   product_name VARCHAR(100) NOT NULL,
-  price        INT NOT NULL,
-  category     VARCHAR(100) NOT NULL,
-  stock        INT NOT NULL
+  price INT NOT NULL,
+  category VARCHAR(100) NOT NULL,
+  stock INT NOT NULL
 ) engine=InnoDB;
