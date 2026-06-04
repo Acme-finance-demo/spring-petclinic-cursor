@@ -51,3 +51,9 @@ INSERT INTO visits VALUES (default, 7, '2013-01-01', 'rabies shot');
 INSERT INTO visits VALUES (default, 8, '2013-01-02', 'rabies shot');
 INSERT INTO visits VALUES (default, 8, '2013-01-03', 'neutered');
 INSERT INTO visits VALUES (default, 7, '2013-01-04', 'spayed');
+
+INSERT INTO products VALUES (default, 'Premium Dog Food', 5000, 'Pet Food', 500);
+INSERT INTO products VALUES (default, 'Cat Toy Set', 1500, 'Pet Toys', 200);
+INSERT INTO products VALUES (default, 'Pet Carrier', 8000, 'Pet Accessories', 50);
+INSERT INTO products VALUES (default, 'Aquarium Filter', 3500, 'Aquarium Supplies', 150);
+INSERT INTO products VALUES (default, 'Bird Cage', 12000, 'Pet Housing', 30);
