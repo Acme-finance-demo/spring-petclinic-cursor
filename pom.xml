@@ -29,6 +29,9 @@
     <webjars-bootstrap.version>5.3.6</webjars-bootstrap.version>
     <webjars-font-awesome.version>4.7.0</webjars-font-awesome.version>
 
+    <!-- Security fix: Override Tomcat version to address CVE-2026-43515 -->
+    <tomcat.version>10.1.55</tomcat.version>
+
     <checkstyle.version>10.25.0</checkstyle.version>
     <jacoco.version>0.8.13</jacoco.version>
     <libsass.version>0.3.4</libsass.version>
