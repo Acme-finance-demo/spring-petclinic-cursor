@@ -38,7 +38,7 @@ class ProductControllerAdvice {
 		List<String> errors = ex.getBindingResult()
 			.getFieldErrors()
 			.stream()
-			.map(FieldError::getDefaultMessage)
+			.map(e -> e.getField() + ": " + e.getDefaultMessage())
 			.toList();
 		Map<String, Object> body = new LinkedHashMap<>();
 		body.put("status", HttpStatus.BAD_REQUEST.value());
