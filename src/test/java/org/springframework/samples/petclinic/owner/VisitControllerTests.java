@@ -72,6 +72,12 @@ class VisitControllerTests {
 	}
 
 	@Test
+	void testInitNewVisitFormWithInvalidPetId() throws Exception {
+		mockMvc.perform(get("/owners/{ownerId}/pets/{petId}/visits/new", TEST_OWNER_ID, 999))
+			.andExpect(status().is5xxServerError());
+	}
+
+	@Test
 	void testProcessNewVisitFormSuccess() throws Exception {
 		mockMvc
 			.perform(post("/owners/{ownerId}/pets/{petId}/visits/new", TEST_OWNER_ID, TEST_PET_ID)

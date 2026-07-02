@@ -94,6 +94,12 @@ class PetControllerTests {
 	}
 
 	@Test
+	void testInitUpdateFormWithInvalidPetId() throws Exception {
+		mockMvc.perform(get("/owners/{ownerId}/pets/{petId}/edit", TEST_OWNER_ID, 999))
+			.andExpect(status().is5xxServerError());
+	}
+
+	@Test
 	void testProcessCreationFormSuccess() throws Exception {
 		mockMvc
 			.perform(post("/owners/{ownerId}/pets/new", TEST_OWNER_ID).param("name", "Betty")
