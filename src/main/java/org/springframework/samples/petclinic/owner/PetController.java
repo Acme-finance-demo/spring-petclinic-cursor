@@ -21,6 +21,7 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
+import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.WebDataBinder;
@@ -79,7 +80,9 @@ class PetController {
 		Optional<Owner> optionalOwner = this.owners.findById(ownerId);
 		Owner owner = optionalOwner.orElseThrow(() -> new IllegalArgumentException(
 				"Owner not found with id: " + ownerId + ". Please ensure the ID is correct "));
-		return owner.getPet(petId);
+		Pet pet = owner.getPet(petId);
+		Assert.notNull(pet, "Pet not found with id: " + petId + ". Please ensure the ID is correct");
+		return pet;
 	}
 
 	@InitBinder("owner")
@@ -160,16 +163,12 @@ class PetController {
 	 * @param pet The pet with updated details
 	 */
 	private void updatePetDetails(Owner owner, Pet pet) {
+		Assert.notNull(pet.getId(), "Pet ID must not be null");
 		Pet existingPet = owner.getPet(pet.getId());
-		if (existingPet != null) {
-			// Update existing pet's properties
-			existingPet.setName(pet.getName());
-			existingPet.setBirthDate(pet.getBirthDate());
-			existingPet.setType(pet.getType());
-		}
-		else {
-			owner.addPet(pet);
-		}
+		Assert.notNull(existingPet, "Pet not found with id: " + pet.getId());
+		existingPet.setName(pet.getName());
+		existingPet.setBirthDate(pet.getBirthDate());
+		existingPet.setType(pet.getType());
 		this.owners.save(owner);
 	}
 
