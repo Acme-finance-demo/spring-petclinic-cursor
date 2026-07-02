@@ -34,6 +34,20 @@ renovate:
     - if: $CI_PIPELINE_SOURCE == "web"
   tags: []
 
+trigger-renovate-impact-analysis:
+  stage: .post
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_COMMIT_AUTHOR =~ /renovate/i'
+  script:
+    - echo "Duo Workflowをトリガー"
+    # GitLab API経由でワークフローを起動
+    - |
+      curl --request POST \
+        --header "PRIVATE-TOKEN: $DUO_WORKFLOW_TOKEN" \
+        --header "Content-Type: application/json" \
+        --data '{"workflow": "renovate-impact-analysis", "inputs": {"merge_request_url": "'$CI_MERGE_REQUEST_PROJECT_URL'/-/merge_requests/'$CI_MERGE_REQUEST_IID'"}}' \
+        "$CI_API_V4_URL/projects/$CI_PROJECT_ID/duo_workflows/runs"
+
 include:
   - template: Jobs/Code-Intelligence.gitlab-ci.yml  
   - template: Jobs/SAST.gitlab-ci.yml  
