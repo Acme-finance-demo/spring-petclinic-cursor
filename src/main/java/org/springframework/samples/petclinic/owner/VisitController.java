@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.stereotype.Controller;
+import org.springframework.util.Assert;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -67,6 +68,7 @@ class VisitController {
 				"Owner not found with id: " + ownerId + ". Please ensure the ID is correct "));
 
 		Pet pet = owner.getPet(petId);
+		Assert.notNull(pet, "Pet not found with id: " + petId + ". Please ensure the ID is correct");
 		model.put("pet", pet);
 		model.put("owner", owner);
 
