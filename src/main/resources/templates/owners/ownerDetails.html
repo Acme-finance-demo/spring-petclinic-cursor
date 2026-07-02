@@ -7,12 +7,12 @@
   <h2 th:text="#{ownerInformation}">Owner Information</h2>
 
   <div th:if="${message}" class="alert alert-success alert-dismissible fade show" id="success-message" role="alert">
-    <span th:text="${message}"></span>
+    <span th:text="${message}" th:remove="tag"></span>
     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
   </div>
 
   <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" id="error-message" role="alert">
-    <span th:text="${error}"></span>
+    <span th:text="${error}" th:remove="tag"></span>
     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
   </div>
 
