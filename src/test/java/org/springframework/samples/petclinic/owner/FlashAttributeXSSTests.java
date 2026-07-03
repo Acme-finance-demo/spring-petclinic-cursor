@@ -126,4 +126,25 @@ class FlashAttributeXSSTests {
 			.andExpect(status().is3xxRedirection());
 	}
 
+	@Test
+	void testOwnerCreationWithXSSPayloadInErrorMessage() throws Exception {
+		mockMvc
+			.perform(post("/owners/new").param("firstName", "Joe").param("lastName", "Bloggs").param("city", "London"))
+			.andExpect(status().isOk())
+			.andExpect(content().string(containsString("There was an error in creating the owner.")))
+			.andExpect(content().string(not(containsString("<script>alert('XSS')</script>"))));
+	}
+
+	@Test
+	void testOwnerUpdateWithXSSPayloadInErrorMessage() throws Exception {
+		mockMvc
+			.perform(post("/owners/{ownerId}/edit", TEST_OWNER_ID).param("firstName", "Joe")
+				.param("lastName", "Bloggs")
+				.param("address", "")
+				.param("telephone", ""))
+			.andExpect(status().isOk())
+			.andExpect(content().string(containsString("There was an error in updating the owner.")))
+			.andExpect(content().string(not(containsString("<img src=x onerror=alert('XSS')>"))));
+	}
+
 }
