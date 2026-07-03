@@ -99,6 +99,15 @@ class FlashAttributeXSSTests {
 	}
 
 	@Test
+	void testOwnerCreationErrorMessageWithXSSPayloadIsEscaped() throws Exception {
+		mockMvc
+			.perform(post("/owners/new").param("firstName", "Joe").param("lastName", "Bloggs").param("city", "London"))
+			.andExpect(status().isOk())
+			.andExpect(content().string(not(containsString("<script>alert('XSS')</script>"))))
+			.andExpect(content().string(not(containsString("&lt;script&gt;alert('XSS')&lt;/script&gt;"))));
+	}
+
+	@Test
 	void testOwnerUpdateErrorMessageIsEscaped() throws Exception {
 		mockMvc
 			.perform(post("/owners/{ownerId}/edit", TEST_OWNER_ID).param("firstName", "Joe")
@@ -108,6 +117,18 @@ class FlashAttributeXSSTests {
 			.andExpect(status().isOk())
 			.andExpect(content().string(containsString("There was an error in updating the owner.")))
 			.andExpect(content().string(not(containsString("<script>"))));
+	}
+
+	@Test
+	void testOwnerUpdateErrorMessageWithXSSPayloadIsEscaped() throws Exception {
+		mockMvc
+			.perform(post("/owners/{ownerId}/edit", TEST_OWNER_ID).param("firstName", "Joe")
+				.param("lastName", "Bloggs")
+				.param("address", "")
+				.param("telephone", ""))
+			.andExpect(status().isOk())
+			.andExpect(content().string(not(containsString("<script>alert('XSS')</script>"))))
+			.andExpect(content().string(not(containsString("&lt;script&gt;alert('XSS')&lt;/script&gt;"))));
 	}
 
 	@Test
