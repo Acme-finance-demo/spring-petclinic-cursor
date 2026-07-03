@@ -45,8 +45,7 @@ import org.springframework.http.ResponseEntity;
  *
  * @author Security Team
  */
-@SpringBootTest(webEnvironment = RANDOM_PORT,
-		properties = { "management.endpoints.enabled-by-default=false" })
+@SpringBootTest(webEnvironment = RANDOM_PORT, properties = { "management.endpoints.enabled-by-default=false" })
 class ErrorHandlingTests {
 
 	@Value(value = "${local.server.port}")

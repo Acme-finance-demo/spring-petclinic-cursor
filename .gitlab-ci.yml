@@ -1,7 +1,9 @@
-stages:      
+stages:
   - renovate
   - build
   - test
+  - provenance   # SLSA: 成果物への署名付き provenance 生成
+  - verify        # SLSA: provenance 検証と VSA 生成
   - pages
   - deploy
 
@@ -9,10 +11,17 @@ image: docker:git
 services:
 - docker:dind
 
-build-job:      # This job runs in the deploy stage.
-  stage: build 
+build-job:      # 実際に jar をビルドし、SLSA provenance の署名対象とする
+  stage: build
+  image: eclipse-temurin:17-jdk
+  variables:
+    # SLSA provenance 生成に必須。未設定だと artifacts-metadata.json が作られず署名が失敗する
+    RUNNER_GENERATE_ARTIFACTS_METADATA: "true"
   script:
-    - echo "building  application..."
+    - ./mvnw -B -DskipTests package
+  artifacts:
+    paths:
+      - target/spring-petclinic-*.jar
 
 deploy-job:      # This job runs in the deploy stage.
   stage: deploy 
@@ -36,9 +45,22 @@ renovate:
 
 
 include:
-  - template: Jobs/Code-Intelligence.gitlab-ci.yml  
-  - template: Jobs/SAST.gitlab-ci.yml  
-  - template: Jobs/Secret-Detection.gitlab-ci.yml  
+  # SLSA Level 1: GitLab 公式 SLSA コンポーネント (gitlab.com/components/slsa)
+  # provenance-signer が成果物に署名付き provenance を生成 (Sigstore Cosign キーレス署名)
+  # NOTE: target_artifact は pom.xml のバージョン更新時に合わせて更新すること
+  - component: $CI_SERVER_FQDN/components/slsa/provenance-signer@0.1.1
+    inputs:
+      target_artifact: target/spring-petclinic-3.5.0-SNAPSHOT.jar
+      stage: provenance
+  # provenance-verifier がパイプライン内で provenance を検証し VSA を生成
+  - component: $CI_SERVER_FQDN/components/slsa/provenance-verifier@0.1.1
+    inputs:
+      resource_url: target/spring-petclinic-3.5.0-SNAPSHOT.jar
+      bundle_file: provenance.json
+      stage: verify
+  - template: Jobs/Code-Intelligence.gitlab-ci.yml
+  - template: Jobs/SAST.gitlab-ci.yml
+  - template: Jobs/Secret-Detection.gitlab-ci.yml
   - template: Jobs/Dependency-Scanning.gitlab-ci.yml
 
 

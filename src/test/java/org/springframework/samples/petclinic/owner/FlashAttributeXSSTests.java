@@ -42,9 +42,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Test class for XSS vulnerability prevention in flash attributes.
- * Verifies that flash attributes containing HTML/JavaScript are properly escaped
- * when rendered in templates.
+ * Test class for XSS vulnerability prevention in flash attributes. Verifies that flash
+ * attributes containing HTML/JavaScript are properly escaped when rendered in templates.
  *
  * @author Security Team
  */

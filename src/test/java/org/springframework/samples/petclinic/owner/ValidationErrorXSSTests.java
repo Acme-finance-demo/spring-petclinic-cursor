@@ -33,8 +33,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Test class for XSS vulnerability prevention in validation error messages.
- * Verifies that validation error messages are properly escaped when rendered in templates.
+ * Test class for XSS vulnerability prevention in validation error messages. Verifies that
+ * validation error messages are properly escaped when rendered in templates.
  *
  * @author Security Team
  */
@@ -62,8 +62,7 @@ class ValidationErrorXSSTests {
 
 	@Test
 	void testValidationErrorsAreEscaped() throws Exception {
-		mockMvc.perform(get("/owners?page=1").param("lastName", "TestUser"))
-			.andExpect(status().isOk());
+		mockMvc.perform(get("/owners?page=1").param("lastName", "TestUser")).andExpect(status().isOk());
 	}
 
 }
