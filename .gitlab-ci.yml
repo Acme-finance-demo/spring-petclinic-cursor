@@ -24,9 +24,34 @@ build-job:      # 実際に jar をビルドし、SLSA provenance の署名対�
       - target/spring-petclinic-*.jar
 
 deploy-job:      # This job runs in the deploy stage.
-  stage: deploy 
+  stage: deploy
   script:
     - echo "Deploying application..."
+
+
+# ---------------------------------------------------------------------------
+# SLSA コンポーネント (provenance-signer / provenance-verifier @0.1.1) の
+# before_script 上書き。
+# 背景: コンポーネントは `apk add cosign` で cosign 3.x を取得するが、
+#   3.x では `cosign attest-blob` に --fulcio-url/--rekor-url を渡すと
+#   "cannot specify service URLs and use signing config" で失敗する。
+#   コンポーネントのスクリプトは変更できないため、cosign 2.x バイナリを
+#   ピン留めして互換性を保つ (2.x は URL 指定と --new-bundle-format 両対応)。
+# ---------------------------------------------------------------------------
+.install-cosign-v2: &install-cosign-v2
+  - apk add --update jq curl
+  - curl -sSfL "https://github.com/sigstore/cosign/releases/download/v2.6.3/cosign-linux-amd64" -o /usr/local/bin/cosign
+  - chmod +x /usr/local/bin/cosign
+
+generate_provenance:
+  before_script:
+    - *install-cosign-v2
+    - mkdir -p $(dirname ${BUNDLE_FILE})
+
+verify_provenance:
+  before_script:
+    - *install-cosign-v2
+    - mkdir .tmp
 
 
 renovate:
