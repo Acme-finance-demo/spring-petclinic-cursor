@@ -39,7 +39,9 @@ deploy-job:      # This job runs in the deploy stage.
 #   ピン留めして互換性を保つ (2.x は URL 指定と --new-bundle-format 両対応)。
 # ---------------------------------------------------------------------------
 .install-cosign-v2: &install-cosign-v2
+  # /usr/local/bin は Wolfi ベースの opa イメージには存在しないため事前作成する
   - apk add --update jq curl
+  - mkdir -p /usr/local/bin
   - curl -sSfL "https://github.com/sigstore/cosign/releases/download/v2.6.3/cosign-linux-amd64" -o /usr/local/bin/cosign
   - chmod +x /usr/local/bin/cosign
 
