@@ -5,6 +5,17 @@
 <body>
 
   <h2 th:text="#{owner}">Owner</h2>
+
+  <div th:if="${message}" class="alert alert-success alert-dismissible fade show" id="success-message" role="alert">
+    <span th:text="${message}" th:remove="tag"></span>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+
+  <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" id="error-message" role="alert">
+    <span th:text="${error}" th:remove="tag"></span>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+
   <form th:object="${owner}" class="form-horizontal" id="add-owner-form" method="post">
     <input th:replace="~{fragments/inputField :: input (#{firstName}, 'firstName', 'text')}" />
     <input th:replace="~{fragments/inputField :: input (#{lastName}, 'lastName', 'text')}" />
@@ -18,6 +29,19 @@
       </div>
     </div>
   </form>
+
+  <script>
+    // Auto-dismiss success and error messages after 3 seconds
+    (function () {
+      var successMsg = document.getElementById("success-message");
+      var errorMsg = document.getElementById("error-message");
+      setTimeout(function () {
+        if (successMsg) successMsg.style.display = "none";
+        if (errorMsg) errorMsg.style.display = "none";
+      }, 3000);
+    })();
+  </script>
+
 </body>
 
 </html>
