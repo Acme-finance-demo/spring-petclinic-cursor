@@ -24,9 +24,36 @@ build-job:      # 実際に jar をビルドし、SLSA provenance の署名対�
       - target/spring-petclinic-*.jar
 
 deploy-job:      # This job runs in the deploy stage.
-  stage: deploy 
+  stage: deploy
   script:
     - echo "Deploying application..."
+
+
+# ---------------------------------------------------------------------------
+# SLSA コンポーネント (provenance-signer / provenance-verifier @0.1.1) の
+# before_script 上書き。コンポーネント本体は変更できないため、環境依存で壊れる
+# ツール導入部だけを差し替えて互換性を確保する (詳細は下のアンカーのコメント)。
+# ---------------------------------------------------------------------------
+.install-slsa-tools: &install-slsa-tools
+  # cosign: apk の cosign は 3.x で --fulcio-url/--rekor-url が使えないため 2.x をピン留め。
+  # jq:     apk (Wolfi) の jq は opa イメージより新しい glibc を要求し実行時に壊れるため、
+  #         静的バイナリを使う。curl のみ apk で導入する。
+  # /usr/local/bin は Wolfi ベースの opa イメージには存在しないため事前作成する。
+  - apk add --update curl
+  - mkdir -p /usr/local/bin
+  - curl -sSfL "https://github.com/sigstore/cosign/releases/download/v2.6.3/cosign-linux-amd64" -o /usr/local/bin/cosign
+  - curl -sSfL "https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-amd64" -o /usr/local/bin/jq
+  - chmod +x /usr/local/bin/cosign /usr/local/bin/jq
+
+generate_provenance:
+  before_script:
+    - *install-slsa-tools
+    - mkdir -p $(dirname ${BUNDLE_FILE})
+
+verify_provenance:
+  before_script:
+    - *install-slsa-tools
+    - mkdir .tmp
 
 
 renovate:
@@ -53,9 +80,12 @@ include:
       target_artifact: target/spring-petclinic-3.5.0-SNAPSHOT.jar
       stage: provenance
   # provenance-verifier がパイプライン内で provenance を検証し VSA を生成
+  # resource_url は curl でダウンロードする URL として扱われるため、ローカルの
+  # ファイルパスではなく file:// スキームで build-job の成果物 (artifacts で
+  # ワークスペースに取得済み) を指す。$CI_PROJECT_DIR は expand_vars で展開される。
   - component: $CI_SERVER_FQDN/components/slsa/provenance-verifier@0.1.1
     inputs:
-      resource_url: target/spring-petclinic-3.5.0-SNAPSHOT.jar
+      resource_url: file://$CI_PROJECT_DIR/target/spring-petclinic-3.5.0-SNAPSHOT.jar
       bundle_file: provenance.json
       stage: verify
   - template: Jobs/Code-Intelligence.gitlab-ci.yml
