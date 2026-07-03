@@ -80,9 +80,12 @@ include:
       target_artifact: target/spring-petclinic-3.5.0-SNAPSHOT.jar
       stage: provenance
   # provenance-verifier がパイプライン内で provenance を検証し VSA を生成
+  # resource_url は curl でダウンロードする URL として扱われるため、ローカルの
+  # ファイルパスではなく file:// スキームで build-job の成果物 (artifacts で
+  # ワークスペースに取得済み) を指す。$CI_PROJECT_DIR は expand_vars で展開される。
   - component: $CI_SERVER_FQDN/components/slsa/provenance-verifier@0.1.1
     inputs:
-      resource_url: target/spring-petclinic-3.5.0-SNAPSHOT.jar
+      resource_url: file://$CI_PROJECT_DIR/target/spring-petclinic-3.5.0-SNAPSHOT.jar
       bundle_file: provenance.json
       stage: verify
   - template: Jobs/Code-Intelligence.gitlab-ci.yml
