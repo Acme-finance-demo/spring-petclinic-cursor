@@ -9,6 +9,16 @@
     Visit
   </h2>
 
+  <div th:if="${message}" class="alert alert-success alert-dismissible fade show" id="success-message" role="alert">
+    <span th:text="${message}" th:remove="tag"></span>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+
+  <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" id="error-message" role="alert">
+    <span th:text="${error}" th:remove="tag"></span>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+
   <h3 th:text="#{pet}">Pet</h3>
   <div class="table-responsive mb-3">
     <table class="table table-striped">
@@ -63,6 +73,16 @@
     </table>
   </div>
 
+  <script>
+    (function () {
+      var successMsg = document.getElementById("success-message");
+      var errorMsg = document.getElementById("error-message");
+      setTimeout(function () {
+        if (successMsg) successMsg.style.display = "none";
+        if (errorMsg) errorMsg.style.display = "none";
+      }, 3000);
+    })();
+  </script>
 </body>
 
 </html>
