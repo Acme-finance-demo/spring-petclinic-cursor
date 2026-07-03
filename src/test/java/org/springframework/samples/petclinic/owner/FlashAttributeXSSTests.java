@@ -127,4 +127,43 @@ class FlashAttributeXSSTests {
 			.andExpect(status().is3xxRedirection());
 	}
 
+	@Test
+	void testOwnerCreationErrorMessageWithXSSPayloadIsEscaped() throws Exception {
+		mockMvc
+			.perform(post("/owners/new").param("firstName", "Joe<script>alert('xss')</script>")
+				.param("lastName", "Bloggs")
+				.param("city", "London"))
+			.andExpect(status().isOk())
+			.andExpect(content().string(not(containsString("<script>alert('xss')</script>"))))
+			.andExpect(content().string(containsString("&lt;script&gt;")));
+	}
+
+	@Test
+	void testOwnerUpdateErrorMessageWithXSSPayloadIsEscaped() throws Exception {
+		mockMvc
+			.perform(post("/owners/{ownerId}/edit", TEST_OWNER_ID).param("firstName", "Joe<img src=x onerror=alert('xss')>")
+				.param("lastName", "Bloggs")
+				.param("address", "")
+				.param("telephone", ""))
+			.andExpect(status().isOk())
+			.andExpect(content().string(not(containsString("<img src=x onerror=alert('xss')>"))))
+			.andExpect(content().string(containsString("&lt;img")));
+	}
+
+	@Test
+	void testOwnerIdMismatchErrorMessageWithXSSPayloadIsEscaped() throws Exception {
+		Owner owner = new Owner();
+		owner.setId(2);
+		owner.setFirstName("John");
+		owner.setLastName("Doe<svg onload=alert('xss')>");
+		owner.setAddress("Center Street");
+		owner.setCity("New York");
+		owner.setTelephone("0123456789");
+
+		given(owners.findById(TEST_OWNER_ID)).willReturn(Optional.of(owner));
+
+		mockMvc.perform(post("/owners/{ownerId}/edit", TEST_OWNER_ID).flashAttr("owner", owner))
+			.andExpect(status().is3xxRedirection());
+	}
+
 }
