@@ -65,4 +65,20 @@ class ValidationErrorXSSTests {
 		mockMvc.perform(get("/owners?page=1").param("lastName", "TestUser")).andExpect(status().isOk());
 	}
 
+	@Test
+	void testValidationErrorsWithXSSPayloadAreEscaped() throws Exception {
+		mockMvc.perform(get("/owners?page=1").param("lastName", "<script>alert('XSS')</script>"))
+			.andExpect(status().isOk())
+			.andExpect(content().string(not(containsString("<script>alert('XSS')</script>"))))
+			.andExpect(content().string(containsString("&lt;script&gt;")));
+	}
+
+	@Test
+	void testValidationErrorsWithHTMLTagsAreEscaped() throws Exception {
+		mockMvc.perform(get("/owners?page=1").param("lastName", "<img src=x onerror=alert('XSS')>"))
+			.andExpect(status().isOk())
+			.andExpect(content().string(not(containsString("<img src=x onerror=alert('XSS')>"))))
+			.andExpect(content().string(containsString("&lt;img")));
+	}
+
 }
