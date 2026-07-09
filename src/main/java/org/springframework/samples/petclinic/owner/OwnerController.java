@@ -171,14 +171,12 @@ class OwnerController {
 	}
 
 
-	// 問題のある実装
-	@RequestMapping("/risky")
-	public String createProduct(@RequestBody Map<String, String> requestData) {
-
-		String name = requestData.get("name");
-		String price = requestData.get("price");
-		productService.saveProduct(name, Double.parseDouble(price));
-
+	// Fixed implementation with explicit HTTP method
+	@RequestMapping(value = "/risky", method = RequestMethod.POST)
+	public String createProduct(@RequestBody @Valid ProductRequest requestData) {
+		// Assuming ProductService is properly injected
+		// and ProductRequest DTO with validation annotations exists
+		productService.saveProduct(requestData.getName(), requestData.getPrice());
 		return "Product created!";
 	}
 
@@ -186,3 +184,4 @@ class OwnerController {
 
 
 }
+
