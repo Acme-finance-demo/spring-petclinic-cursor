@@ -65,4 +65,25 @@ class ValidationErrorXSSTests {
 		mockMvc.perform(get("/owners?page=1").param("lastName", "TestUser")).andExpect(status().isOk());
 	}
 
+	@Test
+	void testFindOwnersFormWithXSSPayloadIsEscaped() throws Exception {
+		mockMvc.perform(get("/owners/find").param("lastName", "<script>alert('xss')</script>"))
+			.andExpect(status().isOk())
+			.andExpect(content().string(not(containsString("<script>alert('xss')</script>"))));
+	}
+
+	@Test
+	void testFindOwnersFormWithImageXSSPayloadIsEscaped() throws Exception {
+		mockMvc.perform(get("/owners?page=1").param("lastName", "<img src=x onerror=alert('xss')>"))
+			.andExpect(status().isOk())
+			.andExpect(content().string(not(containsString("<img src=x onerror=alert('xss')>"))));
+	}
+
+	@Test
+	void testFindOwnersFormWithSVGXSSPayloadIsEscaped() throws Exception {
+		mockMvc.perform(get("/owners?page=1").param("lastName", "<svg onload=alert('xss')>"))
+			.andExpect(status().isOk())
+			.andExpect(content().string(not(containsString("<svg onload=alert('xss')>"))));
+	}
+
 }
