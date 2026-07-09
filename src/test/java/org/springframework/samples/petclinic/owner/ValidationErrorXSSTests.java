@@ -65,4 +65,18 @@ class ValidationErrorXSSTests {
 		mockMvc.perform(get("/owners?page=1").param("lastName", "TestUser")).andExpect(status().isOk());
 	}
 
+	@Test
+	void testOwnerDataIsEscapedInOwnersList() throws Exception {
+		mockMvc.perform(get("/owners?page=1").param("lastName", ""))
+			.andExpect(status().isOk())
+			.andExpect(content().string(not(containsString("<script>"))));
+	}
+
+	@Test
+	void testOwnerDataIsEscapedInOwnerDetails() throws Exception {
+		mockMvc.perform(get("/owners/1"))
+			.andExpect(status().isOk())
+			.andExpect(content().string(not(containsString("<script>"))));
+	}
+
 }
