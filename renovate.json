@@ -8,6 +8,7 @@
     {
       "matchManagers": ["maven"],
       "labels": ["dependencies", "renovate"],
+      "reviewers": ["ai-renovate-impact-analysis-gl-demo-ultimate-nsasaki"],
       "automerge": false,
       "minimumReleaseAge": "7 days"
     }
