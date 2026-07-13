@@ -13,7 +13,7 @@ services:
 
 build-job:      # 実際に jar をビルドし、SLSA provenance の署名対象とする
   stage: build
-  image: eclipse-temurin:17-jdk
+  image: eclipse-temurin:17.0.19_10-jdk
   variables:
     # SLSA provenance 生成に必須。未設定だと artifacts-metadata.json が作られず署名が失敗する
     RUNNER_GENERATE_ARTIFACTS_METADATA: "true"
