@@ -61,6 +61,28 @@
           </li>
 
         </ul>
+
+        <ul class="nav navbar-nav ms-auto">
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="languageDropdown" role="button"
+              data-bs-toggle="dropdown" aria-expanded="false">
+              <span class="fa fa-globe" aria-hidden="true"></span>
+              <span th:text="#{language}">Language</span>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="languageDropdown">
+              <li><a class="dropdown-item" th:href="@{''(lang=ja)}" th:text="'日本語'">日本語</a></li>
+              <li><a class="dropdown-item" th:href="@{''(lang=en)}" th:text="'English'">English</a></li>
+              <li><a class="dropdown-item" th:href="@{''(lang=de)}" th:text="'Deutsch'">Deutsch</a></li>
+              <li><a class="dropdown-item" th:href="@{''(lang=es)}" th:text="'Español'">Español</a></li>
+              <li><a class="dropdown-item" th:href="@{''(lang=ko)}" th:text="'한국어'">한국어</a></li>
+              <li><a class="dropdown-item" th:href="@{''(lang=pt)}" th:text="'Português'">Português</a></li>
+              <li><a class="dropdown-item" th:href="@{''(lang=ru)}" th:text="'Русский'">Русский</a></li>
+              <li><a class="dropdown-item" th:href="@{''(lang=tr)}" th:text="'Türkçe'">Türkçe</a></li>
+              <li><a class="dropdown-item" th:href="@{''(lang=fa)}" th:text="'فارسی'">فارسی</a></li>
+            </ul>
+          </li>
+        </ul>
+
       </div>
     </div>
   </nav>
