@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{fragments/layout :: layout (~{::body},'home')}">
+
+<body>
+  <h2>Message Display (Vulnerable to XSS)</h2>
+  
+  <div class="alert alert-warning">
+    <strong>Warning:</strong> This page is intentionally vulnerable to XSS attacks for demonstration purposes.
+  </div>
+  
+  <!-- VULNERABLE: User input displayed without escaping -->
+  <div class="user-message" th:utext="${userMessage}">
+    User message will appear here
+  </div>
+  
+  <hr>
+  
+  <h3>Test XSS Payloads:</h3>
+  <ul>
+    <li><code>&lt;script&gt;alert('XSS')&lt;/script&gt;</code></li>
+    <li><code>&lt;img src=x onerror=alert('XSS')&gt;</code></li>
+    <li><code>&lt;svg onload=alert('XSS')&gt;</code></li>
+  </ul>
+  
+  <p>
+    <a href="/vulnerable/display?message=Hello%20World" class="btn btn-primary">Safe Message</a>
+    <a href="/vulnerable/display?message=%3Cscript%3Ealert('XSS')%3C/script%3E" class="btn btn-danger">XSS Attack</a>
+  </p>
+  
+</body>
+</html>
