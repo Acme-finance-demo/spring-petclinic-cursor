@@ -27,4 +27,15 @@ class WelcomeController {
 		return "welcome";
 	}
 
+	// Hello worldを返す
+	@GetMapping("/hello")
+	public String helloWorld() {
+		return "helloWorld";
+	}
+
+	
+
+
+		
+
 }
