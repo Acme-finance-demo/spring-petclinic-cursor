@@ -92,7 +92,6 @@ include:
   - template: Jobs/SAST.gitlab-ci.yml
   - template: Jobs/Secret-Detection.gitlab-ci.yml
   - template: Jobs/Dependency-Scanning.gitlab-ci.yml
-  - component: $CI_SERVER_FQDN/components/code-quality-oss/codequality-os-scanners-integration/convert-to-sast@1.6.0
 
 
 
