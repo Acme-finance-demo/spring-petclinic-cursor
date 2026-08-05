@@ -40,6 +40,7 @@
   <div class="d-flex flex-wrap gap-2 mb-4">
     <a th:href="@{__${owner.id}__/edit}" class="btn btn-primary" th:text="#{editOwner}">Edit Owner</a>
     <a th:href="@{__${owner.id}__/pets/new}" class="btn btn-primary" th:text="#{addNewPet}">Add New Pet</a>
+    <a th:href="@{__${owner.id}__/appointments/new}" class="btn btn-success" th:text="#{appointment.book}">Book Appointment</a>
   </div>
 
   <h2 th:text="#{petsAndVisits}">Pets and Visits</h2>
@@ -68,12 +69,18 @@
                 <tr>
                   <th th:text="#{visitDate}">Visit Date</th>
                   <th th:text="#{description}">Description</th>
+                  <th th:text="#{appointment.actions}">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 <tr th:each="visit : ${pet.visits}">
                   <td th:text="${#temporals.format(visit.date, 'yyyy-MM-dd')}"></td>
                   <td th:text="${visit?.description}"></td>
+                  <td>
+                    <a th:href="@{/owners/__${owner.id}__/appointments/__${visit.id}__/edit}"
+                       class="btn btn-sm btn-outline-secondary"
+                       th:text="#{appointment.edit}">Edit</a>
+                  </td>
                 </tr>
                 <tr th:if="${#lists.isEmpty(pet.visits)}">
                   <td colspan="2" class="text-muted fst-italic">No visits recorded</td>

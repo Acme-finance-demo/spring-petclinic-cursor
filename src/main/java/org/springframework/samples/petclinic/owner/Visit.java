@@ -42,6 +42,17 @@ public class Visit extends BaseEntity {
 	@NotBlank
 	private String description;
 
+	@Column(name = "vet_id")
+	private Integer vetId;
+
+	/**
+	 * Transient field used by the appointment form to carry the selected pet id.
+	 * It is not persisted directly; the controller uses it to route the visit to the
+	 * correct pet via {@link Owner#addVisit(Integer, Visit)}.
+	 */
+	@jakarta.persistence.Transient
+	private Integer petId;
+
 	/**
 	 * Creates a new instance of Visit for the current date
 	 */
@@ -63,6 +74,22 @@ public class Visit extends BaseEntity {
 
 	public void setDescription(String description) {
 		this.description = description;
+	}
+
+	public Integer getVetId() {
+		return this.vetId;
+	}
+
+	public void setVetId(Integer vetId) {
+		this.vetId = vetId;
+	}
+
+	public Integer getPetId() {
+		return this.petId;
+	}
+
+	public void setPetId(Integer petId) {
+		this.petId = petId;
 	}
 
 }
