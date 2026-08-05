@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+
+<html xmlns:th="https://www.thymeleaf.org" th:replace="~{fragments/layout :: layout (~{::body},'owners')}">
+
+<body>
+
+  <h2>
+    <th:block th:if="${visit['new']}" th:text="#{appointment.new}">New </th:block>
+    <span th:text="#{appointment}">Appointment</span>
+  </h2>
+
+  <div th:if="${message}" class="alert alert-success alert-dismissible fade show" id="success-message" role="alert">
+    <span th:text="${message}" th:remove="tag"></span>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+
+  <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" id="error-message" role="alert">
+    <span th:text="${error}" th:remove="tag"></span>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+
+  <!-- Owner summary -->
+  <div class="mb-3 row">
+    <label class="col-sm-2 col-form-label fw-semibold" th:text="#{owner}">Owner</label>
+    <div class="col-sm-10 d-flex align-items-center">
+      <span th:text="${owner?.firstName + ' ' + owner?.lastName}"></span>
+    </div>
+  </div>
+
+  <form th:object="${visit}" class="form-horizontal" method="post">
+
+    <!-- Pet selection -->
+    <div th:with="valid=${!#fields.hasErrors('petId')}"
+         th:class="${'mb-3 row' + (valid ? '' : ' has-error')}">
+      <label for="petId" class="col-sm-2 col-form-label fw-semibold" th:text="#{appointment.pet}">Pet</label>
+      <div class="col-sm-10">
+        <select id="petId" name="petId" class="form-select"
+                th:classappend="${valid ? '' : ' is-invalid'}">
+          <option value="" th:text="#{appointment.selectPet}">-- Select a pet --</option>
+          <option th:each="pet : ${owner.pets}" th:value="${pet.id}" th:text="${pet.name}" th:selected="${visit.petId != null and visit.petId == pet.id}"></option>
+        </select>
+        <th:block th:if="${!valid}">
+          <div class="invalid-feedback d-block" th:errors="*{petId}" th:text="#{error}">Pet error</div>
+        </th:block>
+      </div>
+    </div>
+
+    <!-- Vet selection -->
+    <div th:with="valid=${!#fields.hasErrors('vetId')}"
+         th:class="${'mb-3 row' + (valid ? '' : ' has-error')}">
+      <label for="vetId" class="col-sm-2 col-form-label fw-semibold" th:text="#{appointment.vet}">Veterinarian</label>
+      <div class="col-sm-10">
+        <select id="vetId" name="vetId" class="form-select"
+                th:classappend="${valid ? '' : ' is-invalid'}">
+          <option value="" th:text="#{appointment.selectVet}">-- Select a veterinarian --</option>
+          <option th:each="vet : ${vets}" th:value="${vet.id}" th:text="${vet.firstName + ' ' + vet.lastName}" th:selected="${visit.vetId != null and visit.vetId == vet.id}"></option>
+        </select>
+        <th:block th:if="${!valid}">
+          <div class="invalid-feedback d-block" th:errors="*{vetId}" th:text="#{error}">Vet error</div>
+        </th:block>
+      </div>
+    </div>
+
+    <!-- Appointment date -->
+    <div th:with="valid=${!#fields.hasErrors('date')}"
+         th:class="${'mb-3 row' + (valid ? '' : ' has-error')}">
+      <label for="date" class="col-sm-2 col-form-label fw-semibold" th:text="#{appointment.date}">Appointment Date</label>
+      <div class="col-sm-10">
+        <input id="date" type="date" name="date" class="form-control"
+               th:value="*{date}"
+               th:classappend="${valid ? '' : ' is-invalid'}"
+               th:attr="min=${#temporals.format(#temporals.createToday(), 'yyyy-MM-dd')}" />
+        <div class="form-text text-muted" th:text="#{appointment.date.hint}">
+          Business hours: 09:00 \u2013 17:00. Past dates are not accepted.
+        </div>
+        <th:block th:if="${!valid}">
+          <div class="invalid-feedback d-block" th:errors="*{date}" th:text="#{error}">Date error</div>
+        </th:block>
+      </div>
+    </div>
+
+    <!-- Description -->
+    <div th:with="valid=${!#fields.hasErrors('description')}"
+         th:class="${'mb-3 row' + (valid ? '' : ' has-error')}">
+      <label for="description" class="col-sm-2 col-form-label fw-semibold" th:text="#{description}">Description</label>
+      <div class="col-sm-10">
+        <input id="description" type="text" class="form-control" th:field="*{description}"
+               th:classappend="${valid ? '' : ' is-invalid'}" />
+        <th:block th:if="${!valid}">
+          <div class="invalid-feedback d-block" th:errors="*{description}" th:text="#{error}">Description error</div>
+        </th:block>
+      </div>
+    </div>
+
+    <!-- Submit -->
+    <div class="mb-3 row">
+      <div class="col-sm-10 offset-sm-2">
+        <button class="btn btn-primary" type="submit"
+                th:text="${visit['new']} ? #{appointment.book} : #{appointment.update}">
+          Book Appointment
+        </button>
+        <a th:href="@{/owners/__${owner.id}__}" class="btn btn-outline-secondary ms-2"
+           th:text="#{appointment.cancel}">Cancel</a>
+      </div>
+    </div>
+
+  </form>
+
+  <script>
+    (function () {
+      var successMsg = document.getElementById("success-message");
+      var errorMsg = document.getElementById("error-message");
+      setTimeout(function () {
+        if (successMsg) successMsg.style.display = "none";
+        if (errorMsg) errorMsg.style.display = "none";
+      }, 3000);
+    })();
+
+    // Client-side: enforce today as minimum date
+    (function () {
+      var dateInput = document.getElementById("date");
+      if (dateInput) {
+        var today = new Date().toISOString().split("T")[0];
+        if (!dateInput.getAttribute("min")) {
+          dateInput.setAttribute("min", today);
+        }
+      }
+    })();
+  </script>
+
+</body>
+
+</html>
