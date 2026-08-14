@@ -45,17 +45,6 @@ deploy-job:      # This job runs in the deploy stage.
   - curl -sSfL "https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-amd64" -o /usr/local/bin/jq
   - chmod +x /usr/local/bin/cosign /usr/local/bin/jq
 
-generate_provenance:
-  before_script:
-    - *install-slsa-tools
-    - mkdir -p $(dirname ${BUNDLE_FILE})
-
-verify_provenance:
-  before_script:
-    - *install-slsa-tools
-    - mkdir .tmp
-
-
 renovate:
   stage: renovate
   image: renovate/renovate:latest
@@ -76,7 +65,6 @@ include:
   - template: Jobs/SAST.gitlab-ci.yml
   - template: Jobs/Secret-Detection.gitlab-ci.yml
   - template: Jobs/Dependency-Scanning.gitlab-ci.yml
-  - component: $CI_SERVER_FQDN/components/code-quality-oss/codequality-os-scanners-integration/convert-to-sast@1.6.0
 
 
 
