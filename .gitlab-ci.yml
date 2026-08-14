@@ -72,22 +72,6 @@ renovate:
 
 
 include:
-  # SLSA Level 1: GitLab 公式 SLSA コンポーネント (gitlab.com/components/slsa)
-  # provenance-signer が成果物に署名付き provenance を生成 (Sigstore Cosign キーレス署名)
-  # NOTE: target_artifact は pom.xml のバージョン更新時に合わせて更新すること
-  - component: $CI_SERVER_FQDN/components/slsa/provenance-signer@0.1.1
-    inputs:
-      target_artifact: target/spring-petclinic-3.5.0-SNAPSHOT.jar
-      stage: provenance
-  # provenance-verifier がパイプライン内で provenance を検証し VSA を生成
-  # resource_url は curl でダウンロードする URL として扱われるため、ローカルの
-  # ファイルパスではなく file:// スキームで build-job の成果物 (artifacts で
-  # ワークスペースに取得済み) を指す。$CI_PROJECT_DIR は expand_vars で展開される。
-  - component: $CI_SERVER_FQDN/components/slsa/provenance-verifier@0.1.1
-    inputs:
-      resource_url: file://$CI_PROJECT_DIR/target/spring-petclinic-3.5.0-SNAPSHOT.jar
-      bundle_file: provenance.json
-      stage: verify
   - template: Jobs/Code-Intelligence.gitlab-ci.yml
   - template: Jobs/SAST.gitlab-ci.yml
   - template: Jobs/Secret-Detection.gitlab-ci.yml
