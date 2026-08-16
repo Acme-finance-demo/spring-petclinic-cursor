@@ -7,7 +7,7 @@ stages:
   - verify        # SLSA: provenance 検証と VSA 生成
   - pages
   - deploy
-  - automate     # Cursor Cloud Agent（Tokyo weather など）を webhook で起動
+  - automate     # Cursor Cloud Agent（Tokyo weather / Trivy 修正など）を webhook で起動
 
 image: docker:git
 services:
@@ -82,6 +82,59 @@ trigger-tokyo-weather-agent:
         -H "Authorization: Bearer ${CURSOR_AUTOMATION_API_KEY}" \
         -H "Content-Type: application/json" \
         -d "{\"source\":\"gitlab-ci\",\"project\":\"${CI_PROJECT_PATH}\",\"pipeline_id\":\"${CI_PIPELINE_ID}\",\"ref\":\"${CI_COMMIT_REF_NAME}\",\"sha\":\"${CI_COMMIT_SHA}\"}"
+
+# Trivy レポートを Cursor Automation（Cloud Agent）へ渡し、依存修正 MR を依頼する。
+# 手順とプロンプト: .cursor/automations/trivy-remediation.md
+trigger-trivy-agent:
+  stage: automate
+  image: alpine:3.21
+  needs:
+    - job: trivy-dependency-scan
+      artifacts: true
+  rules:
+    - if: '$CURSOR_TRIVY_WEBHOOK_URL && $CURSOR_TRIVY_API_KEY'
+  script:
+    - apk add --no-cache curl jq
+    - |
+      if [ ! -f gl-trivy-fs-report.json ]; then
+        echo "No Trivy report artifact; skipping webhook"
+        exit 0
+      fi
+      COUNT=$(jq '.vulnerabilities | length' gl-trivy-fs-report.json)
+      echo "Trivy vulnerability_count=${COUNT}"
+      if [ "${COUNT}" -eq 0 ]; then
+        echo "No vulnerabilities; skipping webhook"
+        exit 0
+      fi
+      jq -n \
+        --slurpfile report gl-trivy-fs-report.json \
+        --arg source "gitlab-ci" \
+        --arg project "${CI_PROJECT_PATH}" \
+        --arg pipeline_id "${CI_PIPELINE_ID}" \
+        --arg pipeline_url "${CI_PIPELINE_URL}" \
+        --arg ref "${CI_COMMIT_REF_NAME}" \
+        --arg sha "${CI_COMMIT_SHA}" \
+        '{
+          source: $source,
+          project: $project,
+          pipeline_id: $pipeline_id,
+          pipeline_url: $pipeline_url,
+          ref: $ref,
+          sha: $sha,
+          vulnerability_count: ($report[0].vulnerabilities | length),
+          vulnerabilities: [
+            $report[0].vulnerabilities[] | {
+              id, severity, name, description, solution,
+              package: .location.dependency.package.name,
+              version: .location.dependency.version
+            }
+          ],
+          trivy_report: $report[0]
+        }' > /tmp/trivy-webhook-payload.json
+      curl -fsS -X POST "$CURSOR_TRIVY_WEBHOOK_URL" \
+        -H "Authorization: Bearer ${CURSOR_TRIVY_API_KEY}" \
+        -H "Content-Type: application/json" \
+        -d @/tmp/trivy-webhook-payload.json
 
 
 # ---------------------------------------------------------------------------
