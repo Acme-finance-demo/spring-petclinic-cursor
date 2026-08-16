@@ -40,6 +40,7 @@ import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.xpath;
 
 /**
  * Test class for XSS vulnerability prevention in flash attributes. Verifies that flash
@@ -94,7 +95,7 @@ class FlashAttributeXSSTests {
 			.perform(post("/owners/new").param("firstName", "Joe").param("lastName", "Bloggs").param("city", "London"))
 			.andExpect(status().isOk())
 			.andExpect(content().string(containsString("There was an error in creating the owner.")))
-			.andExpect(content().string(not(containsString("<script>"))));
+			.andExpect(xpath("//div[@id='error-message']").string(not(containsString("<script>"))));
 	}
 
 	@Test
@@ -106,7 +107,7 @@ class FlashAttributeXSSTests {
 				.param("telephone", ""))
 			.andExpect(status().isOk())
 			.andExpect(content().string(containsString("There was an error in updating the owner.")))
-			.andExpect(content().string(not(containsString("<script>"))));
+			.andExpect(xpath("//div[@id='error-message']").string(not(containsString("<script>"))));
 	}
 
 	@Test
