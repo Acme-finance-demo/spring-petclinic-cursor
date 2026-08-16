@@ -27,20 +27,21 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.aot.DisabledInAotMode;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultMatcher;
 
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
 import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.not;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.xpath;
 
 /**
  * Test class for XSS vulnerability prevention in flash attributes. Verifies that flash
@@ -94,8 +95,7 @@ class FlashAttributeXSSTests {
 		mockMvc
 			.perform(post("/owners/new").param("firstName", "Joe").param("lastName", "Bloggs").param("city", "London"))
 			.andExpect(status().isOk())
-			.andExpect(content().string(containsString("There was an error in creating the owner.")))
-			.andExpect(xpath("//div[@id='error-message']").string(not(containsString("<script>"))));
+			.andExpect(errorMessageIsEscaped("There was an error in creating the owner."));
 	}
 
 	@Test
@@ -106,8 +106,7 @@ class FlashAttributeXSSTests {
 				.param("address", "")
 				.param("telephone", ""))
 			.andExpect(status().isOk())
-			.andExpect(content().string(containsString("There was an error in updating the owner.")))
-			.andExpect(xpath("//div[@id='error-message']").string(not(containsString("<script>"))));
+			.andExpect(errorMessageIsEscaped("There was an error in updating the owner."));
 	}
 
 	@Test
@@ -125,6 +124,17 @@ class FlashAttributeXSSTests {
 		mockMvc.perform(post("/owners/{ownerId}/edit", TEST_OWNER_ID).flashAttr("owner", owner))
 			.andExpect(status().is3xxRedirection())
 			.andExpect(status().is3xxRedirection());
+	}
+
+	private static ResultMatcher errorMessageIsEscaped(String expectedText) {
+		return result -> {
+			String body = result.getResponse().getContentAsString();
+			int start = body.indexOf("id=\"error-message\"");
+			assertTrue(start >= 0, "error-message element not found");
+			String errorDiv = body.substring(start, body.indexOf("</div>", start));
+			assertTrue(errorDiv.contains(expectedText));
+			assertFalse(errorDiv.contains("<script>"));
+		};
 	}
 
 }
