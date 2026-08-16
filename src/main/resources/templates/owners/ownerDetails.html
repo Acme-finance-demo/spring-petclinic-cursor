@@ -76,7 +76,7 @@
                   <td th:text="${visit?.description}"></td>
                 </tr>
                 <tr th:if="${#lists.isEmpty(pet.visits)}">
-                  <td colspan="2" class="text-muted fst-italic">No visits recorded</td>
+                  <td colspan="2" class="text-muted fst-italic" th:text="#{noVisitsRecorded}">No visits recorded</td>
                 </tr>
               </tbody>
             </table>

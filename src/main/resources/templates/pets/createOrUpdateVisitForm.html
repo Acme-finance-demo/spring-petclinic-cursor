@@ -67,7 +67,7 @@
           <td th:text="${visit.description}"></td>
         </tr>
         <tr th:if="${visit['new'] or #lists.isEmpty(pet.visits)}">
-          <td colspan="2" class="text-muted fst-italic">No previous visits</td>
+          <td colspan="2" class="text-muted fst-italic" th:text="#{noPreviousVisits}">No previous visits</td>
         </tr>
       </tbody>
     </table>
