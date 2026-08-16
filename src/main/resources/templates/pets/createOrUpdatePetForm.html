@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+
+<html xmlns:th="https://www.thymeleaf.org" th:replace="~{fragments/layout :: layout (~{::body},'owners')}">
+
+<body>
+
+  <h2>
+    <th:block th:if="${pet['new']}" th:text="#{new}">New </th:block>
+    <span th:text="#{pet}">Pet</span>
+  </h2>
+
+  <div th:if="${message}" class="alert alert-success alert-dismissible fade show" id="success-message" role="alert">
+    <span th:text="${message}" th:remove="tag"></span>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+
+  <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" id="error-message" role="alert">
+    <span th:text="${error}" th:remove="tag"></span>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+
+  <form th:object="${pet}" class="form-horizontal" method="post">
+    <input type="hidden" name="id" th:value="*{id}" />
+    <div class="mb-3 row">
+      <label class="col-sm-2 col-form-label fw-semibold" th:text="#{owner}">Owner</label>
+      <div class="col-sm-10 d-flex align-items-center">
+        <span th:text="${owner?.firstName + ' ' + owner?.lastName}"></span>
+      </div>
+    </div>
+    <input th:replace="~{fragments/inputField :: input (#{name}, 'name', 'text')}" />
+    <input th:replace="~{fragments/inputField :: input (#{birthDate}, 'birthDate', 'date')}" />
+    <input th:replace="~{fragments/selectField :: select (#{type}, 'type', ${types})}" />
+    <div class="mb-3 row">
+      <div class="col-sm-10 offset-sm-2">
+        <button th:with="text=${pet['new']} ? #{addPet} : #{updatePet}" class="btn btn-primary" type="submit"
+          th:text="${text}">Add Pet</button>
+      </div>
+    </div>
+  </form>
+
+  <script>
+    (function () {
+      var successMsg = document.getElementById("success-message");
+      var errorMsg = document.getElementById("error-message");
+      setTimeout(function () {
+        if (successMsg) successMsg.style.display = "none";
+        if (errorMsg) errorMsg.style.display = "none";
+      }, 3000);
+    })();
+  </script>
+</body>
+
+</html>
