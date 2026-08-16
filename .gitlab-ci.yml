@@ -32,17 +32,24 @@ deploy-job:      # This job runs in the deploy stage.
 
 # Trivy: 依存関係の脆弱性スキャン（CRITICAL で失敗）
 # build-job の JAR を含めてスキャンし、解決済み依存も対象にする。
+# Trivy 単体だと Maven Central へ POM 取得しに行き shared runner で 429 になりやすいため、
+# 先に ./mvnw dependency:resolve で ~/.m2 を埋めてからスキャンする。
 trivy-dependency-scan:
   stage: security
-  image:
-    name: aquasec/trivy:0.74.0
-    entrypoint: [""]
+  image: eclipse-temurin:17.0.19_10-jdk
   needs:
     - job: build-job
       artifacts: true
+  before_script:
+    - apt-get update && apt-get install -y --no-install-recommends curl ca-certificates
+    - curl -sSfL "https://github.com/aquasecurity/trivy/releases/download/v0.74.0/trivy_0.74.0_Linux-64bit.tar.gz"
+        | tar -xz -C /usr/local/bin trivy
+    - curl -sSfL "https://raw.githubusercontent.com/aquasecurity/trivy/v0.74.0/contrib/gitlab.tpl"
+        -o /tmp/gitlab.tpl
+    - ./mvnw -B -DskipTests dependency:resolve
   script:
     - trivy fs --scanners vuln --severity CRITICAL
-        --format template --template "@contrib/gitlab.tpl"
+        --format template --template "@/tmp/gitlab.tpl"
         --output gl-trivy-fs-report.json .
     - trivy fs --scanners vuln --severity CRITICAL
         --exit-code 1 --format table .
