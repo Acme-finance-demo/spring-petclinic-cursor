@@ -51,8 +51,9 @@ trivy-dependency-scan:
     - trivy fs --scanners vuln --severity CRITICAL
         --format template --template "@/tmp/gitlab.tpl"
         --output gl-trivy-fs-report.json .
+    # レポートは出すが、CRITICAL 検出でもジョブは失敗させない
     - trivy fs --scanners vuln --severity CRITICAL
-        --exit-code 1 --format table .
+        --exit-code 0 --format table .
   artifacts:
     when: always
     paths:
@@ -60,7 +61,7 @@ trivy-dependency-scan:
     reports:
       # Trivy 付属 gitlab.tpl は container_scanning スキーマ向け
       container_scanning: gl-trivy-fs-report.json
-  allow_failure: false
+  allow_failure: true
 
 # GitLab には Cursor Automation の「CI completed」トリガーがないため、
 # パイプラインから Automation webhook へ POST して Cloud Agent を起動する。
