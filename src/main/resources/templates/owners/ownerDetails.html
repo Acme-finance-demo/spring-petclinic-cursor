@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+
+<html xmlns:th="https://www.thymeleaf.org" th:replace="~{fragments/layout :: layout (~{::body},'owners')}">
+
+<body>
+
+  <h2 th:text="#{ownerInformation}">Owner Information</h2>
+
+  <div th:if="${message}" class="alert alert-success alert-dismissible fade show" id="success-message" role="alert">
+    <span th:text="${message}" th:remove="tag"></span>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+
+  <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" id="error-message" role="alert">
+    <span th:text="${error}" th:remove="tag"></span>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table table-striped" th:object="${owner}">
+      <tr>
+        <th th:text="#{name}">Name</th>
+        <td><b th:text="*{firstName + ' ' + lastName}"></b></td>
+      </tr>
+      <tr>
+        <th th:text="#{address}">Address</th>
+        <td th:text="*{address}"></td>
+      </tr>
+      <tr>
+        <th th:text="#{city}">City</th>
+        <td th:text="*{city}"></td>
+      </tr>
+      <tr>
+        <th th:text="#{telephone}">Telephone</th>
+        <td th:text="*{telephone}"></td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="d-flex flex-wrap gap-2 mb-4">
+    <a th:href="@{__${owner.id}__/edit}" class="btn btn-primary" th:text="#{editOwner}">Edit Owner</a>
+    <a th:href="@{__${owner.id}__/pets/new}" class="btn btn-primary" th:text="#{addNewPet}">Add New Pet</a>
+  </div>
+
+  <h2 th:text="#{petsAndVisits}">Pets and Visits</h2>
+
+  <div th:each="pet : ${owner.pets}" class="card mb-3">
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-4 mb-3 mb-md-0">
+          <dl>
+            <dt th:text="#{name}">Name</dt>
+            <dd th:text="${pet.name}"></dd>
+            <dt th:text="#{birthDate}">Birth Date</dt>
+            <dd th:text="${#temporals.format(pet.birthDate, 'yyyy-MM-dd')}"></dd>
+            <dt th:text="#{type}">Type</dt>
+            <dd th:text="${pet.type}"></dd>
+          </dl>
+          <div class="d-flex flex-wrap gap-2">
+            <a th:href="@{__${owner.id}__/pets/__${pet.id}__/edit}" class="btn btn-sm btn-outline-primary" th:text="#{editPet}">Edit Pet</a>
+            <a th:href="@{__${owner.id}__/pets/__${pet.id}__/visits/new}" class="btn btn-sm btn-outline-primary" th:text="#{addVisit}">Add Visit</a>
+          </div>
+        </div>
+        <div class="col-md-8">
+          <div class="table-responsive">
+            <table class="table table-sm table-striped">
+              <thead>
+                <tr>
+                  <th th:text="#{visitDate}">Visit Date</th>
+                  <th th:text="#{description}">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr th:each="visit : ${pet.visits}">
+                  <td th:text="${#temporals.format(visit.date, 'yyyy-MM-dd')}"></td>
+                  <td th:text="${visit?.description}"></td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(pet.visits)}">
+                  <td colspan="2" class="text-muted fst-italic">No visits recorded</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Auto-dismiss success and error messages after 3 seconds
+    (function () {
+      var successMsg = document.getElementById("success-message");
+      var errorMsg = document.getElementById("error-message");
+      setTimeout(function () {
+        if (successMsg) successMsg.style.display = "none";
+        if (errorMsg) errorMsg.style.display = "none";
+      }, 3000);
+    })();
+  </script>
+
+</body>
+
+
+</html>

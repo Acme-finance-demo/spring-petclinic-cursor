@@ -1,0 +1,22 @@
+version: "1"
+environment: ambient
+
+components:
+  - name: "mr_ready_greeter"
+    type: AgentComponent
+    prompt_id: "mr_ready_prompt"
+    inputs:
+      - from: "context:project_id"
+        as: "project_id"
+      - from: "context:goal"
+        as: "mr_iid"
+
+prompts:
+  - id: "mr_ready_prompt"
+    content: |
+      プロジェクト {{project_id}} のマージリクエスト IID {{mr_iid}} に対して、
+      以下の文言を **そのまま** コメント（note）として投稿してください。
+      文言の追加・変更・要約は禁止です。
+
+      投稿する文言:
+      「レビュー準備が整いました。担当者は48時間以内に一次レビューをお願いします 🙏」
