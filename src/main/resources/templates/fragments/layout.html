@@ -55,7 +55,7 @@
           </li>
 
           <li
-            th:replace="~{::menuItem ('/oups','error','trigger a RuntimeException to see how it is handled','exclamation-triangle',#{error})}">
+            th:replace="~{::menuItem ('/oups','error','trigger an error to see how it is handled','exclamation-triangle',#{error})}">
             <span class="fa exclamation-triangle" aria-hidden="true"></span>
             <span th:text="#{error}">Error</span>
           </li>
