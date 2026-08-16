@@ -2,6 +2,7 @@ stages:
   - renovate
   - build
   - test
+  - security     # Trivy 依存関係スキャン
   - provenance   # SLSA: 成果物への署名付き provenance 生成
   - verify        # SLSA: provenance 検証と VSA 生成
   - pages
@@ -28,6 +29,31 @@ deploy-job:      # This job runs in the deploy stage.
   stage: deploy
   script:
     - echo "Deploying application..."
+
+# Trivy: 依存関係の脆弱性スキャン（CRITICAL で失敗）
+# build-job の JAR を含めてスキャンし、解決済み依存も対象にする。
+trivy-dependency-scan:
+  stage: security
+  image:
+    name: aquasec/trivy:0.74.0
+    entrypoint: [""]
+  needs:
+    - job: build-job
+      artifacts: true
+  script:
+    - trivy fs --scanners vuln --severity CRITICAL
+        --format template --template "@contrib/gitlab.tpl"
+        --output gl-trivy-fs-report.json .
+    - trivy fs --scanners vuln --severity CRITICAL
+        --exit-code 1 --format table .
+  artifacts:
+    when: always
+    paths:
+      - gl-trivy-fs-report.json
+    reports:
+      # Trivy 付属 gitlab.tpl は container_scanning スキーマ向け
+      container_scanning: gl-trivy-fs-report.json
+  allow_failure: false
 
 # GitLab には Cursor Automation の「CI completed」トリガーがないため、
 # パイプラインから Automation webhook へ POST して Cloud Agent を起動する。
