@@ -1,0 +1,18 @@
+{
+  "version": "15.0.7",
+  "vulnerabilities": [
+    {
+      "id": "CVE-2026-43515",
+      "severity": "Critical",
+      "name": "tomcat-embed-core",
+      "description": "Example CRITICAL finding for local orchestrator demos.",
+      "solution": "Upgrade to 10.1.55 or later.",
+      "location": {
+        "dependency": {
+          "package": { "name": "org.apache.tomcat.embed:tomcat-embed-core" },
+          "version": "10.1.44"
+        }
+      }
+    }
+  ]
+}

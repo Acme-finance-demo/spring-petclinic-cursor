@@ -50,3 +50,9 @@ _site/
 *.css
 !petclinic.css
 .claude/settings.local.json
+
+### Cursor SDK orchestrator ###
+node_modules/
+cursor-sdk/dist/
+.cursor/vuln-orchestrator-state.json
+gl-trivy-fs-report.json

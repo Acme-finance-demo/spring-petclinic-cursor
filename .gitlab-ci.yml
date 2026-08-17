@@ -40,10 +40,12 @@ trivy-dependency-scan:
     - ./mvnw -B -DskipTests dependency:resolve
   script:
     - trivy fs --scanners vuln --severity CRITICAL
+        --skip-dirs target --skip-dirs cursor-sdk --skip-dirs node_modules --skip-dirs .git
         --format template --template "@/tmp/gitlab.tpl"
         --output gl-trivy-fs-report.json .
     # レポートは出すが、CRITICAL 検出でもジョブは失敗させない
     - trivy fs --scanners vuln --severity CRITICAL
+        --skip-dirs target --skip-dirs cursor-sdk --skip-dirs node_modules --skip-dirs .git
         --exit-code 0 --format table .
   artifacts:
     when: always
@@ -65,7 +67,8 @@ trigger-tokyo-weather-agent:
     - job: build-job
       optional: true
   rules:
-    - if: '$CURSOR_AUTOMATION_WEBHOOK_URL && $CURSOR_AUTOMATION_API_KEY'
+    # rules があると GitLab が MR パイプラインを作る。push 以外だと他ジョブが乗らず空パイプラインになる
+    - if: '$CURSOR_AUTOMATION_WEBHOOK_URL && $CURSOR_AUTOMATION_API_KEY && $CI_PIPELINE_SOURCE == "push"'
   script:
     - apk add --no-cache curl
     - |
@@ -83,7 +86,11 @@ trigger-trivy-agent:
     - job: trivy-dependency-scan
       artifacts: true
   rules:
-    - if: '$CURSOR_TRIVY_WEBHOOK_URL && $CURSOR_TRIVY_API_KEY'
+    # SDK ジョブ（CURSOR_API_KEY）が有効なときは Automation 側は動かさない（MR 二重防止）
+    - if: '$CURSOR_API_KEY && $CI_PIPELINE_SOURCE == "push"'
+      when: never
+    # rules があると GitLab が MR パイプラインを作る。push 以外だと needs 先が無く空パイプラインになる
+    - if: '$CURSOR_TRIVY_WEBHOOK_URL && $CURSOR_TRIVY_API_KEY && $CI_PIPELINE_SOURCE == "push"'
   script:
     - apk add --no-cache curl jq
     - |
@@ -127,6 +134,38 @@ trigger-trivy-agent:
         -H "Content-Type: application/json" \
         -d @/tmp/trivy-webhook-payload.json
 
+# Trivy レポートを Cursor SDK オーケストレータへ渡す。
+# スキャンジョブは落とさない。ここも allow_failure でマージは止めない。
+# CURSOR_API_KEY は Cursor Dashboard の user / service-account キー。
+# trigger-trivy-agent と両方有効だと MR が二重になるので、SDK 側を使うときは
+# CURSOR_TRIVY_WEBHOOK_URL / CURSOR_TRIVY_API_KEY を外す。
+sdk-vuln-orchestrator:
+  stage: automate
+  image: node:22.14-bookworm-slim
+  needs:
+    - job: trivy-dependency-scan
+      artifacts: true
+  timeout: 45m
+  rules:
+    - if: '$CURSOR_API_KEY && $CI_PIPELINE_SOURCE == "push"'
+  variables:
+    CURSOR_REPO_URL: $CI_PROJECT_URL
+    CURSOR_STARTING_REF: $CI_COMMIT_SHA
+    VULN_RUNTIME: cloud
+  script:
+    - |
+      if [ ! -f gl-trivy-fs-report.json ]; then
+        echo "No Trivy report artifact; skipping SDK orchestrator"
+        exit 0
+      fi
+    - cd cursor-sdk
+    - npm ci
+    - npx tsx src/cli.ts run --report "$CI_PROJECT_DIR/gl-trivy-fs-report.json" --runtime cloud
+  artifacts:
+    when: always
+    paths:
+      - .cursor/vuln-orchestrator-state.json
+  allow_failure: true
 
 # ---------------------------------------------------------------------------
 # SLSA コンポーネント (provenance-signer / provenance-verifier @0.1.1) の
