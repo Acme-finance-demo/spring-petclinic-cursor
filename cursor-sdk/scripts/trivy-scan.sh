@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# CI の trivy-dependency-scan と同じ: CRITICAL のみ、GitLab JSON、検出しても exit 0。
+# CI の trivy-dependency-scan と同じ: CRITICAL のみ、Trivy JSON、検出しても exit 0。
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -27,14 +27,6 @@ if ! command -v trivy >/dev/null 2>&1; then
   exit 1
 fi
 
-TPL="${TMPDIR:-/tmp}/trivy-gitlab-v0.74.0.tpl"
-if [[ ! -f "$TPL" ]]; then
-  echo "Downloading gitlab.tpl…" >&2
-  curl -sSfL \
-    "https://raw.githubusercontent.com/aquasecurity/trivy/v0.74.0/contrib/gitlab.tpl" \
-    -o "$TPL"
-fi
-
 if [[ "$SKIP_RESOLVE" -eq 0 ]]; then
   echo "Resolving Maven dependencies into ~/.m2…" >&2
   ./mvnw -B -DskipTests dependency:resolve
@@ -45,8 +37,7 @@ OUT="$ROOT/gl-trivy-fs-report.json"
 echo "Scanning (CRITICAL only)…" >&2
 trivy fs --scanners vuln --severity CRITICAL \
   --skip-dirs target --skip-dirs cursor-sdk --skip-dirs node_modules --skip-dirs .git \
-  --format template --template "@${TPL}" \
-  --output "$OUT" \
+  --format json --output "$OUT" \
   .
 
 trivy fs --scanners vuln --severity CRITICAL \

@@ -55,7 +55,7 @@ cd cursor-sdk
 npm run scan
 ```
 
-CRITICAL のみ、GitLab container_scanning JSON、検出しても exit 0。`cursor-sdk/` は対象外。レポートはリポジトリルートの `gl-trivy-fs-report.json`。依存解決を省略するなら `bash scripts/trivy-scan.sh --skip-resolve`。
+CRITICAL のみ、Trivy ネイティブ JSON、検出しても exit 0。`cursor-sdk/` は対象外。レポートはリポジトリルートの `gl-trivy-fs-report.json`。依存解決を省略するなら `bash scripts/trivy-scan.sh --skip-resolve`。
 
 スキャンからトリアージまで（推奨）:
 
@@ -125,7 +125,7 @@ npx tsx src/cli.ts resume \
 
 | オプション | コマンド | 説明 |
 | --- | --- | --- |
-| `--report <path>` | `run` | Trivy / GitLab container_scanning JSON、または flatten 済み webhook 形 |
+| `--report <path>` | `run` | Trivy の JSON（`--format json`） |
 | `--runtime local\|cloud` | `run` | 省略時は `VULN_RUNTIME`。未設定なら CI 上は `cloud`、それ以外は `local` |
 | `--skip-remediate` | `run` | トリアージと Policy まで。修正エージェントは起動しない |
 | `--cwd <path>` | 両方 | リポジトリルート上書き |

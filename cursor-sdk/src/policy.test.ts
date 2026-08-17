@@ -4,6 +4,31 @@ import { groupByPackage, parseFindings } from "./parse-report.ts";
 import { decide, isMajorBump } from "./policy.ts";
 import type { TriageItem } from "./types.ts";
 
+test("parseFindings reads native Trivy JSON", () => {
+  const findings = parseFindings({
+    Results: [
+      {
+        Vulnerabilities: [
+          {
+            VulnerabilityID: "CVE-2026-1",
+            Severity: "CRITICAL",
+            Title: "tomcat",
+            Description: "x",
+            FixedVersion: "10.1.55",
+            InstalledVersion: "10.1.44",
+            PkgIdentifier: {
+              PURL: "pkg:maven/org.apache.tomcat.embed/tomcat-embed-core@10.1.44",
+            },
+          },
+        ],
+      },
+    ],
+  });
+  assert.equal(findings[0]?.package, "org.apache.tomcat.embed:tomcat-embed-core");
+  assert.equal(findings[0]?.version, "10.1.44");
+  assert.equal(findings[0]?.id, "CVE-2026-1");
+});
+
 test("parseFindings reads GitLab container_scanning locations", () => {
   const findings = parseFindings({
     vulnerabilities: [

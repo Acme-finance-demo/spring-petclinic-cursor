@@ -55,7 +55,7 @@ cd cursor-sdk
 npm run scan
 ```
 
-CRITICAL only, GitLab container_scanning JSON, exit 0 even when findings exist. `cursor-sdk/` is skipped. The report is `gl-trivy-fs-report.json` at the repository root. Skip Maven resolution with `bash scripts/trivy-scan.sh --skip-resolve`.
+CRITICAL only, native Trivy JSON, exit 0 even when findings exist. `cursor-sdk/` is skipped. The report is `gl-trivy-fs-report.json` at the repository root. Skip Maven resolution with `bash scripts/trivy-scan.sh --skip-resolve`.
 
 Scan through triage (recommended):
 
@@ -125,7 +125,7 @@ If you omit `--agent-id`, the CLI reads `remediationAgentId` from `.cursor/vuln-
 
 | Option | Command | Description |
 | --- | --- | --- |
-| `--report <path>` | `run` | Trivy / GitLab container_scanning JSON, or the flattened webhook shape |
+| `--report <path>` | `run` | Native Trivy JSON (`--format json`) |
 | `--runtime local\|cloud` | `run` | Falls back to `VULN_RUNTIME`, then `cloud` in CI and `local` otherwise |
 | `--skip-remediate` | `run` | Stop after triage and policy; do not start the fix agent |
 | `--cwd <path>` | both | Override the repository root |

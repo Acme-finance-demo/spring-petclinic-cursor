@@ -12,8 +12,20 @@ function asString(value: unknown, fallback = ""): string {
   return typeof value === "string" && value.length > 0 ? value : fallback;
 }
 
+function mavenNameFromPurl(purl: string): string | undefined {
+  const match = purl.match(/^pkg:maven\/([^/]+)\/([^@?]+)/);
+  if (!match) return undefined;
+  return `${match[1]}:${match[2]}`;
+}
+
 function packageName(vuln: UnknownRecord): string {
   if (typeof vuln.package === "string") return vuln.package;
+  const ident = asRecord(vuln.PkgIdentifier);
+  const fromPurl = mavenNameFromPurl(asString(ident?.PURL));
+  if (fromPurl) return fromPurl;
+  if (typeof vuln.PkgName === "string" && vuln.PkgName.length > 0) {
+    return vuln.PkgName;
+  }
   const location = asRecord(vuln.location);
   const dependency = asRecord(location?.dependency);
   const pkg = asRecord(dependency?.package);
@@ -22,33 +34,48 @@ function packageName(vuln: UnknownRecord): string {
 
 function packageVersion(vuln: UnknownRecord): string {
   if (typeof vuln.version === "string") return vuln.version;
+  if (typeof vuln.InstalledVersion === "string") return vuln.InstalledVersion;
   const location = asRecord(vuln.location);
   const dependency = asRecord(location?.dependency);
   return asString(dependency?.version, "unknown");
 }
 
-export function parseFindings(raw: unknown): Finding[] {
+function collectVulnRecords(raw: unknown): UnknownRecord[] {
   const root = asRecord(raw);
+  if (Array.isArray(root?.Results)) {
+    return root.Results.flatMap((result) => {
+      const rec = asRecord(result);
+      const list = rec?.Vulnerabilities;
+      if (!Array.isArray(list)) return [];
+      return list.flatMap((entry) => {
+        const vuln = asRecord(entry);
+        return vuln ? [vuln] : [];
+      });
+    });
+  }
   const list = Array.isArray(root?.vulnerabilities)
     ? root.vulnerabilities
     : Array.isArray(raw)
       ? raw
       : [];
-
   return list.flatMap((entry) => {
     const vuln = asRecord(entry);
-    if (!vuln) return [];
-    return [
-      {
-        id: asString(vuln.id, asString(vuln.cve, "unknown")),
-        severity: asString(vuln.severity, "UNKNOWN"),
-        name: asString(vuln.name),
-        description: asString(vuln.description),
-        solution: asString(vuln.solution),
-        package: packageName(vuln),
-        version: packageVersion(vuln),
-      },
-    ];
+    return vuln ? [vuln] : [];
+  });
+}
+
+export function parseFindings(raw: unknown): Finding[] {
+  return collectVulnRecords(raw).map((vuln) => {
+    const fixed = asString(vuln.FixedVersion);
+    return {
+      id: asString(vuln.VulnerabilityID, asString(vuln.id, asString(vuln.cve, "unknown"))),
+      severity: asString(vuln.Severity, asString(vuln.severity, "UNKNOWN")),
+      name: asString(vuln.Title, asString(vuln.name)),
+      description: asString(vuln.Description, asString(vuln.description)),
+      solution: asString(vuln.solution, fixed ? `Upgrade to ${fixed}` : ""),
+      package: packageName(vuln),
+      version: packageVersion(vuln),
+    };
   });
 }
 

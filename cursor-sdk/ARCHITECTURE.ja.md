@@ -75,7 +75,7 @@ gitlab-sample/
 | `orchestrate.ts` | 手順の組み立て。レポート → トリアージ → Policy → 修正。エージェントを何台立てるかはここが決める |
 | `agent.ts` | `@cursor/sdk` の薄い包み。`Agent.create` / `resume`、stream、`wait()`、起動失敗と run 失敗の切り分け |
 | `policy.ts` | 自動修正してよいかの判定。重大度、直せるか、メジャーバージョンが上がるか。エージェントの提案は信用しすぎない |
-| `parse-report.ts` | Trivy / GitLab の JSON を `Finding` に直し、パッケージでグループ化する |
+| `parse-report.ts` | Trivy の JSON を `Finding` に直し、パッケージでグループ化する |
 | `prompts.ts` | トリアージ・修正・resume のプロンプト。エージェント出力から JSON を抜く |
 | `state.ts` | `agentId` などを `.cursor/vuln-orchestrator-state.json` に保存・読み込み。resume 用 |
 | `types.ts` | Finding / Triage / Policy / State の型 |
@@ -85,7 +85,7 @@ gitlab-sample/
 
 | ファイル | 役割 |
 | --- | --- |
-| `scripts/trivy-scan.sh` | ローカル Trivy。CI と同じく CRITICAL のみ、GitLab JSON、検出しても exit 0。`cursor-sdk/` は対象外 |
+| `scripts/trivy-scan.sh` | ローカル Trivy。CI と同じく CRITICAL のみ、Trivy JSON、検出しても exit 0。`cursor-sdk/` は対象外 |
 | `fixtures/gl-trivy-fs-report.sample.json` | 実スキャンなしで CLI を試すための 1 件サンプル（Tomcat / CVE-2026-43515） |
 
 ### パッケージ設定

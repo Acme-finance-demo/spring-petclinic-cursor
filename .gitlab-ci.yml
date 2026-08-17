@@ -35,14 +35,11 @@ trivy-dependency-scan:
     - apt-get update && apt-get install -y --no-install-recommends curl ca-certificates
     - curl -sSfL "https://github.com/aquasecurity/trivy/releases/download/v0.74.0/trivy_0.74.0_Linux-64bit.tar.gz"
         | tar -xz -C /usr/local/bin trivy
-    - curl -sSfL "https://raw.githubusercontent.com/aquasecurity/trivy/v0.74.0/contrib/gitlab.tpl"
-        -o /tmp/gitlab.tpl
     - ./mvnw -B -DskipTests dependency:resolve
   script:
     - trivy fs --scanners vuln --severity CRITICAL
         --skip-dirs target --skip-dirs cursor-sdk --skip-dirs node_modules --skip-dirs .git
-        --format template --template "@/tmp/gitlab.tpl"
-        --output gl-trivy-fs-report.json .
+        --format json --output gl-trivy-fs-report.json .
     # レポートは出すが、CRITICAL 検出でもジョブは失敗させない
     - trivy fs --scanners vuln --severity CRITICAL
         --skip-dirs target --skip-dirs cursor-sdk --skip-dirs node_modules --skip-dirs .git
@@ -51,9 +48,6 @@ trivy-dependency-scan:
     when: always
     paths:
       - gl-trivy-fs-report.json
-    reports:
-      # Trivy 付属 gitlab.tpl は container_scanning スキーマ向け
-      container_scanning: gl-trivy-fs-report.json
   allow_failure: true
 
 # GitLab には Cursor Automation の「CI completed」トリガーがないため、
@@ -98,7 +92,7 @@ trigger-trivy-agent:
         echo "No Trivy report artifact; skipping webhook"
         exit 0
       fi
-      COUNT=$(jq '.vulnerabilities | length' gl-trivy-fs-report.json)
+      COUNT=$(jq '[.Results[]? | (.Vulnerabilities // [])[]] | length' gl-trivy-fs-report.json)
       echo "Trivy vulnerability_count=${COUNT}"
       if [ "${COUNT}" -eq 0 ]; then
         echo "No vulnerabilities; skipping webhook"
@@ -119,12 +113,16 @@ trigger-trivy-agent:
           pipeline_url: $pipeline_url,
           ref: $ref,
           sha: $sha,
-          vulnerability_count: ($report[0].vulnerabilities | length),
+          vulnerability_count: ([ $report[0].Results[]? | (.Vulnerabilities // [])[] ] | length),
           vulnerabilities: [
-            $report[0].vulnerabilities[] | {
-              id, severity, name, description, solution,
-              package: .location.dependency.package.name,
-              version: .location.dependency.version
+            $report[0].Results[]? | (.Vulnerabilities // [])[] | {
+              id: .VulnerabilityID,
+              severity: .Severity,
+              name: .Title,
+              description: .Description,
+              solution: (if .FixedVersion then "Upgrade to \(.FixedVersion)" else "" end),
+              package: .PkgName,
+              version: .InstalledVersion
             }
           ],
           trivy_report: $report[0]

@@ -75,7 +75,7 @@ gitlab-sample/
 | `orchestrate.ts` | The pipeline: report → triage → policy → remediate. Decides how many agents to start |
 | `agent.ts` | Thin `@cursor/sdk` wrapper. `Agent.create` / `resume`, stream, `wait()`, startup vs run failures |
 | `policy.ts` | Whether a bump may be automatic: severity, fixable by version, major bump. Does not trust the agent blindly |
-| `parse-report.ts` | Normalize Trivy / GitLab JSON into `Finding`s, group by package |
+| `parse-report.ts` | Normalize Trivy JSON into `Finding`s, group by package |
 | `prompts.ts` | Triage / remediate / resume prompts, plus JSON extraction from agent text |
 | `state.ts` | Persist `agentId`s to `.cursor/vuln-orchestrator-state.json` for resume |
 | `types.ts` | Finding / triage / policy / state types |
@@ -85,7 +85,7 @@ gitlab-sample/
 
 | File | Role |
 | --- | --- |
-| `scripts/trivy-scan.sh` | Local Trivy. Same as CI: CRITICAL only, GitLab JSON, exit 0 on findings. Skips `cursor-sdk/` |
+| `scripts/trivy-scan.sh` | Local Trivy. Same as CI: CRITICAL only, native Trivy JSON, exit 0 on findings. Skips `cursor-sdk/` |
 | `fixtures/gl-trivy-fs-report.sample.json` | One-finding sample (Tomcat / CVE-2026-43515) so the CLI can run without a real scan |
 
 ### Package config
