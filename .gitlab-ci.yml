@@ -2,10 +2,6 @@ stages:
   - build
   - test
   - security     # Trivy 依存関係スキャン
-  - provenance   # SLSA: 成果物への署名付き provenance 生成
-  - verify        # SLSA: provenance 検証と VSA 生成
-  - pages
-  - deploy
   - automate     # Cursor Cloud Agent（Tokyo weather / Trivy 修正など）を webhook で起動
 
 image: docker:git
@@ -24,10 +20,6 @@ build-job:      # 実際に jar をビルドし、SLSA provenance の署名対�
     paths:
       - target/spring-petclinic-*.jar
 
-deploy-job:      # This job runs in the deploy stage.
-  stage: deploy
-  script:
-    - echo "Deploying application..."
 
 # Trivy: 依存関係の脆弱性スキャン
 # build-job の JAR を含めてスキャンし、解決済み依存も対象にする。
