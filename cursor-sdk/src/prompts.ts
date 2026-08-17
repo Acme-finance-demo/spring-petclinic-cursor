@@ -61,12 +61,14 @@ Rules:
 export function impactPrompt(decisions: PolicyDecision[], prUrl?: string): string {
   const auto = decisions.filter((d) => d.action === "auto_remediate");
   const target = prUrl
-    ? `Merge request: ${prUrl}\nPost the analysis as a comment on that MR. Do not open a new MR.`
-    : `No MR URL is available. Print the analysis in the comment format below. Do not open an MR.`;
+    ? `Merge request: ${prUrl}
+Append the analysis to that MR's description (the issue/MR body). Do not post a discussion comment. Do not open a new MR.
+If the MR closes or mentions a GitLab Issue, append the same English section to that Issue description too.`
+    : `No MR URL is available. Print the analysis in the format below. Do not open an MR.`;
 
   return `You are a review assistant for Maven / Spring Boot dependency upgrades (Spring PetClinic).
 
-Do not edit application code. Do not commit. Do not change pom.xml. Analysis and an MR comment only.
+Do not edit application code. Do not commit. Do not change pom.xml. Do not post a discussion comment.
 
 ${target}
 
@@ -90,26 +92,26 @@ Follow these steps:
 
 5. Fetch that library's own release notes / changelog / GitHub releases for the version range (old exclusive → new inclusive). Look for removed/renamed APIs, config keys, and behavior changes. Judge whether those apply to THIS repo's call sites. Do not stop at "the number went up."
 
-6. Post (or print) a Japanese comment in exactly this shape:
+6. Write the analysis in English. Append it to the existing description; keep whatever is already there. Use exactly this shape:
 
-## 📦 依存関係更新の影響分析
+## Upgrade impact analysis
 
-### 更新内容
-- ライブラリ: \`<group:artifact>\` \`X.Y.Z → A.B.C\`（種別: major/minor/patch, scope: xxx, 直接/推移）
+### What changed
+- Library: \`<group:artifact>\` \`X.Y.Z → A.B.C\` (kind: major/minor/patch, scope: xxx, direct/transitive)
 
-### 影響を受けるコード
-- \`src/main/java/...\` — 使い方の説明
-  （利用箇所が無ければ「直接の利用箇所は検出されず（推移的依存の可能性）」と明記）
+### Code that may be affected
+- \`src/main/java/...\` — how it is used
+  (If nothing is found: "No direct usages found (likely a transitive / BOM-managed dependency).")
 
-### 推奨する再テスト範囲
-- 実行コマンド例と対象テストクラス
+### Recommended re-test scope
+- Exact commands and test classes
 
-### 破壊的変更・注意点
-- Release Notes から、本プロジェクトに該当する点。無ければ「特筆すべき破壊的変更は見当たりません」。
-- 見た Release Notes の URL を付ける。
+### Breaking changes / notes
+- Items from the library release notes that apply to this repo. If none: "No relevant breaking changes found."
+- Include the release-notes URLs you read.
 
-### 総合リスク判定
-- 🟢低 / 🟡中 / 🔴高 と一言の根拠
+### Overall risk
+- Low / Medium / High and one-sentence rationale
 `;
 }
 

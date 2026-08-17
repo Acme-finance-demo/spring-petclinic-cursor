@@ -14,7 +14,7 @@ Trivy レポート
     → Agent.create（トリアージ、読み取り中心）
     → policy.ts（コードで判定。エージェントには任せない）
     → Agent.create（修正。cloud なら autoCreatePR）
-    → Agent.create（影響分析。MR コメント。コードは触らない）
+    → Agent.create（影響分析。MR / Issue 本文に英語で追記。コードは触らない）
     → CI 失敗時は Agent.resume（同じエージェントの続き）
 ```
 
@@ -41,7 +41,7 @@ npm ci
 | 場所 | やること | やらないこと |
 | --- | --- | --- |
 | ローカル | Trivy → トリアージ → Policy。ログと state ファイル | MR を開く（`--skip-remediate`。`--runtime local`） |
-| CI | 同じフローのあと、Policy を通ったものだけ cloud で修正 MR。続けて影響分析を MR にコメント | スキャン失敗でパイプラインを落とすこと |
+| CI | 同じフローのあと、Policy を通ったものだけ cloud で修正 MR。続けて影響分析を英語で MR / Issue 本文に追記 | スキャン失敗でパイプラインを落とすこと |
 
 リポジトリルート、または `cursor-sdk/` のどちらからでも実行できます。`--cwd` を省略すると `pom.xml` のあるリポジトリルートを探します。
 
@@ -99,7 +99,7 @@ npx tsx src/cli.ts run \
   --runtime cloud
 ```
 
-ここでは `--skip-remediate` を付けません。入力は同じパイプラインの `trivy-dependency-scan` 成果物です。`CURSOR_REPO_URL` は `$CI_PROJECT_URL`、`CURSOR_STARTING_REF` は `$CI_COMMIT_SHA` です。cloud かつ Policy 通過時だけ `autoCreatePR` で MR が開き、続けて影響分析エージェントが Release Notes と利用箇所を見て MR にコメントします。分析に失敗しても修正 MR は残します。
+ここでは `--skip-remediate` を付けません。入力は同じパイプラインの `trivy-dependency-scan` 成果物です。`CURSOR_REPO_URL` は `$CI_PROJECT_URL`、`CURSOR_STARTING_REF` は `$CI_COMMIT_SHA` です。cloud かつ Policy 通過時だけ `autoCreatePR` で MR が開き、続けて影響分析エージェントが Release Notes と利用箇所を見て、英語で MR（リンクされた Issue があればその）本文に追記します。ディスカッションコメントは付けません。分析に失敗しても修正 MR は残します。
 
 ジョブは `allow_failure: true` です。オーケストレータが落ちてもマージは止まりません。state は成果物 `.cursor/vuln-orchestrator-state.json` に残ります。
 

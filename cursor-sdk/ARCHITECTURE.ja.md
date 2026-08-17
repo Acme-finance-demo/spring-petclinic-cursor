@@ -19,7 +19,7 @@ SDK を呼ぶのは `src/agent.ts` だけです。呼び出しは 4 種類です
 | --- | --- | --- |
 | トリアージ | `Agent.create` + `send` | レポートと `pom.xml` を読み、JSON で分類する。ファイルは編集しない |
 | 修正 | `Agent.create` + `send` | Policy を通ったパッケージだけバージョンを上げ、cloud なら MR を開く |
-| 影響分析 | `Agent.create` + `send` | コードは触らず、Release Notes と利用箇所から互換性・再テスト範囲を MR にコメントする |
+| 影響分析 | `Agent.create` + `send` | コードは触らず、Release Notes と利用箇所から互換性・再テスト範囲を **英語で MR / Issue 本文に追記** する |
 | 続き | `Agent.resume` | 修正 MR の CI 失敗などを、同じエージェントに渡して直す |
 
 次は SDK ではありません。
@@ -41,7 +41,7 @@ cli.ts run
         ├─ agent.ts            トリアージエージェント
         ├─ policy.ts           auto_remediate / comment_only
         ├─ agent.ts            修正エージェント（通ったものだけ）
-        └─ agent.ts            影響分析エージェント（MR コメント）
+        └─ agent.ts            影響分析エージェント（MR / Issue 本文へ英語で追記）
                 │
                 ▼
         .cursor/vuln-orchestrator-state.json

@@ -109,7 +109,7 @@ sequenceDiagram
         Fix-->>CLI: prUrl, agentId (bc-...)
         CLI->>Impact: Agent.create(cloud, autoCreatePR=false)<br/>send(impactPrompt)
         Note over Impact: コードは編集しない<br/>Release Notes と利用箇所を見る
-        Impact->>GitLab: MR に影響分析コメント
+        Impact->>GitLab: MR / Issue 本文に英語で追記
         CLI-->>GL: state を artifact に保存
     end
 ```
@@ -120,7 +120,7 @@ Policy の中身は次のすべてを満たすときだけ `auto_remediate` で�
 2. バージョンを上げるだけで直せる（`recommendedVersion` あり）
 3. メジャーバージョン上げではない（先頭の数字が上がらない）
 
-MR 本文は TypeScript が書いていません。`remediatePrompt` を読んだ Fix agent が書きます。影響分析コメントは `impactPrompt` です（バージョンを上げたあと、互換性と再テスト範囲）。
+MR 本文は TypeScript が書いていません。`remediatePrompt` を読んだ Fix agent が書きます。影響分析は `impactPrompt` が **英語で MR / Issue 本文に追記** します（ディスカッションコメントではない）。
 
 ---
 
@@ -170,7 +170,7 @@ sequenceDiagram
 | 経路 | プロンプト | MR を開くか |
 | --- | --- | --- |
 | ローカル `scan:run` | `triagePrompt` のみ | 開かない |
-| CI `sdk-vuln-orchestrator` | `triagePrompt` → 通れば `remediatePrompt` → `impactPrompt` | Policy 通過時だけ（影響分析はコメント） |
+| CI `sdk-vuln-orchestrator` | `triagePrompt` → 通れば `remediatePrompt` → `impactPrompt` | Policy 通過時だけ（影響分析は本文追記） |
 | CI `trigger-trivy-agent` | Automation の markdown | Automation 側の設定次第 |
 
 ---

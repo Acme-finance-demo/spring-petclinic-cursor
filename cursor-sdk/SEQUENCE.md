@@ -109,7 +109,7 @@ sequenceDiagram
         Fix-->>CLI: prUrl, agentId (bc-...)
         CLI->>Impact: Agent.create(cloud, autoCreatePR=false)<br/>send(impactPrompt)
         Note over Impact: no code edits<br/>release notes + call sites
-        Impact->>GitLab: impact comment on the MR
+        Impact->>GitLab: append English to MR/Issue body
         CLI-->>GL: save state artifact
     end
 ```
@@ -120,7 +120,7 @@ sequenceDiagram
 2. A version bump alone is enough (`recommendedVersion` present)
 3. Not a major bump (first numeric component does not increase)
 
-The MR body is not a TypeScript template. The Fix agent writes it from `remediatePrompt`. The impact comment comes from `impactPrompt` (compatibility and what to re-test after the version change).
+The MR body is not a TypeScript template. The Fix agent writes it from `remediatePrompt`. Impact analysis from `impactPrompt` is **appended in English to the MR/Issue description**, not posted as a discussion comment.
 
 ---
 
@@ -170,7 +170,7 @@ sequenceDiagram
 | Path | Prompt | Opens an MR? |
 | --- | --- | --- |
 | Local `scan:run` | `triagePrompt` only | no |
-| CI `sdk-vuln-orchestrator` | `triagePrompt` → `remediatePrompt` if allowed → `impactPrompt` | only on policy pass (impact is a comment) |
+| CI `sdk-vuln-orchestrator` | `triagePrompt` → `remediatePrompt` if allowed → `impactPrompt` | only on policy pass (impact is appended to the body) |
 | CI `trigger-trivy-agent` | Automation markdown | whatever Automation is configured to do |
 
 ---

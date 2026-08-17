@@ -19,7 +19,7 @@ Only `src/agent.ts` calls the SDK. There are four call sites.
 | --- | --- | --- |
 | Triage | `Agent.create` + `send` | Read the report and `pom.xml`, return JSON. Do not edit files |
 | Remediate | `Agent.create` + `send` | Bump packages that passed policy; on cloud, open an MR |
-| Impact | `Agent.create` + `send` | No code edits. Read release notes and call sites, comment compatibility and re-test scope on the MR |
+| Impact | `Agent.create` + `send` | No code edits. Read release notes and call sites, then **append English** compatibility and re-test scope to the MR (and linked Issue) description |
 | Resume | `Agent.resume` | Send a later CI/run failure to the same remediation agent |
 
 These are not the SDK:
@@ -41,7 +41,7 @@ cli.ts run
         ├─ agent.ts            triage agent
         ├─ policy.ts           auto_remediate / comment_only
         ├─ agent.ts            remediate agent (allow-listed packages only)
-        └─ agent.ts            impact agent (MR comment)
+        └─ agent.ts            impact agent (append English to MR/Issue body)
                 │
                 ▼
         .cursor/vuln-orchestrator-state.json
