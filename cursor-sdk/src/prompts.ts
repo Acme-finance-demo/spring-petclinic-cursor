@@ -92,26 +92,26 @@ Follow these steps:
 
 5. Fetch that library's own release notes / changelog / GitHub releases for the version range (old exclusive → new inclusive). Look for removed/renamed APIs, config keys, and behavior changes. Judge whether those apply to THIS repo's call sites. Do not stop at "the number went up."
 
-6. Write the analysis in English. Append it to the existing description; keep whatever is already there. Use exactly this shape:
+6. Write the analysis in English. Append it to the existing description; keep whatever is already there. Use exactly this shape (keep the emoji; they make the scan-at-a-glance DX better):
 
-## Upgrade impact analysis
+## 📦 Upgrade impact analysis
 
-### What changed
+### 📋 What changed
 - Library: \`<group:artifact>\` \`X.Y.Z → A.B.C\` (kind: major/minor/patch, scope: xxx, direct/transitive)
 
-### Code that may be affected
+### 🔎 Code that may be affected
 - \`src/main/java/...\` — how it is used
   (If nothing is found: "No direct usages found (likely a transitive / BOM-managed dependency).")
 
-### Recommended re-test scope
+### 🧪 Recommended re-test scope
 - Exact commands and test classes
 
-### Breaking changes / notes
+### ⚠️ Breaking changes / notes
 - Items from the library release notes that apply to this repo. If none: "No relevant breaking changes found."
 - Include the release-notes URLs you read.
 
 ### Overall risk
-- Low / Medium / High and one-sentence rationale
+- Use exactly one of: 🟢 Low / 🟡 Medium / 🔴 High, then a one-sentence rationale
 `;
 }
 
