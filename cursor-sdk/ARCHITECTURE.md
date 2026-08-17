@@ -13,12 +13,13 @@ The scan does not fail the pipeline. Fixes arrive later as an agent-opened MR.
 
 ## Where the Cursor SDK is used
 
-Only `src/agent.ts` calls the SDK. There are three call sites.
+Only `src/agent.ts` calls the SDK. There are four call sites.
 
 | Call | API | Role |
 | --- | --- | --- |
 | Triage | `Agent.create` + `send` | Read the report and `pom.xml`, return JSON. Do not edit files |
 | Remediate | `Agent.create` + `send` | Bump packages that passed policy; on cloud, open an MR |
+| Impact | `Agent.create` + `send` | No code edits. Read release notes and call sites, comment compatibility and re-test scope on the MR |
 | Resume | `Agent.resume` | Send a later CI/run failure to the same remediation agent |
 
 These are not the SDK:
@@ -39,7 +40,8 @@ cli.ts run
         ├─ parse-report.ts     group findings by package
         ├─ agent.ts            triage agent
         ├─ policy.ts           auto_remediate / comment_only
-        └─ agent.ts            remediate agent (allow-listed packages only)
+        ├─ agent.ts            remediate agent (allow-listed packages only)
+        └─ agent.ts            impact agent (MR comment)
                 │
                 ▼
         .cursor/vuln-orchestrator-state.json
@@ -76,7 +78,7 @@ gitlab-sample/
 | `agent.ts` | Thin `@cursor/sdk` wrapper. `Agent.create` / `resume`, stream, `wait()`, startup vs run failures |
 | `policy.ts` | Whether a bump may be automatic: severity, fixable by version, major bump. Does not trust the agent blindly |
 | `parse-report.ts` | Normalize Trivy JSON into `Finding`s, group by package |
-| `prompts.ts` | Triage / remediate / resume prompts, plus JSON extraction from agent text |
+| `prompts.ts` | Triage / remediate / impact / resume prompts, plus JSON extraction from agent text |
 | `state.ts` | Persist `agentId`s to `.cursor/vuln-orchestrator-state.json` for resume |
 | `types.ts` | Finding / triage / policy / state types |
 | `policy.test.ts` | Parser and policy unit tests. No SDK calls |

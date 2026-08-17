@@ -10,6 +10,7 @@ export type AgentRunOptions = {
   repoUrl: string;
   startingRef: string;
   autoCreatePR: boolean;
+  prUrl?: string;
   idempotencyKey?: string;
 };
 
@@ -37,7 +38,13 @@ function createOptions(opts: AgentRunOptions) {
     name: opts.name,
     idempotencyKey: opts.idempotencyKey,
     cloud: {
-      repos: [{ url: opts.repoUrl, startingRef: opts.startingRef }],
+      repos: [
+        {
+          url: opts.repoUrl,
+          startingRef: opts.startingRef,
+          ...(opts.prUrl ? { prUrl: opts.prUrl } : {}),
+        },
+      ],
       autoCreatePR: opts.autoCreatePR,
       skipReviewerRequest: true,
       metadata: { purpose: opts.name },

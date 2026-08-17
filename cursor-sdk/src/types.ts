@@ -50,6 +50,8 @@ export type OrchestratorState = {
   triageRunId?: string;
   remediationAgentId?: string;
   remediationRunId?: string;
+  impactAgentId?: string;
+  impactRunId?: string;
   prUrl?: string;
   branch?: string;
   decisions: PolicyDecision[];

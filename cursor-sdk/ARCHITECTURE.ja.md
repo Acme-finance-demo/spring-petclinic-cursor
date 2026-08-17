@@ -13,12 +13,13 @@ English: [ARCHITECTURE.md](./ARCHITECTURE.md)
 
 ## Cursor SDK を使う場所
 
-SDK を呼ぶのは `src/agent.ts` だけです。呼び出しは 3 種類です。
+SDK を呼ぶのは `src/agent.ts` だけです。呼び出しは 4 種類です。
 
 | 呼び出し | API | 役割 |
 | --- | --- | --- |
 | トリアージ | `Agent.create` + `send` | レポートと `pom.xml` を読み、JSON で分類する。ファイルは編集しない |
 | 修正 | `Agent.create` + `send` | Policy を通ったパッケージだけバージョンを上げ、cloud なら MR を開く |
+| 影響分析 | `Agent.create` + `send` | コードは触らず、Release Notes と利用箇所から互換性・再テスト範囲を MR にコメントする |
 | 続き | `Agent.resume` | 修正 MR の CI 失敗などを、同じエージェントに渡して直す |
 
 次は SDK ではありません。
@@ -39,7 +40,8 @@ cli.ts run
         ├─ parse-report.ts     パッケージ単位にまとめる
         ├─ agent.ts            トリアージエージェント
         ├─ policy.ts           auto_remediate / comment_only
-        └─ agent.ts            修正エージェント（通ったものだけ）
+        ├─ agent.ts            修正エージェント（通ったものだけ）
+        └─ agent.ts            影響分析エージェント（MR コメント）
                 │
                 ▼
         .cursor/vuln-orchestrator-state.json
@@ -76,7 +78,7 @@ gitlab-sample/
 | `agent.ts` | `@cursor/sdk` の薄い包み。`Agent.create` / `resume`、stream、`wait()`、起動失敗と run 失敗の切り分け |
 | `policy.ts` | 自動修正してよいかの判定。重大度、直せるか、メジャーバージョンが上がるか。エージェントの提案は信用しすぎない |
 | `parse-report.ts` | Trivy の JSON を `Finding` に直し、パッケージでグループ化する |
-| `prompts.ts` | トリアージ・修正・resume のプロンプト。エージェント出力から JSON を抜く |
+| `prompts.ts` | トリアージ・修正・影響分析・resume のプロンプト。エージェント出力から JSON を抜く |
 | `state.ts` | `agentId` などを `.cursor/vuln-orchestrator-state.json` に保存・読み込み。resume 用 |
 | `types.ts` | Finding / Triage / Policy / State の型 |
 | `policy.test.ts` | パーサと Policy のユニットテスト。SDK は呼ばない |

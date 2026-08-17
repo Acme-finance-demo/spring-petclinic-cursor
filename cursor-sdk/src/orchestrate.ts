@@ -5,6 +5,7 @@ import { decideAll } from "./policy.ts";
 import {
   assertTriageReport,
   extractJson,
+  impactPrompt,
   remediatePrompt,
   resumePrompt,
   triagePrompt,
@@ -105,10 +106,32 @@ export async function runOrchestrator(args: RunArgs): Promise<OrchestratorState>
   state.remediationRunId = remediation.runId;
   state.prUrl = remediation.prUrl;
   state.branch = remediation.branch;
-  await writeState(defaultStatePath(args.cwd), state);
 
   if (state.prUrl) console.error(`[orchestrator] MR: ${state.prUrl}`);
   console.error(`[orchestrator] resume with: agentId=${state.remediationAgentId}`);
+
+  try {
+    const impact = await runAgent({
+      apiKey: args.apiKey,
+      name: "vuln-impact",
+      prompt: impactPrompt(decisions, state.prUrl),
+      runtime: args.runtime,
+      cwd: args.cwd,
+      repoUrl: args.repoUrl,
+      startingRef: state.branch ?? args.startingRef,
+      autoCreatePR: false,
+      prUrl: state.prUrl,
+      idempotencyKey: args.sha ? `vuln-impact-${args.sha}` : undefined,
+    });
+    state.impactAgentId = impact.agentId;
+    state.impactRunId = impact.runId;
+    console.error(`[orchestrator] impact agentId=${impact.agentId}`);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error(`[orchestrator] impact analysis failed (MR still stands): ${message}`);
+  }
+
+  await writeState(defaultStatePath(args.cwd), state);
   return state;
 }
 

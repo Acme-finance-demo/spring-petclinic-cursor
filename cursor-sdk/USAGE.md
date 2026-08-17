@@ -14,6 +14,7 @@ Trivy report
     → Agent.create (triage, read-mostly)
     → policy.ts (decided in code, not by the agent)
     → Agent.create (remediate; autoCreatePR on cloud)
+    → Agent.create (impact analysis; MR comment; no code edits)
     → on a later failure, Agent.resume (same agent)
 ```
 
@@ -40,7 +41,7 @@ Local is for finding out early. CI is for opening an MR from an official scan. A
 | Where | Do | Do not |
 | --- | --- | --- |
 | Local | Trivy → triage → policy. Logs and the state file | Open an MR (`--skip-remediate`, `--runtime local`) |
-| CI | The same flow, then a cloud fix MR for whatever policy allows | Fail the pipeline because the scan found CRITICAL |
+| CI | The same flow, then a cloud fix MR for whatever policy allows, then an impact-analysis comment on that MR | Fail the pipeline because the scan found CRITICAL |
 
 Run from the repo root or from `cursor-sdk/`. If you omit `--cwd`, the CLI walks up until it finds `pom.xml`.
 
@@ -98,7 +99,7 @@ npx tsx src/cli.ts run \
   --runtime cloud
 ```
 
-There is no `--skip-remediate`. Input is the `trivy-dependency-scan` artifact from the same pipeline. `CURSOR_REPO_URL` is `$CI_PROJECT_URL` and `CURSOR_STARTING_REF` is `$CI_COMMIT_SHA`. An MR is opened with `autoCreatePR` only on cloud, and only for packages that pass policy.
+There is no `--skip-remediate`. Input is the `trivy-dependency-scan` artifact from the same pipeline. `CURSOR_REPO_URL` is `$CI_PROJECT_URL` and `CURSOR_STARTING_REF` is `$CI_COMMIT_SHA`. An MR is opened with `autoCreatePR` only on cloud, and only for packages that pass policy. An impact agent then reads that library's release notes and this repo's call sites, and comments on the MR. If impact analysis fails, the fix MR is still kept.
 
 The job is `allow_failure: true`, so an orchestrator failure does not block merge. State is kept as a job artifact at `.cursor/vuln-orchestrator-state.json`.
 

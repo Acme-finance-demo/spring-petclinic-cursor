@@ -58,6 +58,61 @@ Rules:
 `;
 }
 
+export function impactPrompt(decisions: PolicyDecision[], prUrl?: string): string {
+  const auto = decisions.filter((d) => d.action === "auto_remediate");
+  const target = prUrl
+    ? `Merge request: ${prUrl}\nPost the analysis as a comment on that MR. Do not open a new MR.`
+    : `No MR URL is available. Print the analysis in the comment format below. Do not open an MR.`;
+
+  return `You are a review assistant for Maven / Spring Boot dependency upgrades (Spring PetClinic).
+
+Do not edit application code. Do not commit. Do not change pom.xml. Analysis and an MR comment only.
+
+${target}
+
+Policy already chose these upgrades:
+${JSON.stringify(auto, null, 2)}
+
+A version number change in pom.xml is the easy part. Your job is the hard part: what actually changed, whether this project is compatible, and what to re-test.
+
+Follow these steps:
+
+1. Read the MR (title, description, changed files) if a URL was given. Identify each library (group:artifact) and old → new version.
+
+2. Read pom.xml (and build.gradle if present). For each library decide: direct vs transitive / BOM-managed, Maven scope (compile / runtime / test), and update kind (major / minor / patch).
+
+3. Search src/main and src/test for types, packages, and annotations that library provides. If there is no direct usage, say so (typical for transitive / BOM-managed deps).
+
+4. Recommend a re-test range:
+   - Prefer the test classes that cover the call sites you found.
+   - Narrow \`./mvnw test -Dtest=...\` vs full \`./mvnw verify\` based on update kind and coupling. Spring Boot BOM / starter / Tomcat / Thymeleaf template engine changes usually need a wider run.
+   - Spring test slices: repository changes → @DataJpaTest; controller / MVC / template changes → @WebMvcTest / MockMvc.
+
+5. Fetch that library's own release notes / changelog / GitHub releases for the version range (old exclusive → new inclusive). Look for removed/renamed APIs, config keys, and behavior changes. Judge whether those apply to THIS repo's call sites. Do not stop at "the number went up."
+
+6. Post (or print) a Japanese comment in exactly this shape:
+
+## 📦 依存関係更新の影響分析
+
+### 更新内容
+- ライブラリ: \`<group:artifact>\` \`X.Y.Z → A.B.C\`（種別: major/minor/patch, scope: xxx, 直接/推移）
+
+### 影響を受けるコード
+- \`src/main/java/...\` — 使い方の説明
+  （利用箇所が無ければ「直接の利用箇所は検出されず（推移的依存の可能性）」と明記）
+
+### 推奨する再テスト範囲
+- 実行コマンド例と対象テストクラス
+
+### 破壊的変更・注意点
+- Release Notes から、本プロジェクトに該当する点。無ければ「特筆すべき破壊的変更は見当たりません」。
+- 見た Release Notes の URL を付ける。
+
+### 総合リスク判定
+- 🟢低 / 🟡中 / 🔴高 と一言の根拠
+`;
+}
+
 export function resumePrompt(logText: string, extra?: string): string {
   return `The remediation merge request's pipeline (or your previous run) needs a follow-up.
 

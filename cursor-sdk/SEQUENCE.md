@@ -16,6 +16,7 @@ Every prompt is built in `src/prompts.ts` and passed to `agent.send()`. The text
 | Policy | `policy.ts` | no |
 | Triage | Cursor agent (`triagePrompt`) | yes |
 | Fix | Cursor agent (`remediatePrompt`) | yes |
+| Impact | Cursor agent (`impactPrompt`) | yes |
 | GitLab | repo / MR | no |
 | Automation | Cursor Automation + `trigger-trivy-agent` | no (separate path) |
 
@@ -78,6 +79,7 @@ sequenceDiagram
     participant Triage as Triage agent<br/>triagePrompt
     participant Policy as policy.ts
     participant Fix as Fix agent<br/>remediatePrompt
+    participant Impact as Impact agent<br/>impactPrompt
     participant Cursor as Cursor cloud VM
     participant GitLab as GitLab MR
 
@@ -105,6 +107,9 @@ sequenceDiagram
         Cursor->>GitLab: push branch + open MR
         GitLab-->>Fix: MR URL
         Fix-->>CLI: prUrl, agentId (bc-...)
+        CLI->>Impact: Agent.create(cloud, autoCreatePR=false)<br/>send(impactPrompt)
+        Note over Impact: no code edits<br/>release notes + call sites
+        Impact->>GitLab: impact comment on the MR
         CLI-->>GL: save state artifact
     end
 ```
@@ -115,7 +120,7 @@ sequenceDiagram
 2. A version bump alone is enough (`recommendedVersion` present)
 3. Not a major bump (first numeric component does not increase)
 
-The MR body is not a TypeScript template. The Fix agent writes it from `remediatePrompt`.
+The MR body is not a TypeScript template. The Fix agent writes it from `remediatePrompt`. The impact comment comes from `impactPrompt` (compatibility and what to re-test after the version change).
 
 ---
 
@@ -165,7 +170,7 @@ sequenceDiagram
 | Path | Prompt | Opens an MR? |
 | --- | --- | --- |
 | Local `scan:run` | `triagePrompt` only | no |
-| CI `sdk-vuln-orchestrator` | `triagePrompt`, then `remediatePrompt` if policy allows | only on policy pass |
+| CI `sdk-vuln-orchestrator` | `triagePrompt` → `remediatePrompt` if allowed → `impactPrompt` | only on policy pass (impact is a comment) |
 | CI `trigger-trivy-agent` | Automation markdown | whatever Automation is configured to do |
 
 ---
@@ -182,6 +187,7 @@ flowchart LR
 
     P -->|triagePrompt| O
     P -->|remediatePrompt| O
+    P -->|impactPrompt| O
     P -->|resumePrompt| O
     O -->|agent.send prompt| A
     A -->|Agent.create / resume| SDK["@cursor/sdk"]
