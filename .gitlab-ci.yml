@@ -30,7 +30,7 @@ deploy-job:      # This job runs in the deploy stage.
   script:
     - echo "Deploying application..."
 
-# Trivy: 依存関係の脆弱性スキャン（CRITICAL で失敗）
+# Trivy: 依存関係の脆弱性スキャン
 # build-job の JAR を含めてスキャンし、解決済み依存も対象にする。
 # Trivy 単体だと Maven Central へ POM 取得しに行き shared runner で 429 になりやすいため、
 # 先に ./mvnw dependency:resolve で ~/.m2 を埋めてからスキャンする。
