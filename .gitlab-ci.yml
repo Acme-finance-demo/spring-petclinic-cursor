@@ -1,5 +1,4 @@
 stages:
-  - renovate
   - build
   - test
   - security     # Trivy 依存関係スキャン
@@ -153,19 +152,7 @@ trigger-trivy-agent:
   - curl -sSfL "https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-amd64" -o /usr/local/bin/jq
   - chmod +x /usr/local/bin/cosign /usr/local/bin/jq
 
-renovate:
-  stage: renovate
-  image: renovate/renovate:latest
-  variables:
-    RENOVATE_PLATFORM: gitlab
-    RENOVATE_ENDPOINT: https://gitlab.com/api/v4
-    RENOVATE_REPOSITORIES: "gl-demo-ultimate-nsasaki/app/java/spring-petclinic"
-    LOG_LEVEL: debug
-  script:
-    - renovate
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "web"
-  tags: []
+
 
 
 
