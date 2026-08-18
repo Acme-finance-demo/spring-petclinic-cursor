@@ -87,7 +87,7 @@ gitlab-sample/
 
 | ファイル | 役割 |
 | --- | --- |
-| `scripts/trivy-scan.sh` | ローカル Trivy。CI と同じく CRITICAL のみ、Trivy JSON、検出しても exit 0。`cursor-sdk/` は対象外 |
+| `scripts/trivy-scan.sh` | ローカル Trivy。CI と同じく CRITICAL/HIGH/MEDIUM、Trivy JSON、検出しても exit 0。自動修正は Policy が CRITICAL のみ |
 | `fixtures/gl-trivy-fs-report.sample.json` | 実スキャンなしで CLI を試すための 1 件サンプル（Tomcat / CVE-2026-43515） |
 
 ### パッケージ設定

@@ -37,11 +37,11 @@ trivy-dependency-scan:
         | tar -xz -C /usr/local/bin trivy
     - ./mvnw -B -DskipTests dependency:resolve
   script:
-    - trivy fs --scanners vuln --severity CRITICAL
+    - trivy fs --scanners vuln --severity CRITICAL,HIGH,MEDIUM
         --skip-dirs target --skip-dirs cursor-sdk --skip-dirs node_modules --skip-dirs .git
         --format json --output gl-trivy-fs-report.json .
-    # レポートは出すが、CRITICAL 検出でもジョブは失敗させない
-    - trivy fs --scanners vuln --severity CRITICAL
+    # レポートは出すが、検出してもジョブは失敗させない。自動修正するかは Policy が決める。
+    - trivy fs --scanners vuln --severity CRITICAL,HIGH,MEDIUM
         --skip-dirs target --skip-dirs cursor-sdk --skip-dirs node_modules --skip-dirs .git
         --exit-code 0 --format table .
   artifacts:

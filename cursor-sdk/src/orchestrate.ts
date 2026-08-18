@@ -42,8 +42,16 @@ export async function runOrchestrator(args: RunArgs): Promise<OrchestratorState>
   }
 
   const groups = groupByPackage(findings);
+  const bySeverity = new Map<string, number>();
+  for (const finding of findings) {
+    const severity = finding.severity.trim().toUpperCase() || "UNKNOWN";
+    bySeverity.set(severity, (bySeverity.get(severity) ?? 0) + 1);
+  }
+  const severitySummary = [...bySeverity.entries()]
+    .map(([severity, count]) => `${severity} ${count}`)
+    .join(", ");
   console.error(
-    `[orchestrator] ${findings.length} finding(s) in ${groups.length} package group(s)`,
+    `[orchestrator] ${findings.length} finding(s) in ${groups.length} package group(s) (${severitySummary})`,
   );
 
   const triage = await runAgent({
@@ -69,6 +77,9 @@ export async function runOrchestrator(args: RunArgs): Promise<OrchestratorState>
       `  ${decision.action.padEnd(15)} ${decision.item.package}  ${decision.reason}`,
     );
   }
+  console.error(
+    `[orchestrator] auto_remediate ${auto.length} of ${decisions.length} package group(s)`,
+  );
 
   const state: OrchestratorState = {
     createdAt: new Date().toISOString(),

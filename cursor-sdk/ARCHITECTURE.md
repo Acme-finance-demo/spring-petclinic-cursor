@@ -87,7 +87,7 @@ gitlab-sample/
 
 | File | Role |
 | --- | --- |
-| `scripts/trivy-scan.sh` | Local Trivy. Same as CI: CRITICAL only, native Trivy JSON, exit 0 on findings. Skips `cursor-sdk/` |
+| `scripts/trivy-scan.sh` | Local Trivy. Same as CI: CRITICAL/HIGH/MEDIUM, native Trivy JSON, exit 0 on findings. Auto-remediate stays CRITICAL-only in policy |
 | `fixtures/gl-trivy-fs-report.sample.json` | One-finding sample (Tomcat / CVE-2026-43515) so the CLI can run without a real scan |
 
 ### Package config

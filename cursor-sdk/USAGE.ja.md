@@ -56,7 +56,7 @@ cd cursor-sdk
 npm run scan
 ```
 
-CRITICAL のみ、Trivy ネイティブ JSON、検出しても exit 0。`cursor-sdk/` は対象外。レポートはリポジトリルートの `gl-trivy-fs-report.json`。依存解決を省略するなら `bash scripts/trivy-scan.sh --skip-resolve`。
+CRITICAL / HIGH / MEDIUM、Trivy ネイティブ JSON、検出しても exit 0。自動修正は Policy が CRITICAL だけ通す。`cursor-sdk/` は対象外。レポートはリポジトリルートの `gl-trivy-fs-report.json`。依存解決を省略するなら `bash scripts/trivy-scan.sh --skip-resolve`。
 
 スキャンからトリアージまで（推奨）:
 

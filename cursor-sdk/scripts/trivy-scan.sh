@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# CI の trivy-dependency-scan と同じ: CRITICAL のみ、Trivy JSON、検出しても exit 0。
+# CI の trivy-dependency-scan と同じ: CRITICAL/HIGH/MEDIUM、Trivy JSON、検出しても exit 0。
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -34,13 +34,13 @@ fi
 
 OUT="$ROOT/gl-trivy-fs-report.json"
 
-echo "Scanning (CRITICAL only)…" >&2
-trivy fs --scanners vuln --severity CRITICAL \
+echo "Scanning (CRITICAL,HIGH,MEDIUM)…" >&2
+trivy fs --scanners vuln --severity CRITICAL,HIGH,MEDIUM \
   --skip-dirs target --skip-dirs cursor-sdk --skip-dirs node_modules --skip-dirs .git \
   --format json --output "$OUT" \
   .
 
-trivy fs --scanners vuln --severity CRITICAL \
+trivy fs --scanners vuln --severity CRITICAL,HIGH,MEDIUM \
   --skip-dirs target --skip-dirs cursor-sdk --skip-dirs node_modules --skip-dirs .git \
   --exit-code 0 --format table \
   .

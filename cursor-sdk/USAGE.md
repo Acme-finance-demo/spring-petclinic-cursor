@@ -56,7 +56,7 @@ cd cursor-sdk
 npm run scan
 ```
 
-CRITICAL only, native Trivy JSON, exit 0 even when findings exist. `cursor-sdk/` is skipped. The report is `gl-trivy-fs-report.json` at the repository root. Skip Maven resolution with `bash scripts/trivy-scan.sh --skip-resolve`.
+CRITICAL / HIGH / MEDIUM, native Trivy JSON, exit 0 even when findings exist. Auto-remediate stays CRITICAL-only in policy. `cursor-sdk/` is skipped. The report is `gl-trivy-fs-report.json` at the repository root. Skip Maven resolution with `bash scripts/trivy-scan.sh --skip-resolve`.
 
 Scan through triage (recommended):
 

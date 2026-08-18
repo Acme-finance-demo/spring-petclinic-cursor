@@ -38,7 +38,7 @@ sequenceDiagram
     participant State as vuln-orchestrator-state.json
 
     Dev->>Trivy: npm run scan
-    Trivy->>Trivy: CRITICAL のみスキャン<br/>cursor-sdk は skip
+    Trivy->>Trivy: CRITICAL/HIGH/MEDIUM<br/>cursor-sdk は skip
     Trivy-->>Dev: gl-trivy-fs-report.json<br/>exit 0（検出しても落とさない）
 
     Dev->>CLI: run --runtime local --skip-remediate
@@ -84,7 +84,7 @@ sequenceDiagram
     participant GitLab as GitLab MR
 
     Dev->>GL: git push
-    GL->>Scan: CRITICAL スキャン（ジョブは落とさない）
+    GL->>Scan: CRITICAL/HIGH/MEDIUM（ジョブは落とさない）
     Scan-->>GL: gl-trivy-fs-report.json
 
     GL->>CLI: tsx cli.ts run --runtime cloud<br/>（--skip-remediate なし）
