@@ -1,6 +1,7 @@
 import { existsSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { resolveHostContext, vocabFor } from "./host.ts";
 import { resumeOrchestrator, runOrchestrator } from "./orchestrate.ts";
 import { defaultStatePath, readState } from "./state.ts";
 import type { Runtime } from "./types.ts";
@@ -18,7 +19,11 @@ function opt(name: string): string | undefined {
 function findRepoRoot(start: string): string {
   let dir = start;
   for (;;) {
-    if (existsSync(join(dir, "pom.xml")) || existsSync(join(dir, ".gitlab-ci.yml"))) {
+    if (
+      existsSync(join(dir, "pom.xml")) ||
+      existsSync(join(dir, ".gitlab-ci.yml")) ||
+      existsSync(join(dir, ".github", "workflows"))
+    ) {
       return dir;
     }
     const parent = dirname(dir);
@@ -40,10 +45,12 @@ function usage(): never {
 
 Env:
   CURSOR_API_KEY          required
-  CURSOR_REPO_URL         cloud clone URL (CI: $CI_PROJECT_URL)
-  CURSOR_STARTING_REF     cloud git ref (CI: $CI_COMMIT_SHA)
+  CURSOR_REPO_URL         cloud clone URL (GitHub Actions: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY,
+                          GitLab CI: $CI_PROJECT_URL, otherwise the origin remote)
+  CURSOR_STARTING_REF     cloud git ref (GitHub Actions: $GITHUB_SHA, GitLab CI: $CI_COMMIT_SHA)
   CURSOR_MODEL            default composer-2.5
   VULN_RUNTIME            local | cloud (CI defaults to cloud)
+  VULN_HOST               github | gitlab (overrides autodetection; only changes PR/MR wording)
 `);
   process.exit(64);
 }
@@ -60,6 +67,7 @@ async function main(): Promise<void> {
 
   const here = dirname(fileURLToPath(import.meta.url));
   const cwd = resolve(opt("--cwd") ?? findRepoRoot(resolve(here, "../..")));
+  const hostContext = resolveHostContext({ cwd });
 
   if (command === "run") {
     const reportPath = opt("--report");
@@ -67,22 +75,21 @@ async function main(): Promise<void> {
     const runtime = (opt("--runtime") as Runtime | undefined) ?? defaultRuntime();
     if (runtime !== "local" && runtime !== "cloud") usage();
 
+    console.error(
+      `[orchestrator] host=${hostContext.host} repo=${hostContext.repoUrl} ref=${hostContext.startingRef}`,
+    );
+
     await runOrchestrator({
       apiKey,
       reportPath: resolve(reportPath),
       runtime,
       cwd,
-      repoUrl:
-        process.env.CURSOR_REPO_URL ??
-        process.env.CI_PROJECT_URL ??
-        "https://gitlab.com/naoharu1218/gitlab-sample",
-      startingRef:
-        process.env.CURSOR_STARTING_REF ??
-        process.env.CI_COMMIT_SHA ??
-        process.env.CI_COMMIT_REF_NAME ??
-        "main",
-      pipelineId: process.env.CI_PIPELINE_ID,
-      sha: process.env.CI_COMMIT_SHA,
+      host: hostContext.host,
+      vocab: hostContext.vocab,
+      repoUrl: hostContext.repoUrl,
+      startingRef: hostContext.startingRef,
+      pipelineId: hostContext.pipelineId,
+      sha: hostContext.sha,
       skipRemediate: flag("--skip-remediate"),
     });
     return;
@@ -100,6 +107,8 @@ async function main(): Promise<void> {
     apiKey,
     agentId,
     cwd,
+    // ローカルから resume するときは、記録された host の語彙を優先する
+    vocab: saved?.host ? vocabFor(saved.host) : hostContext.vocab,
     logPath: opt("--log"),
     note: opt("--note"),
   });

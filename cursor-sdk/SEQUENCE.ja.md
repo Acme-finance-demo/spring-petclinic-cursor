@@ -17,7 +17,7 @@ English: [SEQUENCE.md](./SEQUENCE.md)
 | Triage | Cursor Agent（`triagePrompt`） | はい |
 | Fix | Cursor Agent（`remediatePrompt`） | はい |
 | Impact | Cursor Agent（`impactPrompt`） | はい |
-| GitLab | リポジトリ / MR | いいえ |
+| フォージ | GitLab（リポジトリ / MR）または GitHub（リポジトリ / PR） | いいえ |
 | Automation | Cursor Automation + `trigger-trivy-agent` | いいえ（別経路） |
 
 ---
@@ -66,14 +66,14 @@ sequenceDiagram
 
 ---
 
-## 2. CI（Policy を通ったものだけ MR）
+## 2. CI（Policy を通ったものだけ MR / PR）
 
-人が `--runtime cloud` を叩く必要はありません。push かつ `CURSOR_API_KEY` があるとき、`sdk-vuln-orchestrator` が実行します。
+人が `--runtime cloud` を叩く必要はありません。push かつ `CURSOR_API_KEY` があるとき、`sdk-vuln-orchestrator` が実行します（GitLab は `.gitlab-ci.yml`、GitHub は `.github/workflows/security-scan.yml` の同名ジョブ）。流れは同じで、`host.ts` が clone URL・開始 ref・MR / PR の呼び方だけを差し替えます。
 
 ```mermaid
 sequenceDiagram
     actor Dev
-    participant GL as GitLab CI
+    participant GL as GitLab CI /<br/>GitHub Actions
     participant Scan as trivy-dependency-scan
     participant CLI as CLI<br/>orchestrate.ts
     participant Triage as Triage agent<br/>triagePrompt
@@ -81,7 +81,7 @@ sequenceDiagram
     participant Fix as Fix agent<br/>remediatePrompt
     participant Impact as Impact agent<br/>impactPrompt
     participant Cursor as Cursor cloud VM
-    participant GitLab as GitLab MR
+    participant Forge as GitLab MR /<br/>GitHub PR
 
     Dev->>GL: git push
     GL->>Scan: CRITICAL/HIGH/MEDIUM（ジョブは落とさない）
@@ -99,17 +99,17 @@ sequenceDiagram
     Policy-->>CLI: decisions[]
 
     alt auto_remediate が 0件
-        CLI-->>GL: Fix を起動せず終了（MR なし）
+        CLI-->>GL: Fix を起動せず終了（MR / PR なし）
     else 1件以上
         CLI->>Fix: Agent.create(cloud, autoCreatePR=true)<br/>send(remediatePrompt)
-        Note over Fix: AUTO だけバージョンを上げる<br/>comment_only は MR 本文の TODO
+        Note over Fix: AUTO だけバージョンを上げる<br/>comment_only は本文の TODO
         Fix->>Cursor: clone → pom を最小変更 → commit
-        Cursor->>GitLab: ブランチ push + MR 作成
-        GitLab-->>Fix: MR URL
+        Cursor->>Forge: ブランチ push + MR / PR 作成
+        Forge-->>Fix: MR / PR の URL
         Fix-->>CLI: prUrl, agentId (bc-...)
         CLI->>Impact: Agent.create(cloud, autoCreatePR=false)<br/>send(impactPrompt)
         Note over Impact: コードは編集しない<br/>Release Notes と利用箇所を見る
-        Impact->>GitLab: MR / Issue 本文に英語で追記
+        Impact->>Forge: MR / PR / Issue 本文に英語で追記
         CLI-->>GL: state を artifact に保存
     end
 ```
@@ -120,11 +120,11 @@ Policy の中身は次のすべてを満たすときだけ `auto_remediate` で�
 2. バージョンを上げるだけで直せる（`recommendedVersion` あり）
 3. メジャーバージョン上げではない（先頭の数字が上がらない）
 
-MR 本文は TypeScript が書いていません。`remediatePrompt` を読んだ Fix agent が書きます。影響分析は `impactPrompt` が **英語で MR / Issue 本文に追記** します（ディスカッションコメントではない）。
+MR / PR 本文は TypeScript が書いていません。`remediatePrompt` を読んだ Fix agent が書きます。影響分析は `impactPrompt` が **英語で MR / PR / Issue 本文に追記** します（コメントではない）。
 
 ---
 
-## 3. 修正 MR の CI が落ちたあと（resume）
+## 3. 修正 MR / PR の CI が落ちたあと（resume）
 
 元の Trivy ジョブが赤でも resume しません。対象は修正ブランチの build/test 失敗か、エージェント run の失敗です。
 
@@ -133,12 +133,12 @@ sequenceDiagram
     actor Op as オペレータ / 後続ジョブ
     participant CLI as CLI<br/>resume
     participant Fix as 同じ Fix agent<br/>Agent.resume
-    participant GitLab as 修正 MR
+    participant Forge as 修正 MR / PR
 
     Op->>CLI: resume --agent-id bc-... --log ci.log
     CLI->>Fix: Agent.resume(bc-...)<br/>send(resumePrompt)
     Note over Fix: 新しい agent は作らない<br/>prompts.ts の resumePrompt
-    Fix->>GitLab: 追加 commit（必要なら）
+    Fix->>Forge: 追加 commit（必要なら）
     Fix-->>CLI: runId / prUrl
 ```
 
@@ -146,9 +146,9 @@ sequenceDiagram
 
 ---
 
-## 4. 使っていない経路（Cursor Automation）
+## 4. 使っていない経路（Cursor Automation、GitLab のみ）
 
-SDK ジョブとは別物です。`CURSOR_TRIVY_WEBHOOK_URL` が残っていると、こちらも動いて MR が二重になります。
+SDK ジョブとは別物です。`CURSOR_TRIVY_WEBHOOK_URL` が残っていると、こちらも動いて MR が二重になります。GitHub Actions には移植していません。この webhook ジョブは GitLab に Automation 向けの「CI 完了」トリガーが無いから存在するものです。
 
 ```mermaid
 sequenceDiagram
@@ -170,7 +170,7 @@ sequenceDiagram
 | 経路 | プロンプト | MR を開くか |
 | --- | --- | --- |
 | ローカル `scan:run` | `triagePrompt` のみ | 開かない |
-| CI `sdk-vuln-orchestrator` | `triagePrompt` → 通れば `remediatePrompt` → `impactPrompt` | Policy 通過時だけ（影響分析は本文追記） |
+| CI `sdk-vuln-orchestrator`（GitLab CI / GitHub Actions） | `triagePrompt` → 通れば `remediatePrompt` → `impactPrompt` | Policy 通過時だけ（影響分析は本文追記） |
 | CI `trigger-trivy-agent` | Automation の markdown | Automation 側の設定次第 |
 
 ---

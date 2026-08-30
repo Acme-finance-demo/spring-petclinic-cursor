@@ -1,5 +1,30 @@
 export type Runtime = "local" | "cloud";
 
+/** どのフォージ上で動いているか。MR/PR の語彙と repo URL の解決に使う。 */
+export type Host = "github" | "gitlab";
+
+export type HostVocab = {
+  /** "GitHub" / "GitLab" */
+  host: string;
+  /** "pull request" / "merge request" */
+  pr: string;
+  /** "PR" / "MR" */
+  prShort: string;
+  /** "GitHub Issue" / "GitLab Issue" */
+  issue: string;
+  /** "pull request comment" / "discussion comment" */
+  comment: string;
+};
+
+export type HostContext = {
+  host: Host;
+  vocab: HostVocab;
+  repoUrl: string;
+  startingRef: string;
+  sha?: string;
+  pipelineId?: string;
+};
+
 export type Finding = {
   id: string;
   severity: string;
@@ -44,6 +69,7 @@ export type PolicyDecision = {
 export type OrchestratorState = {
   createdAt: string;
   runtime: Runtime;
+  host?: Host;
   pipelineId?: string;
   sha?: string;
   triageAgentId?: string;

@@ -5,7 +5,9 @@
 What we built and which file does what: [ARCHITECTURE.md](./ARCHITECTURE.md).
 Sequences: [SEQUENCE.md](./SEQUENCE.md).
 
-Takes a GitLab CI Trivy report and runs triage → policy → a fix MR via the Cursor SDK. The scan job itself does not fail on CRITICAL findings. Remediation is asynchronous.
+Takes a Trivy report from GitLab CI or GitHub Actions and runs triage → policy → a fix MR/PR via the Cursor SDK. The scan job itself does not fail on CRITICAL findings. Remediation is asynchronous.
+
+The host is detected from CI environment variables (`GITLAB_CI` / `GITHUB_ACTIONS`), so the same CLI runs on both. Only the repo URL, the starting ref, and the MR/PR wording in the prompts change.
 
 ## Flow
 
@@ -14,7 +16,7 @@ Trivy report
     → Agent.create (triage, read-mostly)
     → policy.ts (decided in code, not by the agent)
     → Agent.create (remediate; autoCreatePR on cloud)
-    → Agent.create (impact analysis; append English to the MR/Issue body; no code edits)
+    → Agent.create (impact analysis; append English to the MR/PR/Issue body; no code edits)
     → on a later failure, Agent.resume (same agent)
 ```
 
@@ -25,7 +27,7 @@ The SDK is used only by the CLI in this directory. Policy and report parsing are
 - Node.js 22.13+
 - [Trivy](https://trivy.dev/) for local scans (`brew install trivy` on macOS)
 - `CURSOR_API_KEY` from the [Cursor Dashboard](https://cursor.com/dashboard/api) (user key or service-account key)
-- For the cloud runtime: Cursor must be able to access this GitLab repository
+- For the cloud runtime: Cursor must be able to access this repository (GitLab or GitHub)
 
 ## Install
 
@@ -36,12 +38,12 @@ npm ci
 
 ## What to run where
 
-Local is for finding out early. CI is for opening an MR from an official scan. A laptop Trivy report can disagree with CI, so local runs do not open MRs.
+Local is for finding out early. CI is for opening an MR/PR from an official scan. A laptop Trivy report can disagree with CI, so local runs do not open MRs or PRs.
 
 | Where | Do | Do not |
 | --- | --- | --- |
-| Local | Trivy → triage → policy. Logs and the state file | Open an MR (`--skip-remediate`, `--runtime local`) |
-| CI | The same flow, then a cloud fix MR for whatever policy allows, then English impact analysis appended to the MR/Issue body | Fail the pipeline because the scan found CRITICAL |
+| Local | Trivy → triage → policy. Logs and the state file | Open an MR/PR (`--skip-remediate`, `--runtime local`) |
+| CI | The same flow, then a cloud fix MR (GitLab) / PR (GitHub) for whatever policy allows, then English impact analysis appended to its description | Fail the pipeline because the scan found CRITICAL |
 
 Run from the repo root or from `cursor-sdk/`. If you omit `--cwd`, the CLI walks up until it finds `pom.xml`.
 
@@ -89,7 +91,9 @@ Output is the policy lines in the terminal plus `.cursor/vuln-orchestrator-state
 
 ### Commands CI runs
 
-You do not need to pass `--runtime cloud` on a laptop. On a push pipeline with `CURSOR_API_KEY`, `sdk-vuln-orchestrator` runs:
+You do not need to pass `--runtime cloud` on a laptop. On a push pipeline with `CURSOR_API_KEY`, the orchestrator job runs this.
+
+GitLab CI — `sdk-vuln-orchestrator` in `.gitlab-ci.yml`:
 
 ```bash
 cd cursor-sdk
@@ -99,17 +103,43 @@ npx tsx src/cli.ts run \
   --runtime cloud
 ```
 
-There is no `--skip-remediate`. Input is the `trivy-dependency-scan` artifact from the same pipeline. `CURSOR_REPO_URL` is `$CI_PROJECT_URL` and `CURSOR_STARTING_REF` is `$CI_COMMIT_SHA`. An MR is opened with `autoCreatePR` only on cloud, and only for packages that pass policy. An impact agent then reads that library's release notes and this repo's call sites, and **appends English analysis to the MR description** (and to a linked GitLab Issue if the MR closes one). It does not post a discussion comment. If impact analysis fails, the fix MR is still kept.
+GitHub Actions — `sdk-vuln-orchestrator` in `.github/workflows/security-scan.yml`:
 
-The job is `allow_failure: true`, so an orchestrator failure does not block merge. State is kept as a job artifact at `.cursor/vuln-orchestrator-state.json`.
+```bash
+cd cursor-sdk
+npm ci
+npx tsx src/cli.ts run \
+  --report "$GITHUB_WORKSPACE/gl-trivy-fs-report.json" \
+  --runtime cloud
+```
 
-Setup:
+Same command; only the workspace variable differs. There is no `--skip-remediate`. Input is the Trivy report artifact from the same pipeline / run. `CURSOR_REPO_URL` and `CURSOR_STARTING_REF` come from the host: `$CI_PROJECT_URL` / `$CI_COMMIT_SHA` on GitLab, `$GITHUB_SERVER_URL/$GITHUB_REPOSITORY` / `$GITHUB_SHA` on GitHub. An MR (GitLab) or PR (GitHub) is opened with `autoCreatePR` only on cloud, and only for packages that pass policy. An impact agent then reads that library's release notes and this repo's call sites, and **appends English analysis to the MR/PR description** (and to a linked Issue if it closes one). It does not post a comment. If impact analysis fails, the fix MR/PR is still kept.
 
-1. GitLab: **Settings → CI/CD → Variables** → add `CURSOR_API_KEY` (Masked. If it is Protected, only pushes to protected branches will see it)
+An orchestrator failure does not block merge: `allow_failure: true` on GitLab, `continue-on-error: true` on GitHub. State is kept as a job artifact at `.cursor/vuln-orchestrator-state.json`.
+
+Setup on GitLab:
+
+1. **Settings → CI/CD → Variables** → add `CURSOR_API_KEY` (Masked. If it is Protected, only pushes to protected branches will see it)
 2. Disable the existing Cursor Automation variables (`CURSOR_TRIVY_WEBHOOK_URL` / `CURSOR_TRIVY_API_KEY`). Leaving both enabled duplicates MRs
 3. Push to `main`
 
-### After the fix MR's CI fails (resume)
+Setup on GitHub:
+
+1. **Settings → Secrets and variables → Actions → New repository secret** → add `CURSOR_API_KEY`. Without it the orchestrator job's steps are skipped and the workflow still passes
+2. Connect this repository to Cursor. The Cursor GitHub App needs write access, because the cloud agent pushes the fix branch and opens the PR itself — not `GITHUB_TOKEN`
+3. Optional: **Settings → Code security** → turn on Code scanning so the Trivy SARIF lands in the Security tab. Without it the upload step fails soft (`continue-on-error: true`)
+4. Push to `main`
+
+What the GitHub workflow does differently:
+
+- `push` ignores `cursor/**`, so the agent's fix branch does not start another orchestrator run. The fix PR is still built and scanned through the `pull_request` trigger
+- The orchestrator job only runs on `push`, never on `pull_request`
+- Trivy also writes `trivy-results.sarif`, uploaded with `github/codeql-action/upload-sarif` (the GitLab side has no SARIF step)
+- The scan job does not download the JAR artifact. `--skip-dirs target` excludes it anyway; what matters is `~/.m2` filled by `./mvnw dependency:resolve`
+- Who authors the fix PR depends on the key. The SDK's `openAsCursorGithubApp` defaults to true for a service-account key (PR shows up as the Cursor GitHub App) and false for a user key (PR shows up as you). We do not set it explicitly
+- `trigger-trivy-agent` (the Cursor Automation webhook) is not ported. That job exists because GitLab has no "CI completed" trigger for Automations; on GitHub an Automation can trigger natively, and running both paths would duplicate PRs
+
+### After the fix MR/PR's CI fails (resume)
 
 Do not resume on a red Trivy job. Resume is for a failed build/test on the fix branch, or a failed agent run. The `agentId` is the cloud agent from CI (`bc-...`).
 
@@ -139,10 +169,11 @@ If you omit `--agent-id`, the CLI reads `remediationAgentId` from `.cursor/vuln-
 | Variable | Required | Description |
 | --- | --- | --- |
 | `CURSOR_API_KEY` | yes | Cursor API key |
-| `CURSOR_REPO_URL` | for cloud | Clone URL. In CI: `$CI_PROJECT_URL` |
-| `CURSOR_STARTING_REF` | for cloud | Starting ref. In CI: `$CI_COMMIT_SHA` |
+| `CURSOR_REPO_URL` | for cloud | Clone URL. GitLab CI: `$CI_PROJECT_URL`. GitHub Actions: `$GITHUB_SERVER_URL/$GITHUB_REPOSITORY`. Off CI: the `origin` remote |
+| `CURSOR_STARTING_REF` | for cloud | Starting ref. GitLab CI: `$CI_COMMIT_SHA`. GitHub Actions: `$GITHUB_SHA` |
 | `CURSOR_MODEL` | no | Defaults to `composer-2.5` |
 | `VULN_RUNTIME` | no | `local` or `cloud` |
+| `VULN_HOST` | no | `github` or `gitlab`. Overrides autodetection; only changes the MR/PR wording in prompts |
 
 ## Policy (when a fix is automatic)
 
@@ -155,19 +186,24 @@ Decisions live in `src/policy.ts`. The orchestrator does not take the agent's re
 - A recommended version exists
 - It is not a major bump (first numeric component does not increase)
 
-Everything else is `comment_only` and becomes a TODO in the MR body. Spring Boot 3.x → 4.x stays a human decision.
+Everything else is `comment_only` and becomes a TODO in the MR/PR body. Spring Boot 3.x → 4.x stays a human decision.
 
 The shortest live extension is adding `"HIGH"` to `AUTO_REMEDIATE_SEVERITIES`.
 
-## GitLab CI
+## CI jobs
 
-The job is `sdk-vuln-orchestrator`. Its script is the command in “Commands CI runs” above. The scan job does not fail on CRITICAL findings.
+| Host | File | Scan job | Orchestrator job |
+| --- | --- | --- | --- |
+| GitLab CI | `.gitlab-ci.yml` | `trivy-dependency-scan` | `sdk-vuln-orchestrator` |
+| GitHub Actions | `.github/workflows/security-scan.yml` | `trivy-dependency-scan` | `sdk-vuln-orchestrator` |
+
+Both orchestrator jobs run the command in “Commands CI runs” above. Neither scan job fails on CRITICAL findings.
 
 ## State file
 
 Path: `.cursor/vuln-orchestrator-state.json` at the repo root (gitignored)
 
-It stores `triageAgentId` / `remediationAgentId` / run IDs / policy decisions / MR URL, for resume and debugging. Cloud runs show up in Cursor under **Filter → Source → SDK**.
+It stores `host` / `triageAgentId` / `remediationAgentId` / run IDs / policy decisions / MR-PR URL, for resume and debugging. Cloud runs show up in Cursor under **Filter → Source → SDK**.
 
 ## Exit codes
 

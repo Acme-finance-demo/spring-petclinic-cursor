@@ -9,7 +9,7 @@ English: [ARCHITECTURE.md](./ARCHITECTURE.md)
 
 企業の SDLC 向けに、**CRITICAL 依存関係脆弱性をトリアージし、方針を通ったものだけ直す** Cursor SDK プロトタイプです。対象アプリは既存の Spring PetClinic（このリポジトリ）で、アプリ本体はほとんど触っていません。
 
-スキャンでパイプラインは落としません。修正はあとからエージェントが MR で追います。
+スキャンでパイプラインは落としません。修正はあとからエージェントが MR（GitLab）または PR（GitHub）で追います。CLI は両ホスト共通で、どちらかは `host.ts` が判定します。
 
 ## Cursor SDK を使う場所
 
@@ -18,15 +18,15 @@ SDK を呼ぶのは `src/agent.ts` だけです。呼び出しは 4 種類です
 | 呼び出し | API | 役割 |
 | --- | --- | --- |
 | トリアージ | `Agent.create` + `send` | レポートと `pom.xml` を読み、JSON で分類する。ファイルは編集しない |
-| 修正 | `Agent.create` + `send` | Policy を通ったパッケージだけバージョンを上げ、cloud なら MR を開く |
-| 影響分析 | `Agent.create` + `send` | コードは触らず、Release Notes と利用箇所から互換性・再テスト範囲を **英語で MR / Issue 本文に追記** する |
-| 続き | `Agent.resume` | 修正 MR の CI 失敗などを、同じエージェントに渡して直す |
+| 修正 | `Agent.create` + `send` | Policy を通ったパッケージだけバージョンを上げ、cloud なら MR / PR を開く |
+| 影響分析 | `Agent.create` + `send` | コードは触らず、Release Notes と利用箇所から互換性・再テスト範囲を **英語で MR / PR / Issue 本文に追記** する |
+| 続き | `Agent.resume` | 修正 MR / PR の CI 失敗などを、同じエージェントに渡して直す |
 
 次は SDK ではありません。
 
 - Trivy スキャン
 - `policy.ts` の if/else
-- GitLab CI の YAML
+- GitLab CI / GitHub Actions の YAML
 - Cursor Automations（`trigger-trivy-agent`）
 
 ## 処理の流れ
@@ -41,7 +41,7 @@ cli.ts run
         ├─ agent.ts            トリアージエージェント
         ├─ policy.ts           auto_remediate / comment_only
         ├─ agent.ts            修正エージェント（通ったものだけ）
-        └─ agent.ts            影響分析エージェント（MR / Issue 本文へ英語で追記）
+        └─ agent.ts            影響分析エージェント（MR / PR / Issue 本文へ英語で追記）
                 │
                 ▼
         .cursor/vuln-orchestrator-state.json
@@ -55,7 +55,9 @@ cli.ts resume → 同じ remediation agent
 
 ```
 gitlab-sample/
-├── .gitlab-ci.yml              Trivy ジョブ + SDK ジョブを追加
+├── .gitlab-ci.yml              GitLab CI: Trivy ジョブ + SDK ジョブ
+├── .github/workflows/
+│   └── security-scan.yml       GitHub Actions: 同じ 2 ジョブ + SARIF アップロード
 ├── .gitignore                  生成物を除外
 ├── pom.xml など                既存アプリ（対象リポジトリ）
 ├── .cursor/automations/        既存の Automation（SDK ではない）
@@ -74,6 +76,7 @@ gitlab-sample/
 | ファイル | 役割 |
 | --- | --- |
 | `cli.ts` | 入口。`run` / `resume`、引数と環境変数、リポジトリルートの特定 |
+| `host.ts` | GitLab か GitHub かを CI 環境変数から判定し、clone URL / 開始 ref / MR・PR の呼び方を決める |
 | `orchestrate.ts` | 手順の組み立て。レポート → トリアージ → Policy → 修正。エージェントを何台立てるかはここが決める |
 | `agent.ts` | `@cursor/sdk` の薄い包み。`Agent.create` / `resume`、stream、`wait()`、起動失敗と run 失敗の切り分け |
 | `policy.ts` | 自動修正してよいかの判定。重大度、直せるか、メジャーバージョンが上がるか。エージェントの提案は信用しすぎない |
@@ -82,6 +85,7 @@ gitlab-sample/
 | `state.ts` | `agentId` などを `.cursor/vuln-orchestrator-state.json` に保存・読み込み。resume 用 |
 | `types.ts` | Finding / Triage / Policy / State の型 |
 | `policy.test.ts` | パーサと Policy のユニットテスト。SDK は呼ばない |
+| `host.test.ts` | ホスト判定と clone URL 正規化のユニットテスト。SDK は呼ばない |
 
 ### スキャンとデモデータ
 
@@ -103,21 +107,23 @@ gitlab-sample/
 | ファイル | 役割 |
 | --- | --- |
 | `.gitlab-ci.yml` | `trivy-dependency-scan` が `cursor-sdk` を skip。`sdk-vuln-orchestrator` が成果物を SDK CLI に渡す（`CURSOR_API_KEY` がある push のみ） |
-| `.gitignore` | `node_modules/`、`gl-trivy-fs-report.json`、`.cursor/vuln-orchestrator-state.json` |
+| `.github/workflows/security-scan.yml` | GitHub Actions 版の同じジョブ + Code scanning への SARIF アップロード。`push` は `cursor/**` を除外。オーケストレータのステップは `CURSOR_API_KEY` シークレットが前提 |
+| `.gitignore` | `node_modules/`、`gl-trivy-fs-report.json`、`trivy-results.sarif`、`.cursor/vuln-orchestrator-state.json` |
 
 ### 実行時にだけできるファイル（コミットしない）
 
 | パス | 役割 |
 | --- | --- |
 | `gl-trivy-fs-report.json` | 直近の Trivy 出力。オーケストレータの入力 |
-| `.cursor/vuln-orchestrator-state.json` | 直近の `agentId` / run id / Policy 判定 / MR URL |
+| `trivy-results.sarif` | GitHub のみ。Code scanning 用の同じ検出結果 |
+| `.cursor/vuln-orchestrator-state.json` | 直近の `host` / `agentId` / run id / Policy 判定 / MR・PR の URL |
 
 ### 既存のまま（このプロトタイプの本体ではない）
 
 | パス | 役割 |
 | --- | --- |
 | `.cursor/automations/trivy-remediation.md` | Cursor Automation 用プロンプト。webhook で Cloud Agent を直接起動する別経路 |
-| `.gitlab-ci.yml` の `trigger-trivy-agent` | その Automation を CI から叩くジョブ。SDK ジョブと両方有効だと MR が二重になる |
+| `.gitlab-ci.yml` の `trigger-trivy-agent` | その Automation を CI から叩くジョブ。SDK ジョブと両方有効だと MR が二重になる。GitHub には移植していない（Automation 側から直接トリガーできるため） |
 | `.cursor/automations/tokyo-weather.md` | SDK / Automation の配線確認用サンプル。脆弱性フローとは無関係 |
 | `src/main/java/**` | PetClinic 本体。トリアージ・修正の対象ワークスペース |
 
@@ -136,6 +142,6 @@ gitlab-sample/
 | 場所 | デフォルト | 意味 |
 | --- | --- | --- |
 | 手元 | `local` | このマシンの作業ツリーを読む / 編集する |
-| GitLab CI | `cloud` | Cursor の VM がリポジトリを clone する。修正時は `autoCreatePR` |
+| GitLab CI / GitHub Actions | `cloud` | Cursor の VM がリポジトリを clone する。修正時は `autoCreatePR` |
 
 `--runtime` または `VULN_RUNTIME` で上書きできます。

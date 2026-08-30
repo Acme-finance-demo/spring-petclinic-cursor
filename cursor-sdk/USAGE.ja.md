@@ -5,7 +5,9 @@ English: [USAGE.md](./USAGE.md)
 構成とファイルの役割は [ARCHITECTURE.ja.md](./ARCHITECTURE.ja.md) を参照。
 シーケンスは [SEQUENCE.ja.md](./SEQUENCE.ja.md) を参照。
 
-GitLab CI の Trivy レポートを受け取り、Cursor SDK でトリアージ → 方針判定 → 修正 MR まで進めるプロトタイプです。スキャンジョブ自体は CRITICAL が出ても失敗しません。修正は非同期です。
+GitLab CI / GitHub Actions の Trivy レポートを受け取り、Cursor SDK でトリアージ → 方針判定 → 修正 MR / PR まで進めるプロトタイプです。スキャンジョブ自体は CRITICAL が出ても失敗しません。修正は非同期です。
+
+どちらのホスト上かは CI の環境変数（`GITLAB_CI` / `GITHUB_ACTIONS`）から自動判定するので、CLI は同じものが動きます。変わるのは repo URL、開始 ref、プロンプト内の MR / PR という呼び方だけです。
 
 ## 全体像
 
@@ -14,7 +16,7 @@ Trivy レポート
     → Agent.create（トリアージ、読み取り中心）
     → policy.ts（コードで判定。エージェントには任せない）
     → Agent.create（修正。cloud なら autoCreatePR）
-    → Agent.create（影響分析。MR / Issue 本文に英語で追記。コードは触らない）
+    → Agent.create（影響分析。MR / PR / Issue 本文に英語で追記。コードは触らない）
     → CI 失敗時は Agent.resume（同じエージェントの続き）
 ```
 
@@ -25,7 +27,7 @@ SDK を呼ぶのはこのディレクトリの CLI だけです。Policy 判定�
 - Node.js 22.13 以上
 - [Trivy](https://trivy.dev/)（ローカルスキャン用。macOS なら `brew install trivy`）
 - [Cursor Dashboard](https://cursor.com/dashboard/api) の `CURSOR_API_KEY`（ユーザーキーまたはサービスアカウントキー）
-- cloud ランタイムを使う場合: Cursor からこの GitLab リポジトリへアクセスできること
+- cloud ランタイムを使う場合: Cursor からこのリポジトリ（GitLab / GitHub）へアクセスできること
 
 ## インストール
 
@@ -36,12 +38,12 @@ npm ci
 
 ## どこで何を実行するか
 
-ローカルは早く知るため、CI は正式なスキャン結果から MR を出すため、です。手元の Trivy は CI と一致するとは限らないので、ローカルでは MR を開きません。
+ローカルは早く知るため、CI は正式なスキャン結果から MR / PR を出すため、です。手元の Trivy は CI と一致するとは限らないので、ローカルでは MR も PR も開きません。
 
 | 場所 | やること | やらないこと |
 | --- | --- | --- |
-| ローカル | Trivy → トリアージ → Policy。ログと state ファイル | MR を開く（`--skip-remediate`。`--runtime local`） |
-| CI | 同じフローのあと、Policy を通ったものだけ cloud で修正 MR。続けて影響分析を英語で MR / Issue 本文に追記 | スキャン失敗でパイプラインを落とすこと |
+| ローカル | Trivy → トリアージ → Policy。ログと state ファイル | MR / PR を開く（`--skip-remediate`。`--runtime local`） |
+| CI | 同じフローのあと、Policy を通ったものだけ cloud で修正 MR（GitLab）/ PR（GitHub）。続けて影響分析を英語でその本文に追記 | スキャン失敗でパイプラインを落とすこと |
 
 リポジトリルート、または `cursor-sdk/` のどちらからでも実行できます。`--cwd` を省略すると `pom.xml` のあるリポジトリルートを探します。
 
@@ -89,7 +91,9 @@ npx tsx src/cli.ts run \
 
 ### CI で実行されるコマンド
 
-人が手元で `--runtime cloud` を叩く必要はありません。`CURSOR_API_KEY` が入った push パイプラインで `sdk-vuln-orchestrator` が次を実行します。
+人が手元で `--runtime cloud` を叩く必要はありません。`CURSOR_API_KEY` が入った push パイプラインで、オーケストレータジョブが次を実行します。
+
+GitLab CI — `.gitlab-ci.yml` の `sdk-vuln-orchestrator`:
 
 ```bash
 cd cursor-sdk
@@ -99,17 +103,43 @@ npx tsx src/cli.ts run \
   --runtime cloud
 ```
 
-ここでは `--skip-remediate` を付けません。入力は同じパイプラインの `trivy-dependency-scan` 成果物です。`CURSOR_REPO_URL` は `$CI_PROJECT_URL`、`CURSOR_STARTING_REF` は `$CI_COMMIT_SHA` です。cloud かつ Policy 通過時だけ `autoCreatePR` で MR が開き、続けて影響分析エージェントが Release Notes と利用箇所を見て、英語で MR（リンクされた Issue があればその）本文に追記します。ディスカッションコメントは付けません。分析に失敗しても修正 MR は残します。
+GitHub Actions — `.github/workflows/security-scan.yml` の `sdk-vuln-orchestrator`:
 
-ジョブは `allow_failure: true` です。オーケストレータが落ちてもマージは止まりません。state は成果物 `.cursor/vuln-orchestrator-state.json` に残ります。
+```bash
+cd cursor-sdk
+npm ci
+npx tsx src/cli.ts run \
+  --report "$GITHUB_WORKSPACE/gl-trivy-fs-report.json" \
+  --runtime cloud
+```
 
-セットアップ:
+コマンドは同じで、ワークスペースを指す変数だけが違います。`--skip-remediate` は付けません。入力は同じパイプライン / run の Trivy レポート成果物です。`CURSOR_REPO_URL` と `CURSOR_STARTING_REF` はホスト側の変数から取ります（GitLab は `$CI_PROJECT_URL` / `$CI_COMMIT_SHA`、GitHub は `$GITHUB_SERVER_URL/$GITHUB_REPOSITORY` / `$GITHUB_SHA`）。cloud かつ Policy 通過時だけ `autoCreatePR` で MR（GitLab）または PR（GitHub）が開き、続けて影響分析エージェントが Release Notes と利用箇所を見て、英語で **MR / PR 本文**（クローズ対象の Issue があればその本文にも）追記します。コメントは付けません。分析に失敗しても修正 MR / PR は残します。
 
-1. GitLab: **Settings → CI/CD → Variables** に `CURSOR_API_KEY` を追加（Masked。Protected にするなら protected ブランチの push だけが対象）
+オーケストレータが落ちてもマージは止まりません（GitLab は `allow_failure: true`、GitHub は `continue-on-error: true`）。state は成果物 `.cursor/vuln-orchestrator-state.json` に残ります。
+
+GitLab でのセットアップ:
+
+1. **Settings → CI/CD → Variables** に `CURSOR_API_KEY` を追加（Masked。Protected にするなら protected ブランチの push だけが対象）
 2. 既存の Cursor Automation（`CURSOR_TRIVY_WEBHOOK_URL` / `CURSOR_TRIVY_API_KEY`）は無効化。両方有効だと MR が二重になる
 3. `main` へ push する
 
-### 修正 MR の CI が落ちたあと（resume）
+GitHub でのセットアップ:
+
+1. **Settings → Secrets and variables → Actions → New repository secret** に `CURSOR_API_KEY` を追加。未設定ならオーケストレータジョブのステップはスキップされ、ワークフローは成功のまま終わる
+2. このリポジトリを Cursor に接続する。修正ブランチを push して PR を開くのは `GITHUB_TOKEN` ではなく Cloud Agent 自身なので、Cursor の GitHub App に書き込み権限が必要
+3. 任意: **Settings → Code security** で Code scanning を有効にすると Trivy の SARIF が Security タブに出る。無効でもアップロードのステップは `continue-on-error: true` なので失敗扱いにはならない
+4. `main` へ push する
+
+GitHub 側だけの挙動:
+
+- `push` トリガーは `cursor/**` を除外している。エージェントが作った修正ブランチでオーケストレータを再度回さないため。修正 PR の build / scan は `pull_request` トリガーで走る
+- オーケストレータジョブは `push` のときだけ動く（`pull_request` では動かない）
+- Trivy が `trivy-results.sarif` も出し、`github/codeql-action/upload-sarif` で Code scanning へ上げる（GitLab 側に SARIF のステップはない）
+- スキャンジョブは JAR 成果物を取り込まない。`--skip-dirs target` で対象外だから意味がなく、効くのは `./mvnw dependency:resolve` で埋めた `~/.m2` の方
+- 修正 PR の作成者は使うキーで変わる。SDK の `openAsCursorGithubApp` はサービスアカウントキーなら true（Cursor GitHub App 名義）、ユーザーキーなら false（自分の名義）が既定。ここでは明示指定していない
+- `trigger-trivy-agent`（Cursor Automation の webhook）は移植していない。あのジョブは GitLab に Automation 向けの「CI 完了」トリガーが無いから存在するもので、GitHub なら Automation 側から直接トリガーできる。両方動かすと PR が二重になる
+
+### 修正 MR / PR の CI が落ちたあと（resume）
 
 元の Trivy ジョブの失敗では resume しません。修正ブランチ側の build/test 失敗、またはエージェント run の失敗が対象です。使う `agentId` は CI の cloud エージェント（`bc-...`）です。
 
@@ -139,10 +169,11 @@ npx tsx src/cli.ts resume \
 | 変数 | 必須 | 説明 |
 | --- | --- | --- |
 | `CURSOR_API_KEY` | はい | Cursor の API キー |
-| `CURSOR_REPO_URL` | cloud 時 | clone 先。CI では `$CI_PROJECT_URL` |
-| `CURSOR_STARTING_REF` | cloud 時 | 開始 ref。CI では `$CI_COMMIT_SHA` |
+| `CURSOR_REPO_URL` | cloud 時 | clone 先。GitLab CI は `$CI_PROJECT_URL`、GitHub Actions は `$GITHUB_SERVER_URL/$GITHUB_REPOSITORY`、CI 外は `origin` の remote |
+| `CURSOR_STARTING_REF` | cloud 時 | 開始 ref。GitLab CI は `$CI_COMMIT_SHA`、GitHub Actions は `$GITHUB_SHA` |
 | `CURSOR_MODEL` | いいえ | デフォルト `composer-2.5` |
 | `VULN_RUNTIME` | いいえ | `local` または `cloud` |
+| `VULN_HOST` | いいえ | `github` / `gitlab`。自動判定の上書き。変わるのはプロンプト内の MR / PR の呼び方だけ |
 
 ## Policy（自動修正する条件）
 
@@ -155,19 +186,24 @@ npx tsx src/cli.ts resume \
 - 推奨バージョンがある
 - メジャーバージョン上げではない（先頭の数字成分が上がらない）
 
-それ以外は `comment_only` で、MR 本文の TODO に回します。Spring Boot 本体の 3.x → 4.x などは人が判断します。
+それ以外は `comment_only` で、MR / PR 本文の TODO に回します。Spring Boot 本体の 3.x → 4.x などは人が判断します。
 
 面接で拡張するなら、`AUTO_REMEDIATE_SEVERITIES` に `"HIGH"` を足すのが最短です。
 
-## GitLab CI
+## CI ジョブ
 
-ジョブ名は `sdk-vuln-orchestrator` です。上の「CI で実行されるコマンド」がその script です。スキャンジョブは CRITICAL でも失敗しません。
+| ホスト | ファイル | スキャンジョブ | オーケストレータジョブ |
+| --- | --- | --- | --- |
+| GitLab CI | `.gitlab-ci.yml` | `trivy-dependency-scan` | `sdk-vuln-orchestrator` |
+| GitHub Actions | `.github/workflows/security-scan.yml` | `trivy-dependency-scan` | `sdk-vuln-orchestrator` |
+
+どちらのオーケストレータジョブも上の「CI で実行されるコマンド」を実行します。スキャンジョブはどちらも CRITICAL でも失敗しません。
 
 ## 状態ファイル
 
 パス: リポジトリルートの `.cursor/vuln-orchestrator-state.json`（gitignore 済み）
 
-`triageAgentId` / `remediationAgentId` / `runId` / Policy 判定 / MR URL を保存します。resume と障害調査用です。cloud の run は Cursor 上で **Filter → Source → SDK** から見られます。
+`host` / `triageAgentId` / `remediationAgentId` / `runId` / Policy 判定 / MR・PR の URL を保存します。resume と障害調査用です。cloud の run は Cursor 上で **Filter → Source → SDK** から見られます。
 
 ## 終了コード
 

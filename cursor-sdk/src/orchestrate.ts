@@ -11,13 +11,15 @@ import {
   triagePrompt,
 } from "./prompts.ts";
 import { defaultStatePath, writeState } from "./state.ts";
-import type { OrchestratorState, Runtime } from "./types.ts";
+import type { Host, HostVocab, OrchestratorState, Runtime } from "./types.ts";
 
 export type RunArgs = {
   apiKey: string;
   reportPath: string;
   runtime: Runtime;
   cwd: string;
+  host: Host;
+  vocab: HostVocab;
   repoUrl: string;
   startingRef: string;
   pipelineId?: string;
@@ -33,6 +35,7 @@ export async function runOrchestrator(args: RunArgs): Promise<OrchestratorState>
     const empty: OrchestratorState = {
       createdAt: new Date().toISOString(),
       runtime: args.runtime,
+      host: args.host,
       pipelineId: args.pipelineId,
       sha: args.sha,
       decisions: [],
@@ -57,7 +60,7 @@ export async function runOrchestrator(args: RunArgs): Promise<OrchestratorState>
   const triage = await runAgent({
     apiKey: args.apiKey,
     name: "vuln-triage",
-    prompt: triagePrompt(groups),
+    prompt: triagePrompt(groups, args.vocab),
     runtime: args.runtime,
     cwd: args.cwd,
     repoUrl: args.repoUrl,
@@ -84,6 +87,7 @@ export async function runOrchestrator(args: RunArgs): Promise<OrchestratorState>
   const state: OrchestratorState = {
     createdAt: new Date().toISOString(),
     runtime: args.runtime,
+    host: args.host,
     pipelineId: args.pipelineId,
     sha: args.sha,
     triageAgentId: triage.agentId,
@@ -104,7 +108,7 @@ export async function runOrchestrator(args: RunArgs): Promise<OrchestratorState>
   const remediation = await runAgent({
     apiKey: args.apiKey,
     name: "vuln-remediate",
-    prompt: remediatePrompt(decisions),
+    prompt: remediatePrompt(decisions, args.vocab),
     runtime: args.runtime,
     cwd: args.cwd,
     repoUrl: args.repoUrl,
@@ -118,14 +122,14 @@ export async function runOrchestrator(args: RunArgs): Promise<OrchestratorState>
   state.prUrl = remediation.prUrl;
   state.branch = remediation.branch;
 
-  if (state.prUrl) console.error(`[orchestrator] MR: ${state.prUrl}`);
+  if (state.prUrl) console.error(`[orchestrator] ${args.vocab.prShort}: ${state.prUrl}`);
   console.error(`[orchestrator] resume with: agentId=${state.remediationAgentId}`);
 
   try {
     const impact = await runAgent({
       apiKey: args.apiKey,
       name: "vuln-impact",
-      prompt: impactPrompt(decisions, state.prUrl),
+      prompt: impactPrompt(decisions, args.vocab, state.prUrl),
       runtime: args.runtime,
       cwd: args.cwd,
       repoUrl: args.repoUrl,
@@ -150,6 +154,7 @@ export async function resumeOrchestrator(args: {
   apiKey: string;
   agentId: string;
   cwd: string;
+  vocab: HostVocab;
   logPath?: string;
   note?: string;
 }): Promise<void> {
@@ -160,8 +165,8 @@ export async function resumeOrchestrator(args: {
     apiKey: args.apiKey,
     agentId: args.agentId,
     cwd: args.cwd,
-    prompt: resumePrompt(logText, args.note),
+    prompt: resumePrompt(logText, args.vocab, args.note),
   });
   console.error(`[orchestrator] resumed agentId=${result.agentId} runId=${result.runId}`);
-  if (result.prUrl) console.error(`[orchestrator] MR: ${result.prUrl}`);
+  if (result.prUrl) console.error(`[orchestrator] ${args.vocab.prShort}: ${result.prUrl}`);
 }

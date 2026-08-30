@@ -17,7 +17,7 @@ Every prompt is built in `src/prompts.ts` and passed to `agent.send()`. The text
 | Triage | Cursor agent (`triagePrompt`) | yes |
 | Fix | Cursor agent (`remediatePrompt`) | yes |
 | Impact | Cursor agent (`impactPrompt`) | yes |
-| GitLab | repo / MR | no |
+| Forge | GitLab (repo / MR) or GitHub (repo / PR) | no |
 | Automation | Cursor Automation + `trigger-trivy-agent` | no (separate path) |
 
 ---
@@ -66,14 +66,14 @@ No MR is opened. `remediationAgentId` is not written.
 
 ---
 
-## 2. CI (MR only for packages that pass policy)
+## 2. CI (MR/PR only for packages that pass policy)
 
-You do not pass `--runtime cloud` by hand. On a push with `CURSOR_API_KEY`, `sdk-vuln-orchestrator` runs this.
+You do not pass `--runtime cloud` by hand. On a push with `CURSOR_API_KEY`, `sdk-vuln-orchestrator` runs this — `sdk-vuln-orchestrator` in `.gitlab-ci.yml` on GitLab, the job of the same name in `.github/workflows/security-scan.yml` on GitHub. The flow is identical; `host.ts` only swaps the clone URL, the starting ref, and the MR/PR wording.
 
 ```mermaid
 sequenceDiagram
     actor Dev
-    participant GL as GitLab CI
+    participant GL as GitLab CI /<br/>GitHub Actions
     participant Scan as trivy-dependency-scan
     participant CLI as CLI<br/>orchestrate.ts
     participant Triage as Triage agent<br/>triagePrompt
@@ -81,7 +81,7 @@ sequenceDiagram
     participant Fix as Fix agent<br/>remediatePrompt
     participant Impact as Impact agent<br/>impactPrompt
     participant Cursor as Cursor cloud VM
-    participant GitLab as GitLab MR
+    participant Forge as GitLab MR /<br/>GitHub PR
 
     Dev->>GL: git push
     GL->>Scan: CRITICAL/HIGH/MEDIUM (job stays green)
@@ -99,17 +99,17 @@ sequenceDiagram
     Policy-->>CLI: decisions[]
 
     alt zero auto_remediate
-        CLI-->>GL: skip Fix agent (no MR)
+        CLI-->>GL: skip Fix agent (no MR/PR)
     else one or more
         CLI->>Fix: Agent.create(cloud, autoCreatePR=true)<br/>send(remediatePrompt)
-        Note over Fix: bump AUTO only<br/>comment_only → TODO in MR body
+        Note over Fix: bump AUTO only<br/>comment_only → TODO in the body
         Fix->>Cursor: clone → minimal pom edit → commit
-        Cursor->>GitLab: push branch + open MR
-        GitLab-->>Fix: MR URL
+        Cursor->>Forge: push branch + open MR/PR
+        Forge-->>Fix: MR/PR URL
         Fix-->>CLI: prUrl, agentId (bc-...)
         CLI->>Impact: Agent.create(cloud, autoCreatePR=false)<br/>send(impactPrompt)
         Note over Impact: no code edits<br/>release notes + call sites
-        Impact->>GitLab: append English to MR/Issue body
+        Impact->>Forge: append English to MR/PR/Issue body
         CLI-->>GL: save state artifact
     end
 ```
@@ -120,11 +120,11 @@ sequenceDiagram
 2. A version bump alone is enough (`recommendedVersion` present)
 3. Not a major bump (first numeric component does not increase)
 
-The MR body is not a TypeScript template. The Fix agent writes it from `remediatePrompt`. Impact analysis from `impactPrompt` is **appended in English to the MR/Issue description**, not posted as a discussion comment.
+The MR/PR body is not a TypeScript template. The Fix agent writes it from `remediatePrompt`. Impact analysis from `impactPrompt` is **appended in English to the MR/PR/Issue description**, not posted as a comment.
 
 ---
 
-## 3. After the fix MR's CI fails (resume)
+## 3. After the fix MR/PR's CI fails (resume)
 
 Do not resume on a red Trivy job. Resume is for a failed build/test on the fix branch, or a failed agent run.
 
@@ -133,12 +133,12 @@ sequenceDiagram
     actor Op as Operator / follow-up job
     participant CLI as CLI<br/>resume
     participant Fix as same Fix agent<br/>Agent.resume
-    participant GitLab as fix MR
+    participant Forge as fix MR / PR
 
     Op->>CLI: resume --agent-id bc-... --log ci.log
     CLI->>Fix: Agent.resume(bc-...)<br/>send(resumePrompt)
     Note over Fix: no new agent<br/>resumePrompt from prompts.ts
-    Fix->>GitLab: extra commit if needed
+    Fix->>Forge: extra commit if needed
     Fix-->>CLI: runId / prUrl
 ```
 
@@ -146,9 +146,9 @@ A local triage-only state file has no `remediationAgentId`, so it cannot drive t
 
 ---
 
-## 4. Unused path (Cursor Automation)
+## 4. Unused path (Cursor Automation, GitLab only)
 
-This is separate from the SDK job. If `CURSOR_TRIVY_WEBHOOK_URL` is still set, both can run and duplicate MRs.
+This is separate from the SDK job. If `CURSOR_TRIVY_WEBHOOK_URL` is still set, both can run and duplicate MRs. It is not ported to GitHub Actions: the webhook job only exists because GitLab has no "CI completed" trigger for Automations.
 
 ```mermaid
 sequenceDiagram
@@ -170,7 +170,7 @@ sequenceDiagram
 | Path | Prompt | Opens an MR? |
 | --- | --- | --- |
 | Local `scan:run` | `triagePrompt` only | no |
-| CI `sdk-vuln-orchestrator` | `triagePrompt` → `remediatePrompt` if allowed → `impactPrompt` | only on policy pass (impact is appended to the body) |
+| CI `sdk-vuln-orchestrator` (GitLab CI or GitHub Actions) | `triagePrompt` → `remediatePrompt` if allowed → `impactPrompt` | only on policy pass (impact is appended to the body) |
 | CI `trigger-trivy-agent` | Automation markdown | whatever Automation is configured to do |
 
 ---

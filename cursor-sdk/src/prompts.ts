@@ -1,9 +1,9 @@
-import type { PackageGroup, PolicyDecision, TriageReport } from "./types.ts";
+import type { HostVocab, PackageGroup, PolicyDecision, TriageReport } from "./types.ts";
 
-export function triagePrompt(groups: PackageGroup[]): string {
+export function triagePrompt(groups: PackageGroup[], vocab: HostVocab): string {
   return `You are triaging dependency vulnerabilities for a Spring Boot / Maven app (Spring PetClinic).
 
-Read pom.xml (and build.gradle if present). Do not edit files. Do not commit. Do not open a merge request.
+Read pom.xml (and build.gradle if present). Do not edit files. Do not commit. Do not open a ${vocab.pr}.
 
 For each package below:
 - Is it a direct dependency or BOM-managed / transitive?
@@ -34,7 +34,7 @@ ${JSON.stringify(groups, null, 2)}
 `;
 }
 
-export function remediatePrompt(decisions: PolicyDecision[]): string {
+export function remediatePrompt(decisions: PolicyDecision[], vocab: HostVocab): string {
   const auto = decisions.filter((d) => d.action === "auto_remediate");
   const deferred = decisions.filter((d) => d.action === "comment_only");
 
@@ -45,30 +45,34 @@ Policy already ran in the caller. Follow it exactly.
 AUTO-REMEDIATE these packages (minimal version bumps only):
 ${JSON.stringify(auto, null, 2)}
 
-DO NOT bump these; mention them in the MR description as TODOs:
+DO NOT bump these; mention them in the ${vocab.prShort} description as TODOs:
 ${JSON.stringify(deferred, null, 2)}
 
 Rules:
 - Prefer existing Spring Boot / BOM managed versions and pom properties (e.g. tomcat.version).
 - Only add explicit version overrides when necessary.
 - Do not refactor unrelated code. Do not change CI unless the bump requires it.
-- If a finding cannot be fixed by a version bump, leave a TODO in the MR body and still open the MR with whatever safe upgrades you made.
-- If an MR/branch already exists for the same packages, update it instead of opening a duplicate.
-- Commit on a new branch and open a merge request. Title/body must list CVE IDs and packages upgraded.
+- If a finding cannot be fixed by a version bump, leave a TODO in the ${vocab.prShort} body and still open the ${vocab.pr} with whatever safe upgrades you made.
+- If a ${vocab.pr}/branch already exists for the same packages, update it instead of opening a duplicate.
+- Commit on a new branch and open a ${vocab.pr}. Title/body must list CVE IDs and packages upgraded.
 `;
 }
 
-export function impactPrompt(decisions: PolicyDecision[], prUrl?: string): string {
+export function impactPrompt(
+  decisions: PolicyDecision[],
+  vocab: HostVocab,
+  prUrl?: string,
+): string {
   const auto = decisions.filter((d) => d.action === "auto_remediate");
   const target = prUrl
-    ? `Merge request: ${prUrl}
-Append the analysis to that MR's description (the issue/MR body). Do not post a discussion comment. Do not open a new MR.
-If the MR closes or mentions a GitLab Issue, append the same English section to that Issue description too.`
-    : `No MR URL is available. Print the analysis in the format below. Do not open an MR.`;
+    ? `${vocab.prShort}: ${prUrl}
+Append the analysis to that ${vocab.prShort}'s description (the ${vocab.prShort} body). Do not post a ${vocab.comment}. Do not open a new ${vocab.pr}.
+If the ${vocab.prShort} closes or mentions a ${vocab.issue}, append the same English section to that Issue description too.`
+    : `No ${vocab.prShort} URL is available. Print the analysis in the format below. Do not open a ${vocab.pr}.`;
 
   return `You are a review assistant for Maven / Spring Boot dependency upgrades (Spring PetClinic).
 
-Do not edit application code. Do not commit. Do not change pom.xml. Do not post a discussion comment.
+Do not edit application code. Do not commit. Do not change pom.xml. Do not post a ${vocab.comment}.
 
 ${target}
 
@@ -79,7 +83,7 @@ A version number change in pom.xml is the easy part. Your job is the hard part: 
 
 Follow these steps:
 
-1. Read the MR (title, description, changed files) if a URL was given. Identify each library (group:artifact) and old → new version.
+1. Read the ${vocab.prShort} (title, description, changed files) if a URL was given. Identify each library (group:artifact) and old → new version.
 
 2. Read pom.xml (and build.gradle if present). For each library decide: direct vs transitive / BOM-managed, Maven scope (compile / runtime / test), and update kind (major / minor / patch).
 
@@ -115,8 +119,8 @@ Follow these steps:
 `;
 }
 
-export function resumePrompt(logText: string, extra?: string): string {
-  return `The remediation merge request's pipeline (or your previous run) needs a follow-up.
+export function resumePrompt(logText: string, vocab: HostVocab, extra?: string): string {
+  return `The remediation ${vocab.pr}'s CI run (or your previous run) needs a follow-up.
 
 Continue the same work. Do not start over. Do not bump packages that policy marked comment_only.
 
