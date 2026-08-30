@@ -109,10 +109,13 @@ jobs:
         with:
           path: control
       # 監査対象。public リポジトリなのでトークンは不要
+      # ディレクトリ名を target にしないこと。SCAN_FLAGS の --skip-dirs target
+      # （対象リポジトリ内の Maven ビルド出力を除外する指定）がスキャン対象ごと
+      # 除外してしまい、検出が常に 0 件になる。
       - name: Clone the target repository
         run: |
-          git clone --depth 1 --branch "${{ matrix.repo.ref }}" "${{ matrix.repo.url }}.git" target
-          echo "HEAD: $(git -C target rev-parse --short HEAD)"
+          git clone --depth 1 --branch "${{ matrix.repo.ref }}" "${{ matrix.repo.url }}.git" repo
+          echo "HEAD: $(git -C repo rev-parse --short HEAD)"
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -137,15 +140,15 @@ jobs:
       # 失敗しても pom.xml 自体はスキャンできるので続行する。
       - name: Resolve Maven dependencies (best effort)
         run: |
-          if [ -f target/pom.xml ] && [ -x target/mvnw ]; then
-            (cd target && ./mvnw -B -DskipTests dependency:resolve) || echo "dependency:resolve failed; scanning the manifest only"
+          if [ -f repo/pom.xml ] && [ -x repo/mvnw ]; then
+            (cd repo && ./mvnw -B -DskipTests dependency:resolve) || echo "dependency:resolve failed; scanning the manifest only"
           else
             echo "not a Maven repository; nothing to resolve"
           fi
       - name: Scan (JSON)
-        run: trivy fs ${SCAN_FLAGS} --format json --output "$GITHUB_WORKSPACE/trivy-report.json" target
+        run: trivy fs ${SCAN_FLAGS} --format json --output "$GITHUB_WORKSPACE/trivy-report.json" repo
       - name: Scan (table for the log)
-        run: trivy fs ${SCAN_FLAGS} --exit-code 0 --format table target
+        run: trivy fs ${SCAN_FLAGS} --exit-code 0 --format table repo
       - name: Triage, policy, fix PR, impact analysis
         if: steps.guard.outputs.enabled == 'true'
         working-directory: control/cursor-sdk
@@ -153,17 +156,17 @@ jobs:
           npm ci
           npx tsx src/cli.ts run \
             --report "$GITHUB_WORKSPACE/trivy-report.json" \
-            --cwd "$GITHUB_WORKSPACE/target" \
+            --cwd "$GITHUB_WORKSPACE/repo" \
             --runtime cloud
       # 対象リポジトリ側に書かれた state を横断レポート用に回収する
       - name: Collect the result
         if: always()
         run: |
           mkdir -p out
-          if [ -f target/.cursor/vuln-orchestrator-state.json ]; then
+          if [ -f repo/.cursor/vuln-orchestrator-state.json ]; then
             jq -c --arg name "${{ matrix.repo.name }}" --arg slug "${{ matrix.repo.slug }}" --arg ref "${{ matrix.repo.ref }}" \
               '. + {fleetName: $name, fleetSlug: $slug, fleetRef: $ref}' \
-              target/.cursor/vuln-orchestrator-state.json > "out/${{ matrix.repo.key }}.json"
+              repo/.cursor/vuln-orchestrator-state.json > "out/${{ matrix.repo.key }}.json"
           else
             jq -n --arg name "${{ matrix.repo.name }}" --arg slug "${{ matrix.repo.slug }}" --arg ref "${{ matrix.repo.ref }}" \
               '{fleetName: $name, fleetSlug: $slug, fleetRef: $ref, error: "no state file (scan or orchestrator failed)"}' \
