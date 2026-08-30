@@ -133,7 +133,7 @@ GitHub でのセットアップ:
 GitHub 側だけの挙動:
 
 - `push` トリガーは `cursor/**` を除外している。エージェントが作った修正ブランチでオーケストレータを再度回さないため。修正 PR の build / scan は `pull_request` トリガーで走る
-- オーケストレータジョブは `push` のときだけ動く（`pull_request` では動かない）
+- オーケストレータジョブは `push` と手動の **Run workflow**（`workflow_dispatch`）で動く（`pull_request` では動かない）
 - Trivy が `trivy-results.sarif` も出し、`github/codeql-action/upload-sarif` で Code scanning へ上げる（GitLab 側に SARIF のステップはない）
 - スキャンジョブは JAR 成果物を取り込まない。`--skip-dirs target` で対象外だから意味がなく、効くのは `./mvnw dependency:resolve` で埋めた `~/.m2` の方
 - 修正 PR の作成者は使うキーで変わる。SDK の `openAsCursorGithubApp` はサービスアカウントキーなら true（Cursor GitHub App 名義）、ユーザーキーなら false（自分の名義）が既定。ここでは明示指定していない

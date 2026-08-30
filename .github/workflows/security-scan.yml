@@ -106,8 +106,8 @@ jobs:
   sdk-vuln-orchestrator:
     runs-on: ubuntu-latest
     needs: trivy-dependency-scan
-    # 修正 PR を開くのは push のときだけ（PR の CI では回さない）
-    if: github.event_name == 'push'
+    # 修正 PR を開くのは push と手動実行のときだけ（PR の CI では回さない）
+    if: github.event_name != 'pull_request'
     timeout-minutes: 45
     # allow_failure 相当。オーケストレータが落ちてもマージは止めない
     continue-on-error: true

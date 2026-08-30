@@ -133,7 +133,7 @@ Setup on GitHub:
 What the GitHub workflow does differently:
 
 - `push` ignores `cursor/**`, so the agent's fix branch does not start another orchestrator run. The fix PR is still built and scanned through the `pull_request` trigger
-- The orchestrator job only runs on `push`, never on `pull_request`
+- The orchestrator job runs on `push` and on a manual **Run workflow** (`workflow_dispatch`), never on `pull_request`
 - Trivy also writes `trivy-results.sarif`, uploaded with `github/codeql-action/upload-sarif` (the GitLab side has no SARIF step)
 - The scan job does not download the JAR artifact. `--skip-dirs target` excludes it anyway; what matters is `~/.m2` filled by `./mvnw dependency:resolve`
 - Who authors the fix PR depends on the key. The SDK's `openAsCursorGithubApp` defaults to true for a service-account key (PR shows up as the Cursor GitHub App) and false for a user key (PR shows up as you). We do not set it explicitly
