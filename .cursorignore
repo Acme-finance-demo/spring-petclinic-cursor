@@ -1,0 +1,4 @@
+# Local-only working materials. Keep out of Agent / Tab / Inline Edit context
+# and out of @ mention references. Same syntax as .gitignore.
+# https://cursor.com/docs/context/ignore-files
+assets/
