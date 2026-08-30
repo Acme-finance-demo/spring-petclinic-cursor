@@ -105,3 +105,35 @@ test("CURSOR_REPO_URL and CURSOR_STARTING_REF win over CI variables", () => {
   assert.equal(ctx.repoUrl, "https://github.com/acme/fork");
   assert.equal(ctx.startingRef, "release");
 });
+
+test("GitHub prefers the branch name over the commit SHA as the starting ref", () => {
+  const ctx = resolveHostContext({
+    cwd: "/repo",
+    gitRemote: noRemote,
+    env: {
+      GITHUB_ACTIONS: "true",
+      GITHUB_SERVER_URL: "https://github.com",
+      GITHUB_REPOSITORY: "acme/app",
+      GITHUB_REF_NAME: "feature-branch",
+      GITHUB_SHA: "abc123",
+    },
+  });
+  // Cursor の ref 検証が push 直後の SHA を解決できないため、ブランチ名を使う
+  assert.equal(ctx.startingRef, "feature-branch");
+  // 冪等キー用の sha は SHA のまま
+  assert.equal(ctx.sha, "abc123");
+});
+
+test("GitLab keeps the commit SHA as the starting ref", () => {
+  const ctx = resolveHostContext({
+    cwd: "/repo",
+    gitRemote: noRemote,
+    env: {
+      GITLAB_CI: "true",
+      CI_PROJECT_URL: "https://gitlab.com/acme/app",
+      CI_COMMIT_REF_NAME: "feature-branch",
+      CI_COMMIT_SHA: "def456",
+    },
+  });
+  assert.equal(ctx.startingRef, "def456");
+});

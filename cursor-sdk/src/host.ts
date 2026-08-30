@@ -107,9 +107,15 @@ export function resolveHostContext(args: ResolveHostArgs): HostContext {
     host,
     vocab: VOCAB[host],
     repoUrl,
+    // GitHub はブランチ名を先に見る。Cursor の ref 検証が push 直後の
+    // コミット SHA を解決できないことがあるため（ブランチ名なら通る）。
+    // GitLab は SHA 先で問題が出ていないので従来の順序を保つ。
     startingRef:
       first(
         env.CURSOR_STARTING_REF,
+        ...(host === "github"
+          ? [env.GITHUB_REF_NAME, env.GITHUB_SHA]
+          : [env.CI_COMMIT_SHA, env.CI_COMMIT_REF_NAME]),
         env.GITHUB_SHA,
         env.CI_COMMIT_SHA,
         env.GITHUB_REF_NAME,

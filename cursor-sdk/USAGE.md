@@ -113,7 +113,7 @@ npx tsx src/cli.ts run \
   --runtime cloud
 ```
 
-Same command; only the workspace variable differs. There is no `--skip-remediate`. Input is the Trivy report artifact from the same pipeline / run. `CURSOR_REPO_URL` and `CURSOR_STARTING_REF` come from the host: `$CI_PROJECT_URL` / `$CI_COMMIT_SHA` on GitLab, `$GITHUB_SERVER_URL/$GITHUB_REPOSITORY` / `$GITHUB_SHA` on GitHub. An MR (GitLab) or PR (GitHub) is opened with `autoCreatePR` only on cloud, and only for packages that pass policy. An impact agent then reads that library's release notes and this repo's call sites, and **appends English analysis to the MR/PR description** (and to a linked Issue if it closes one). It does not post a comment. If impact analysis fails, the fix MR/PR is still kept.
+Same command; only the workspace variable differs. There is no `--skip-remediate`. Input is the Trivy report artifact from the same pipeline / run. `CURSOR_REPO_URL` and `CURSOR_STARTING_REF` come from the host: `$CI_PROJECT_URL` / `$CI_COMMIT_SHA` on GitLab, `$GITHUB_SERVER_URL/$GITHUB_REPOSITORY` / `$GITHUB_REF_NAME` on GitHub. An MR (GitLab) or PR (GitHub) is opened with `autoCreatePR` only on cloud, and only for packages that pass policy. An impact agent then reads that library's release notes and this repo's call sites, and **appends English analysis to the MR/PR description** (and to a linked Issue if it closes one). It does not post a comment. If impact analysis fails, the fix MR/PR is still kept.
 
 An orchestrator failure does not block merge: `allow_failure: true` on GitLab, `continue-on-error: true` on GitHub. State is kept as a job artifact at `.cursor/vuln-orchestrator-state.json`.
 
@@ -136,6 +136,7 @@ What the GitHub workflow does differently:
 - The orchestrator job runs on `push` and on a manual **Run workflow** (`workflow_dispatch`), never on `pull_request`
 - Trivy also writes `trivy-results.sarif`, uploaded with `github/codeql-action/upload-sarif` (the GitLab side has no SARIF step)
 - The scan job does not download the JAR artifact. `--skip-dirs target` excludes it anyway; what matters is `~/.m2` filled by `./mvnw dependency:resolve`
+- The starting ref is the branch name (`github.ref_name`), not the commit SHA. Cursor's ref validation rejected a freshly pushed SHA with `Failed to verify existence of commit ...` while the branch name resolved fine; the idempotency key still uses `GITHUB_SHA`, so a run is not started twice for the same commit
 - Who authors the fix PR depends on the key. The SDK's `openAsCursorGithubApp` defaults to true for a service-account key (PR shows up as the Cursor GitHub App) and false for a user key (PR shows up as you). We do not set it explicitly
 - `trigger-trivy-agent` (the Cursor Automation webhook) is not ported. That job exists because GitLab has no "CI completed" trigger for Automations; on GitHub an Automation can trigger natively, and running both paths would duplicate PRs
 
@@ -170,7 +171,7 @@ If you omit `--agent-id`, the CLI reads `remediationAgentId` from `.cursor/vuln-
 | --- | --- | --- |
 | `CURSOR_API_KEY` | yes | Cursor API key |
 | `CURSOR_REPO_URL` | for cloud | Clone URL. GitLab CI: `$CI_PROJECT_URL`. GitHub Actions: `$GITHUB_SERVER_URL/$GITHUB_REPOSITORY`. Off CI: the `origin` remote |
-| `CURSOR_STARTING_REF` | for cloud | Starting ref. GitLab CI: `$CI_COMMIT_SHA`. GitHub Actions: `$GITHUB_SHA` |
+| `CURSOR_STARTING_REF` | for cloud | Starting ref. GitLab CI: `$CI_COMMIT_SHA`. GitHub Actions: `$GITHUB_REF_NAME` (branch name, because Cursor could not verify a freshly pushed SHA) |
 | `CURSOR_MODEL` | no | Defaults to `composer-2.5` |
 | `VULN_RUNTIME` | no | `local` or `cloud` |
 | `VULN_HOST` | no | `github` or `gitlab`. Overrides autodetection; only changes the MR/PR wording in prompts |

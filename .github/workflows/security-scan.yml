@@ -114,7 +114,10 @@ jobs:
     env:
       CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
       CURSOR_REPO_URL: ${{ github.server_url }}/${{ github.repository }}
-      CURSOR_STARTING_REF: ${{ github.sha }}
+      # SHA ではなくブランチ名。Cursor の ref 検証は push 直後のコミット SHA を
+      # 解決できず validation_error になることがあるが、ブランチ名なら通る。
+      # 冪等キーには GITHUB_SHA を使うので、run ごとの重複起動は防げる。
+      CURSOR_STARTING_REF: ${{ github.ref_name }}
       VULN_RUNTIME: cloud
     steps:
       - name: Check for CURSOR_API_KEY

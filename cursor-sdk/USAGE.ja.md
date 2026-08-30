@@ -113,7 +113,7 @@ npx tsx src/cli.ts run \
   --runtime cloud
 ```
 
-コマンドは同じで、ワークスペースを指す変数だけが違います。`--skip-remediate` は付けません。入力は同じパイプライン / run の Trivy レポート成果物です。`CURSOR_REPO_URL` と `CURSOR_STARTING_REF` はホスト側の変数から取ります（GitLab は `$CI_PROJECT_URL` / `$CI_COMMIT_SHA`、GitHub は `$GITHUB_SERVER_URL/$GITHUB_REPOSITORY` / `$GITHUB_SHA`）。cloud かつ Policy 通過時だけ `autoCreatePR` で MR（GitLab）または PR（GitHub）が開き、続けて影響分析エージェントが Release Notes と利用箇所を見て、英語で **MR / PR 本文**（クローズ対象の Issue があればその本文にも）追記します。コメントは付けません。分析に失敗しても修正 MR / PR は残します。
+コマンドは同じで、ワークスペースを指す変数だけが違います。`--skip-remediate` は付けません。入力は同じパイプライン / run の Trivy レポート成果物です。`CURSOR_REPO_URL` と `CURSOR_STARTING_REF` はホスト側の変数から取ります（GitLab は `$CI_PROJECT_URL` / `$CI_COMMIT_SHA`、GitHub は `$GITHUB_SERVER_URL/$GITHUB_REPOSITORY` / `$GITHUB_REF_NAME`）。cloud かつ Policy 通過時だけ `autoCreatePR` で MR（GitLab）または PR（GitHub）が開き、続けて影響分析エージェントが Release Notes と利用箇所を見て、英語で **MR / PR 本文**（クローズ対象の Issue があればその本文にも）追記します。コメントは付けません。分析に失敗しても修正 MR / PR は残します。
 
 オーケストレータが落ちてもマージは止まりません（GitLab は `allow_failure: true`、GitHub は `continue-on-error: true`）。state は成果物 `.cursor/vuln-orchestrator-state.json` に残ります。
 
@@ -136,6 +136,7 @@ GitHub 側だけの挙動:
 - オーケストレータジョブは `push` と手動の **Run workflow**（`workflow_dispatch`）で動く（`pull_request` では動かない）
 - Trivy が `trivy-results.sarif` も出し、`github/codeql-action/upload-sarif` で Code scanning へ上げる（GitLab 側に SARIF のステップはない）
 - スキャンジョブは JAR 成果物を取り込まない。`--skip-dirs target` で対象外だから意味がなく、効くのは `./mvnw dependency:resolve` で埋めた `~/.m2` の方
+- 開始 ref はコミット SHA ではなくブランチ名（`github.ref_name`）。Cursor の ref 検証が push 直後の SHA を `Failed to verify existence of commit ...` で弾くことがあり、ブランチ名なら通るため。冪等キーは `GITHUB_SHA` のままなので、同じコミットで二重に起動することはない
 - 修正 PR の作成者は使うキーで変わる。SDK の `openAsCursorGithubApp` はサービスアカウントキーなら true（Cursor GitHub App 名義）、ユーザーキーなら false（自分の名義）が既定。ここでは明示指定していない
 - `trigger-trivy-agent`（Cursor Automation の webhook）は移植していない。あのジョブは GitLab に Automation 向けの「CI 完了」トリガーが無いから存在するもので、GitHub なら Automation 側から直接トリガーできる。両方動かすと PR が二重になる
 
@@ -170,7 +171,7 @@ npx tsx src/cli.ts resume \
 | --- | --- | --- |
 | `CURSOR_API_KEY` | はい | Cursor の API キー |
 | `CURSOR_REPO_URL` | cloud 時 | clone 先。GitLab CI は `$CI_PROJECT_URL`、GitHub Actions は `$GITHUB_SERVER_URL/$GITHUB_REPOSITORY`、CI 外は `origin` の remote |
-| `CURSOR_STARTING_REF` | cloud 時 | 開始 ref。GitLab CI は `$CI_COMMIT_SHA`、GitHub Actions は `$GITHUB_SHA` |
+| `CURSOR_STARTING_REF` | cloud 時 | 開始 ref。GitLab CI は `$CI_COMMIT_SHA`、GitHub Actions は `$GITHUB_REF_NAME`（push 直後の SHA を Cursor が検証できないためブランチ名） |
 | `CURSOR_MODEL` | いいえ | デフォルト `composer-2.5` |
 | `VULN_RUNTIME` | いいえ | `local` または `cloud` |
 | `VULN_HOST` | いいえ | `github` / `gitlab`。自動判定の上書き。変わるのはプロンプト内の MR / PR の呼び方だけ |
