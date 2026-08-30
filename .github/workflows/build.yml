@@ -1,0 +1,28 @@
+# このアプリ自身の CI。依存を上げる修正 PR がビルドを壊していないかを見る役割も持つ。
+# 脆弱性スキャンとその修正は security.yml（コントロールプレーン呼び出し）側。
+name: build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+      - run: ./mvnw -B -DskipTests package
+      - uses: actions/upload-artifact@v4
+        with:
+          name: petclinic-jar
+          path: target/spring-petclinic-*.jar
+          if-no-files-found: error

@@ -1,0 +1,26 @@
+# 脆弱性ガバナンスはコントロールプレーンが持っている。
+# このリポジトリはそれを呼ぶだけで、スキャナもオーケストレータも置かない。
+# 実装と方針: https://github.com/naoharu/cursor-governance-demo
+name: security
+
+on:
+  push:
+    branches-ignore:
+      # エージェントが作った修正ブランチで再度回さない。修正 PR は pull_request 側で見る
+      - "cursor/**"
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  # Trivy の SARIF を Code scanning へ上げるために呼び出し先へ渡す
+  security-events: write
+
+jobs:
+  governance:
+    uses: naoharu/cursor-governance-demo/.github/workflows/repo-scan.yml@main
+    with:
+      # PR では検出のみ。修正 PR を開くのは push と手動実行のときだけ
+      remediate: ${{ github.event_name != 'pull_request' }}
+    # 呼び出し元の CURSOR_API_KEY を渡す。未設定ならスキャンのみで成功終了する
+    secrets: inherit

@@ -51,11 +51,10 @@ _site/
 !petclinic.css
 .claude/settings.local.json
 
-### Cursor SDK orchestrator ###
+### Vulnerability governance (generated locally / in CI) ###
 node_modules/
-cursor-sdk/dist/
 .cursor/vuln-orchestrator-state.json
-gl-trivy-fs-report.json
+trivy-report.json
 trivy-results.sarif
 
 ### Local-only working materials (never commit) ###
