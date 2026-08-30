@@ -25,6 +25,8 @@ repositories {
 }
 
 ext.checkstyleVersion = "10.25.0"
+// Security fix: Override Thymeleaf version to address CVE-2026-40477, CVE-2026-40478, CVE-2026-41901
+ext['thymeleaf.version'] = '3.1.5.RELEASE'
 ext.springJavaformatCheckstyleVersion = "0.0.46"
 ext.webjarsLocatorLiteVersion = "1.1.4"
 ext.webjarsFontawesomeVersion = "4.7.0"
