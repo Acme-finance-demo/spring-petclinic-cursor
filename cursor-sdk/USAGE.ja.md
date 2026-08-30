@@ -191,12 +191,50 @@ npx tsx src/cli.ts resume \
 
 面接で拡張するなら、`AUTO_REMEDIATE_SEVERITIES` に `"HIGH"` を足すのが最短です。
 
+## フリートモード（複数リポジトリ）
+
+`security-scan.yml` が守るのは 1 リポジトリだけです。`fleet-governance.yml` は同じフローをリポジトリ一覧に対して回します。単発の修正ではなく「統制」になるのはこの部分です。
+
+| | 単一リポジトリ | フリート |
+| --- | --- | --- |
+| ワークフロー | `.github/workflows/security-scan.yml` | `.github/workflows/fleet-governance.yml` |
+| トリガー | `push` / `pull_request` | `schedule`（毎日）/ `workflow_dispatch` / `governance/**` への `push` |
+| 対象 | そのワークフローが置かれたリポジトリ | `governance/fleet.json` の全エントリ |
+| 出力 | 修正 PR 1 本 + SARIF | リポジトリごとに修正 PR + 横断サマリの Issue |
+
+設定は `governance/fleet.json` です。`url` は必須、`ref` を省略するとそのリポジトリのデフォルトブランチ、`name` はレポートの表示名になります。
+
+```json
+{
+  "repos": [
+    { "name": "petclinic (Java / Maven)", "url": "https://github.com/acme/petclinic", "ref": "main" },
+    { "name": "web (npm)", "url": "https://github.com/acme/web" }
+  ]
+}
+```
+
+フリート実行の流れ:
+
+1. `plan` が `fleet.json` を読み、`ref` 未指定はデフォルトブランチを解決して matrix を出す
+2. `scan` がリポジトリごとに走る（`fail-fast: false`、同時 3 本）。クローン → Trivy → トリアージ → policy → 修正 PR → 影響分析。各リポジトリの state ファイルを成果物として上げる
+3. `report` が `governance/render-report.py` でサマリを組み立て、Job Summary **と** コントロールリポジトリの Issue に出す。リポジトリ別の検出数、policy が自動修正したもの、見送ったものとその理由、全修正 PR へのリンクが載る
+
+対象が public なら追加トークンは不要です。Actions はクローンするだけで、修正 PR を push するのは Cursor の GitHub App です。private を対象にする場合は `repo` スコープの PAT をシークレットに入れ、クローンのステップで使います。
+
+エコシステムはリポジトリごとに判定し（`cursor-sdk/src/ecosystem.ts`）、プロンプトが切り替わります（Maven / Gradle の managed version、npm の range と lockfile の使い分け、Go の `go get` + `go mod tidy`、Python の lockfile ツール）。policy は共通で変わりません。
+
+把握しておくべき制約が 2 つあります。
+
+- `schedule` と `workflow_dispatch` は **デフォルトブランチ上のワークフローしか**動かしません。デモを feature ブランチで回している間は、`governance/**` への `push` トリガーが実際の起動手段になります
+- 冪等キーは `<purpose>-<owner-repo>-<sha>` なので、同じコミットで単一リポジトリ版とフリート版の両方が走っても、リポジトリごとに同じエージェントが再利用され、PR が二重になりません
+
 ## CI ジョブ
 
 | ホスト | ファイル | スキャンジョブ | オーケストレータジョブ |
 | --- | --- | --- | --- |
 | GitLab CI | `.gitlab-ci.yml` | `trivy-dependency-scan` | `sdk-vuln-orchestrator` |
 | GitHub Actions | `.github/workflows/security-scan.yml` | `trivy-dependency-scan` | `sdk-vuln-orchestrator` |
+| GitHub Actions（フリート） | `.github/workflows/fleet-governance.yml` | `scan`（matrix） | `scan`（matrix）+ `report` |
 
 どちらのオーケストレータジョブも上の「CI で実行されるコマンド」を実行します。スキャンジョブはどちらも CRITICAL でも失敗しません。
 

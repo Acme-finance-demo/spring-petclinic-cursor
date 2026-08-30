@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { groupByPackage, parseFindings } from "./parse-report.ts";
-import { decide, isMajorBump } from "./policy.ts";
+import { decide, isDowngrade, isMajorBump } from "./policy.ts";
 import type { TriageItem } from "./types.ts";
 
 test("parseFindings reads native Trivy JSON", () => {
@@ -130,4 +130,31 @@ test("policy defers findings without a fixed version", () => {
 test("isMajorBump uses the first numeric component", () => {
   assert.equal(isMajorBump("10.1.44", "10.1.55"), false);
   assert.equal(isMajorBump("3.5.0", "4.0.1"), true);
+});
+
+test("policy rejects a downgrade picked from a multi-value FixedVersion", () => {
+  // Trivy の form-data の FixedVersion は "2.5.4, 3.0.4, 4.0.4"。
+  // 4.0.0 に対して 2.5.4 を選んでしまった場合は上げるべきではない。
+  const decision = decide({
+    package: "form-data",
+    currentVersion: "4.0.0",
+    recommendedVersion: "2.5.4",
+    cves: ["CVE-2026-1"],
+    severity: "CRITICAL",
+    isDirectDependency: true,
+    isMajorBump: false,
+    canFixByVersionBump: true,
+    notes: "",
+  });
+  assert.equal(decision.action, "comment_only");
+  assert.match(decision.reason, /older than/);
+});
+
+test("isDowngrade compares every numeric component", () => {
+  assert.equal(isDowngrade("4.0.0", "4.0.4"), false);
+  assert.equal(isDowngrade("4.0.0", "2.5.4"), true);
+  assert.equal(isDowngrade("1.4.1", "1.4.1"), false);
+  assert.equal(isDowngrade("v1.6.0", "v1.4.0"), true);
+  assert.equal(isDowngrade("3.1.3.RELEASE", "3.1.5.RELEASE"), false);
+  assert.equal(isDowngrade("1.0.0", null), false);
 });

@@ -11,7 +11,13 @@ import {
   triagePrompt,
 } from "./prompts.ts";
 import { defaultStatePath, writeState } from "./state.ts";
-import type { Host, HostVocab, OrchestratorState, Runtime } from "./types.ts";
+import type {
+  EcosystemProfile,
+  Host,
+  HostVocab,
+  OrchestratorState,
+  Runtime,
+} from "./types.ts";
 
 export type RunArgs = {
   apiKey: string;
@@ -20,12 +26,24 @@ export type RunArgs = {
   cwd: string;
   host: Host;
   vocab: HostVocab;
+  ecosystems: EcosystemProfile[];
   repoUrl: string;
   startingRef: string;
   pipelineId?: string;
   sha?: string;
   skipRemediate?: boolean;
 };
+
+/** github.com/owner/repo → owner-repo。冪等キーを対象リポジトリごとに分けるため。 */
+function repoSlug(repoUrl: string): string {
+  const parts = repoUrl.replace(/\.git$/, "").split("/").filter(Boolean);
+  return parts.slice(-2).join("-").toLowerCase().replace(/[^a-z0-9-]+/g, "-");
+}
+
+function idempotencyKey(purpose: string, args: RunArgs): string | undefined {
+  const base = args.sha ?? args.pipelineId;
+  return base ? `${purpose}-${repoSlug(args.repoUrl)}-${base}` : undefined;
+}
 
 export async function runOrchestrator(args: RunArgs): Promise<OrchestratorState> {
   const raw = JSON.parse(await readFile(args.reportPath, "utf8")) as unknown;
@@ -36,6 +54,9 @@ export async function runOrchestrator(args: RunArgs): Promise<OrchestratorState>
       createdAt: new Date().toISOString(),
       runtime: args.runtime,
       host: args.host,
+      repoUrl: args.repoUrl,
+      ecosystems: args.ecosystems.map((e) => e.id),
+      findings: { total: 0, bySeverity: {}, packageGroups: 0 },
       pipelineId: args.pipelineId,
       sha: args.sha,
       decisions: [],
@@ -50,6 +71,11 @@ export async function runOrchestrator(args: RunArgs): Promise<OrchestratorState>
     const severity = finding.severity.trim().toUpperCase() || "UNKNOWN";
     bySeverity.set(severity, (bySeverity.get(severity) ?? 0) + 1);
   }
+  const findingSummary = {
+    total: findings.length,
+    bySeverity: Object.fromEntries(bySeverity),
+    packageGroups: groups.length,
+  };
   const severitySummary = [...bySeverity.entries()]
     .map(([severity, count]) => `${severity} ${count}`)
     .join(", ");
@@ -60,13 +86,13 @@ export async function runOrchestrator(args: RunArgs): Promise<OrchestratorState>
   const triage = await runAgent({
     apiKey: args.apiKey,
     name: "vuln-triage",
-    prompt: triagePrompt(groups, args.vocab),
+    prompt: triagePrompt(groups, args.vocab, args.ecosystems),
     runtime: args.runtime,
     cwd: args.cwd,
     repoUrl: args.repoUrl,
     startingRef: args.startingRef,
     autoCreatePR: false,
-    idempotencyKey: args.sha ? `vuln-triage-${args.sha}` : undefined,
+    idempotencyKey: idempotencyKey("vuln-triage", args),
   });
 
   const report = assertTriageReport(extractJson(triage.text));
@@ -88,6 +114,9 @@ export async function runOrchestrator(args: RunArgs): Promise<OrchestratorState>
     createdAt: new Date().toISOString(),
     runtime: args.runtime,
     host: args.host,
+    repoUrl: args.repoUrl,
+    ecosystems: args.ecosystems.map((e) => e.id),
+    findings: findingSummary,
     pipelineId: args.pipelineId,
     sha: args.sha,
     triageAgentId: triage.agentId,
@@ -108,13 +137,13 @@ export async function runOrchestrator(args: RunArgs): Promise<OrchestratorState>
   const remediation = await runAgent({
     apiKey: args.apiKey,
     name: "vuln-remediate",
-    prompt: remediatePrompt(decisions, args.vocab),
+    prompt: remediatePrompt(decisions, args.vocab, args.ecosystems),
     runtime: args.runtime,
     cwd: args.cwd,
     repoUrl: args.repoUrl,
     startingRef: args.startingRef,
     autoCreatePR: args.runtime === "cloud",
-    idempotencyKey: args.sha ? `vuln-fix-${args.sha}` : undefined,
+    idempotencyKey: idempotencyKey("vuln-fix", args),
   });
 
   state.remediationAgentId = remediation.agentId;
@@ -129,14 +158,14 @@ export async function runOrchestrator(args: RunArgs): Promise<OrchestratorState>
     const impact = await runAgent({
       apiKey: args.apiKey,
       name: "vuln-impact",
-      prompt: impactPrompt(decisions, args.vocab, state.prUrl),
+      prompt: impactPrompt(decisions, args.vocab, args.ecosystems, state.prUrl),
       runtime: args.runtime,
       cwd: args.cwd,
       repoUrl: args.repoUrl,
       startingRef: state.branch ?? args.startingRef,
       autoCreatePR: false,
       prUrl: state.prUrl,
-      idempotencyKey: args.sha ? `vuln-impact-${args.sha}` : undefined,
+      idempotencyKey: idempotencyKey("vuln-impact", args),
     });
     state.impactAgentId = impact.agentId;
     state.impactRunId = impact.runId;

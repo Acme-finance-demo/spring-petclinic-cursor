@@ -25,6 +25,20 @@ export type HostContext = {
   pipelineId?: string;
 };
 
+export type EcosystemId = "maven" | "gradle" | "npm" | "go" | "python" | "unknown";
+
+export type EcosystemProfile = {
+  id: EcosystemId;
+  /** "Maven (Java)" のような表示名 */
+  label: string;
+  /** 検出したマニフェストの相対パス */
+  manifests: string[];
+  /** 修正エージェントに渡すエコシステム固有のルール */
+  upgradeRules: string[];
+  /** 影響分析エージェントに渡す再テストコマンド */
+  testCommands: string[];
+};
+
 export type Finding = {
   id: string;
   severity: string;
@@ -66,10 +80,21 @@ export type PolicyDecision = {
   item: TriageItem;
 };
 
+/** フリート横断レポート用の集計。 */
+export type FindingSummary = {
+  total: number;
+  bySeverity: Record<string, number>;
+  packageGroups: number;
+};
+
 export type OrchestratorState = {
   createdAt: string;
   runtime: Runtime;
   host?: Host;
+  /** どのリポジトリを対象に走ったか。マルチリポジトリ実行のレポートで使う */
+  repoUrl?: string;
+  ecosystems?: EcosystemId[];
+  findings?: FindingSummary;
   pipelineId?: string;
   sha?: string;
   triageAgentId?: string;

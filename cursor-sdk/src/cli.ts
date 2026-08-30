@@ -1,6 +1,7 @@
 import { existsSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { detectEcosystems } from "./ecosystem.ts";
 import { resolveHostContext, vocabFor } from "./host.ts";
 import { resumeOrchestrator, runOrchestrator } from "./orchestrate.ts";
 import { defaultStatePath, readState } from "./state.ts";
@@ -40,7 +41,7 @@ function defaultRuntime(): Runtime {
 
 function usage(): never {
   console.error(`Usage:
-  npx tsx src/cli.ts run --report <gl-trivy-fs-report.json> [--runtime local|cloud] [--skip-remediate]
+  npx tsx src/cli.ts run --report <trivy-report.json> [--runtime local|cloud] [--skip-remediate] [--cwd <repo>]
   npx tsx src/cli.ts resume [--agent-id <id>] [--log <ci-log.txt>] [--note <text>]
 
 Env:
@@ -75,8 +76,14 @@ async function main(): Promise<void> {
     const runtime = (opt("--runtime") as Runtime | undefined) ?? defaultRuntime();
     if (runtime !== "local" && runtime !== "cloud") usage();
 
+    const ecosystems = detectEcosystems(cwd);
     console.error(
       `[orchestrator] host=${hostContext.host} repo=${hostContext.repoUrl} ref=${hostContext.startingRef}`,
+    );
+    console.error(
+      `[orchestrator] ecosystems: ${ecosystems
+        .map((e) => `${e.id}(${e.manifests.length} manifest(s))`)
+        .join(", ")}`,
     );
 
     await runOrchestrator({
@@ -86,6 +93,7 @@ async function main(): Promise<void> {
       cwd,
       host: hostContext.host,
       vocab: hostContext.vocab,
+      ecosystems,
       repoUrl: hostContext.repoUrl,
       startingRef: hostContext.startingRef,
       pipelineId: hostContext.pipelineId,

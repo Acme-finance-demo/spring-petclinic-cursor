@@ -57,7 +57,11 @@ cli.ts resume → 同じ remediation agent
 gitlab-sample/
 ├── .gitlab-ci.yml              GitLab CI: Trivy ジョブ + SDK ジョブ
 ├── .github/workflows/
-│   └── security-scan.yml       GitHub Actions: 同じ 2 ジョブ + SARIF アップロード
+│   ├── security-scan.yml       GitHub Actions: 同じ 2 ジョブ + SARIF アップロード
+│   └── fleet-governance.yml    GitHub Actions: 同じフローを複数リポジトリへ展開
+├── governance/
+│   ├── fleet.json              継続的統制の対象リポジトリ
+│   └── render-report.py        横断レポート（Job Summary + Issue）
 ├── .gitignore                  生成物を除外
 ├── pom.xml など                既存アプリ（対象リポジトリ）
 ├── .cursor/automations/        既存の Automation（SDK ではない）
@@ -77,6 +81,7 @@ gitlab-sample/
 | --- | --- |
 | `cli.ts` | 入口。`run` / `resume`、引数と環境変数、リポジトリルートの特定 |
 | `host.ts` | GitLab か GitHub かを CI 環境変数から判定し、clone URL / 開始 ref / MR・PR の呼び方を決める |
+| `ecosystem.ts` | ツリー内のマニフェストから Maven / Gradle / npm / Go / Python を判定し、プロンプトに差し込む更新ルールとテストコマンドを供給する |
 | `orchestrate.ts` | 手順の組み立て。レポート → トリアージ → Policy → 修正。エージェントを何台立てるかはここが決める |
 | `agent.ts` | `@cursor/sdk` の薄い包み。`Agent.create` / `resume`、stream、`wait()`、起動失敗と run 失敗の切り分け |
 | `policy.ts` | 自動修正してよいかの判定。重大度、直せるか、メジャーバージョンが上がるか。エージェントの提案は信用しすぎない |
@@ -86,6 +91,7 @@ gitlab-sample/
 | `types.ts` | Finding / Triage / Policy / State の型 |
 | `policy.test.ts` | パーサと Policy のユニットテスト。SDK は呼ばない |
 | `host.test.ts` | ホスト判定と clone URL 正規化のユニットテスト。SDK は呼ばない |
+| `ecosystem.test.ts` | 一時ディレクトリを使ったエコシステム判定のユニットテスト。SDK は呼ばない |
 
 ### スキャンとデモデータ
 
@@ -108,6 +114,9 @@ gitlab-sample/
 | --- | --- |
 | `.gitlab-ci.yml` | `trivy-dependency-scan` が `cursor-sdk` を skip。`sdk-vuln-orchestrator` が成果物を SDK CLI に渡す（`CURSOR_API_KEY` がある push のみ） |
 | `.github/workflows/security-scan.yml` | GitHub Actions 版の同じジョブ + Code scanning への SARIF アップロード。`push` は `cursor/**` を除外。オーケストレータのステップは `CURSOR_API_KEY` シークレットが前提 |
+| `.github/workflows/fleet-governance.yml` | フリートモード。`governance/fleet.json` を matrix で回し、リポジトリごとに修正 PR、最後に横断 Issue |
+| `governance/fleet.json` | 継続的統制の対象リポジトリ一覧 |
+| `governance/render-report.py` | リポジトリ別の state から横断レポートを組み立てる |
 | `.gitignore` | `node_modules/`、`gl-trivy-fs-report.json`、`trivy-results.sarif`、`.cursor/vuln-orchestrator-state.json` |
 
 ### 実行時にだけできるファイル（コミットしない）

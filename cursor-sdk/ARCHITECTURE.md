@@ -57,7 +57,11 @@ Almost all new code lives in `cursor-sdk/`. PetClinic Java was not changed.
 gitlab-sample/
 ├── .gitlab-ci.yml              GitLab CI: Trivy job + SDK job
 ├── .github/workflows/
-│   └── security-scan.yml       GitHub Actions: the same two jobs + SARIF upload
+│   ├── security-scan.yml       GitHub Actions: the same two jobs + SARIF upload
+│   └── fleet-governance.yml    GitHub Actions: the same flow across many repositories
+├── governance/
+│   ├── fleet.json              the repositories under continuous governance
+│   └── render-report.py        roll-up report (job summary + Issue)
 ├── .gitignore                  generated files ignored
 ├── pom.xml etc.                existing app (workspace under scan)
 ├── .cursor/automations/        existing Automations (not the SDK)
@@ -77,6 +81,7 @@ gitlab-sample/
 | --- | --- |
 | `cli.ts` | Entry point. `run` / `resume`, flags and env, find repo root |
 | `host.ts` | GitLab vs GitHub: detect the host from CI env, resolve the clone URL / starting ref, pick the MR/PR wording |
+| `ecosystem.ts` | Detect Maven / Gradle / npm / Go / Python from the manifests in the tree, and supply the upgrade rules and test commands the prompts inject |
 | `orchestrate.ts` | The pipeline: report → triage → policy → remediate. Decides how many agents to start |
 | `agent.ts` | Thin `@cursor/sdk` wrapper. `Agent.create` / `resume`, stream, `wait()`, startup vs run failures |
 | `policy.ts` | Whether a bump may be automatic: severity, fixable by version, major bump. Does not trust the agent blindly |
@@ -86,6 +91,7 @@ gitlab-sample/
 | `types.ts` | Finding / triage / policy / state types |
 | `policy.test.ts` | Parser and policy unit tests. No SDK calls |
 | `host.test.ts` | Host detection and clone-URL normalization tests. No SDK calls |
+| `ecosystem.test.ts` | Ecosystem detection tests over temp fixtures. No SDK calls |
 
 ### Scan and demo data
 
@@ -108,6 +114,9 @@ gitlab-sample/
 | --- | --- |
 | `.gitlab-ci.yml` | `trivy-dependency-scan` skips `cursor-sdk`. `sdk-vuln-orchestrator` feeds the artifact to the SDK CLI (push pipelines with `CURSOR_API_KEY`) |
 | `.github/workflows/security-scan.yml` | The same jobs on GitHub Actions, plus a SARIF upload to Code scanning. `push` ignores `cursor/**`; the orchestrator steps need the `CURSOR_API_KEY` secret |
+| `.github/workflows/fleet-governance.yml` | Fleet mode: a matrix over `governance/fleet.json`, one fix PR per repository, then a roll-up Issue |
+| `governance/fleet.json` | Which repositories are under continuous governance |
+| `governance/render-report.py` | Turns the per-repository state files into the roll-up report |
 | `.gitignore` | `node_modules/`, `gl-trivy-fs-report.json`, `trivy-results.sarif`, `.cursor/vuln-orchestrator-state.json` |
 
 ### Generated at runtime (not committed)

@@ -191,12 +191,50 @@ Everything else is `comment_only` and becomes a TODO in the MR/PR body. Spring B
 
 The shortest live extension is adding `"HIGH"` to `AUTO_REMEDIATE_SEVERITIES`.
 
+## Fleet mode (many repositories)
+
+`security-scan.yml` guards one repository. `fleet-governance.yml` runs the same flow across a list of repositories, which is what makes it governance rather than a one-off fix.
+
+| | Single repo | Fleet |
+| --- | --- | --- |
+| Workflow | `.github/workflows/security-scan.yml` | `.github/workflows/fleet-governance.yml` |
+| Trigger | `push`, `pull_request` | `schedule` (daily), `workflow_dispatch`, `push` on `governance/**` |
+| Target | the repository the workflow lives in | every entry in `governance/fleet.json` |
+| Output | one fix PR + SARIF | one fix PR per repository + a roll-up Issue |
+
+The fleet config is `governance/fleet.json`. `url` is required; `ref` defaults to that repository's default branch; `name` is the label used in the report.
+
+```json
+{
+  "repos": [
+    { "name": "petclinic (Java / Maven)", "url": "https://github.com/acme/petclinic", "ref": "main" },
+    { "name": "web (npm)", "url": "https://github.com/acme/web" }
+  ]
+}
+```
+
+How a fleet run works:
+
+1. `plan` reads `fleet.json`, resolves any missing `ref` to the repository's default branch, and emits a matrix
+2. `scan` runs once per repository (`fail-fast: false`, 3 at a time): clone → Trivy → triage → policy → fix PR → impact analysis. Each repository's state file is uploaded as an artifact
+3. `report` renders `governance/render-report.py` into the job summary **and** opens an Issue in the control repository: per-repo findings, what policy auto-fixed, what it deferred and why, and links to every fix PR
+
+Public target repositories need no extra token: Actions only clones them, and the fix PR is pushed by Cursor's GitHub App. Add a PAT with `repo` scope as a secret and use it in the clone step for private targets.
+
+Ecosystems are detected per repository (`cursor-sdk/src/ecosystem.ts`), and the prompts adapt: Maven/Gradle managed versions, npm lockfile-vs-range, `go get` + `go mod tidy`, or the Python lockfile tool. Policy is unchanged and shared by all of them.
+
+Two constraints worth knowing:
+
+- `schedule` and `workflow_dispatch` only run workflows that exist on the **default branch**. While the demo lives on a feature branch, the `push` trigger on `governance/**` is what actually starts a fleet run
+- The idempotency key is `<purpose>-<owner-repo>-<sha>`, so the single-repo workflow and the fleet workflow triggered by the same commit reuse one agent per repository instead of opening duplicate PRs
+
 ## CI jobs
 
 | Host | File | Scan job | Orchestrator job |
 | --- | --- | --- | --- |
 | GitLab CI | `.gitlab-ci.yml` | `trivy-dependency-scan` | `sdk-vuln-orchestrator` |
 | GitHub Actions | `.github/workflows/security-scan.yml` | `trivy-dependency-scan` | `sdk-vuln-orchestrator` |
+| GitHub Actions (fleet) | `.github/workflows/fleet-governance.yml` | `scan` (matrix) | `scan` (matrix) + `report` |
 
 Both orchestrator jobs run the command in “Commands CI runs” above. Neither scan job fails on CRITICAL findings.
 
