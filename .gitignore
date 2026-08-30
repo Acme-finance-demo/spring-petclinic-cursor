@@ -57,3 +57,6 @@ cursor-sdk/dist/
 .cursor/vuln-orchestrator-state.json
 gl-trivy-fs-report.json
 trivy-results.sarif
+
+### Local-only working materials (never commit) ###
+assets/
