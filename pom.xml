@@ -33,6 +33,9 @@
     <!-- Security fix: Override Tomcat version to address CVE-2026-43515 -->
     <tomcat.version>10.1.55</tomcat.version>
 
+    <!-- Security fix: Override Thymeleaf version to address CVE-2026-40477, CVE-2026-40478, CVE-2026-41901 -->
+    <thymeleaf.version>3.1.5.RELEASE</thymeleaf.version>
+
     <checkstyle.version>10.25.0</checkstyle.version>
     <jacoco.version>0.8.15</jacoco.version>
     <libsass.version>0.3.4</libsass.version>
