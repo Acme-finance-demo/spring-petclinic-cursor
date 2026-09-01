@@ -1,6 +1,6 @@
 # 脆弱性ガバナンスはコントロールプレーンが持っている。
 # このリポジトリはそれを呼ぶだけで、スキャナもオーケストレータも置かない。
-# 実装と方針: https://github.com/naoharu/cursor-governance-demo
+# 実装と方針: https://github.com/Acme-finance-demo/cursor-governance-demo
 name: security
 
 on:
@@ -18,7 +18,7 @@ permissions:
 
 jobs:
   governance:
-    uses: naoharu/cursor-governance-demo/.github/workflows/repo-scan.yml@main
+    uses: Acme-finance-demo/cursor-governance-demo/.github/workflows/repo-scan.yml@main
     with:
       # PR では検出のみ。修正 PR を開くのは push と手動実行のときだけ
       remediate: ${{ github.event_name != 'pull_request' }}

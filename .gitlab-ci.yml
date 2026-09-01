@@ -134,7 +134,7 @@ trigger-trivy-agent:
 
 # Trivy レポートを脆弱性ガバナンスのコントロールプレーンへ渡す。
 # オーケストレータのコードはこのリポジトリには置かない（GitHub Actions 側と同じ方針）。
-#   https://github.com/naoharu/cursor-governance-demo
+#   https://github.com/Acme-finance-demo/cursor-governance-demo
 # スキャンジョブは落とさない。ここも allow_failure でマージは止めない。
 # CURSOR_API_KEY は Cursor Dashboard の user / service-account キー。
 # trigger-trivy-agent と両方有効だと MR が二重になるので、こちらを使うときは
@@ -149,7 +149,7 @@ sdk-vuln-orchestrator:
   rules:
     - if: '$CURSOR_API_KEY && $CI_PIPELINE_SOURCE == "push"'
   variables:
-    CONTROL_PLANE_REPO: https://github.com/naoharu/cursor-governance-demo
+    CONTROL_PLANE_REPO: https://github.com/Acme-finance-demo/cursor-governance-demo
     CURSOR_REPO_URL: $CI_PROJECT_URL
     CURSOR_STARTING_REF: $CI_COMMIT_SHA
     VULN_RUNTIME: cloud
