@@ -32,6 +32,8 @@ ext.webjarsBootstrapVersion = "5.3.6"
 
 // Security fix: Override Thymeleaf version to address CVE-2026-40477, CVE-2026-40478, CVE-2026-41901
 ext['thymeleaf.version'] = '3.1.5.RELEASE'
+// Security fix: Override Tomcat version to address CVE-2026-65182, CVE-2026-65905, CVE-2026-68525
+ext['tomcat.version'] = '10.1.59'
 
 dependencies {
   implementation 'org.springframework.boot:spring-boot-starter-cache'

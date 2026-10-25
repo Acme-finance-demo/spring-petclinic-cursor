@@ -19,7 +19,6 @@
 
     <!-- Generic properties -->
     <java.version>17</java.version>
-    <tomcat.version>10.1.44</tomcat.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <!-- Important for reproducible builds. Update using e.g. ./mvnw versions:set -DnewVersion=... -->
@@ -30,8 +29,8 @@
     <webjars-bootstrap.version>5.3.6</webjars-bootstrap.version>
     <webjars-font-awesome.version>4.7.0</webjars-font-awesome.version>
 
-    <!-- Security fix: Override Tomcat version to address CVE-2026-43515 -->
-    <tomcat.version>10.1.55</tomcat.version>
+    <!-- Security fix: Override Tomcat version to address CVE-2026-65182, CVE-2026-65905, CVE-2026-68525 -->
+    <tomcat.version>10.1.59</tomcat.version>
 
     <!-- Security fix: Override Thymeleaf version to address CVE-2026-40477, CVE-2026-40478, CVE-2026-41901 -->
     <thymeleaf.version>3.1.5.RELEASE</thymeleaf.version>
