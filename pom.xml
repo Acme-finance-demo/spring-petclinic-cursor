@@ -32,6 +32,14 @@
     <!-- Security fix: Override Tomcat version to address CVE-2026-65182, CVE-2026-65905, CVE-2026-68525 -->
     <tomcat.version>10.1.59</tomcat.version>
 
+    <!--
+      Security fix: Bump Spring Framework BOM to align spring-webmvc (and related modules) past 6.2.7.
+      Targets CVE-2026-47884, CVE-2026-47890, CVE-2026-41842, CVE-2026-41845, CVE-2025-41242,
+      CVE-2026-22737, CVE-2026-22745, CVE-2026-41841, CVE-2026-41843, CVE-2026-41844,
+      CVE-2026-41846, CVE-2026-41853. Uses 6.2.19 — latest 6.2.x on Maven Central (6.2.20 not published there).
+    -->
+    <spring-framework.version>6.2.19</spring-framework.version>
+
     <!-- Security fix: Override Thymeleaf version to address CVE-2026-40477, CVE-2026-40478, CVE-2026-41901 -->
     <thymeleaf.version>3.1.5.RELEASE</thymeleaf.version>
 
